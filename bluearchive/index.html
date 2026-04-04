@@ -4,23 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>블루아카이브 리세계 판매 | 리스트업</title>
-  <meta name="description" content="블루아카이브 리세계 계정 직거래 매물. 고성능 블루아카이브 계정을 안전하게 구매하세요. 블루아카이브 판매계정, 블루아카이브 리세계 거래.">
+  <meta name="description" content="블루아카이브 리세계 계정 직거래 매물. 블루아카이브 판매계정, 블루아카이브 리세계 거래.">
   <meta property="og:title" content="블루아카이브 리세계 판매 매물 | 리스트업">
-  <meta property="og:description" content="블루아카이브 리세계 계정을 직접 거래하세요.">
   <meta property="og:type" content="website">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 <div id="navbar"></div>
-<div class="container">
-  <div class="game-tabs" id="game-tabs"></div>
-  <div style="display:flex;gap:8px;margin-bottom:16px;">
-    <select class="form-select" id="server-filter" style="flex:1;min-width:120px;">
-      <option value="">전체 서버</option>
-    </select>
+<div class="page-wrapper">
+  <div class="layout-with-sidebar">
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title">게임 선택</div>
+        <div class="sidebar-game-list" id="sidebar-games"></div>
+      </div>
+      <div class="sidebar-card">
+        <div class="sidebar-title">서버</div>
+        <select class="form-select" id="server-filter" style="font-size:13px;">
+          <option value="">전체 서버</option>
+        </select>
+      </div>
+    </aside>
+    <div class="content-area">
+      <div class="content-header">
+        <div class="content-title">📘 블루아카이브 매물</div>
+        <span class="content-count" id="listing-count"></span>
+      </div>
+      <div id="listings-container"><div class="loading">불러오는 중...</div></div>
+    </div>
   </div>
-  <div class="section-title">블루아카이브 매물 <span class="count-badge" id="listing-count"></span></div>
-  <div id="listings-container"></div>
 </div>
 <a href="/trade/register.html" class="fab">✏️ 판매글 등록</a>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -29,17 +41,14 @@
 <script>
   const GAME_SLUG = 'bluearchive'
   document.getElementById('navbar').innerHTML = renderNavbar()
-  document.getElementById('game-tabs').innerHTML = renderGameTabs(GAME_SLUG)
+  document.getElementById('sidebar-games').innerHTML = GAMES.map(g => `<a href="${g.path}" class="sidebar-game-item ${g.slug === GAME_SLUG ? 'active' : ''}">${g.emoji} ${g.nameKo}</a>`).join('')
   async function loadServers() {
     const { data: game } = await db.from('Game').select('id').eq('slug', GAME_SLUG).single()
     if (!game) return
     const { data: servers } = await db.from('Server').select('id, nameKo').eq('gameId', game.id)
-    const select = document.getElementById('server-filter')
-    servers?.forEach(s => {
-      const opt = document.createElement('option')
-      opt.value = s.id; opt.textContent = s.nameKo; select.appendChild(opt)
-    })
-    select.addEventListener('change', () => loadPage(1))
+    const sel = document.getElementById('server-filter')
+    servers?.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.nameKo; sel.appendChild(o) })
+    sel.addEventListener('change', () => loadPage(1))
   }
   async function updateCount() {
     const { data: game } = await db.from('Game').select('id').eq('slug', GAME_SLUG).single()
@@ -47,10 +56,7 @@
     const { count } = await db.from('Listing').select('*', { count: 'exact', head: true }).eq('status', 'active').eq('gameId', game.id)
     document.getElementById('listing-count').textContent = count + '개'
   }
-  function loadPage(page = 1) {
-    const serverId = document.getElementById('server-filter').value || undefined
-    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId, page })
-  }
+  function loadPage(p = 1) { loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: p }) }
   loadServers(); updateCount(); loadPage(1)
 </script>
 </body>

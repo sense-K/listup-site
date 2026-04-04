@@ -3,13 +3,14 @@
   --primary: #6366f1;
   --primary-dark: #4f46e5;
   --primary-light: #818cf8;
-  --bg: #f8f9ff;
+  --bg: #f4f5fb;
   --card: #ffffff;
   --text: #1e1b4b;
   --text-muted: #6b7280;
   --border: #e5e7eb;
   --radius: 12px;
   --shadow: 0 2px 12px rgba(99,102,241,0.08);
+  --sidebar-width: 220px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -24,7 +25,7 @@ body {
 /* ===== 네비게이션 ===== */
 .navbar {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  padding: 0 20px;
+  padding: 0 24px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -32,7 +33,7 @@ body {
 }
 
 .navbar-inner {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -47,63 +48,109 @@ body {
   text-decoration: none;
   letter-spacing: -0.5px;
 }
+.navbar-logo span { opacity: 0.75; font-weight: 400; font-size: 13px; margin-left: 6px; }
 
-.navbar-logo span { opacity: 0.8; font-weight: 400; font-size: 13px; margin-left: 6px; }
-
-.navbar-menu { display: flex; gap: 4px; }
-
+.navbar-menu { display: flex; gap: 4px; align-items: center; }
 .navbar-menu a {
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.85);
   text-decoration: none;
   font-size: 14px;
-  padding: 6px 10px;
+  padding: 6px 14px;
   border-radius: 8px;
   transition: all 0.2s;
 }
-
 .navbar-menu a:hover, .navbar-menu a.active {
   color: #fff;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.18);
+}
+.navbar-sell-btn {
+  background: #fff !important;
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+  margin-left: 8px;
 }
 
-/* ===== 메인 컨텐츠 ===== */
-.container {
-  max-width: 1100px;
+/* ===== 페이지 래퍼 ===== */
+.page-wrapper {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px 16px;
+  padding: 28px 24px;
 }
 
-/* ===== 게임 탭 ===== */
-.game-tabs {
+/* ===== PC 2단 레이아웃 (사이드바 + 콘텐츠) ===== */
+.layout-with-sidebar {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  margin-bottom: 20px;
-  scrollbar-width: none;
+  gap: 24px;
+  align-items: flex-start;
 }
-.game-tabs::-webkit-scrollbar { display: none; }
 
-.game-tab {
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  position: sticky;
+  top: 76px;
+}
+
+.sidebar-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.sidebar-game-list { display: flex; flex-direction: column; gap: 4px; }
+.sidebar-game-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  border: 1.5px solid var(--border);
-  background: var(--card);
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-decoration: none;
   color: var(--text-muted);
   font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
   transition: all 0.2s;
 }
+.sidebar-game-item:hover { background: #f3f4f6; color: var(--text); }
+.sidebar-game-item.active { background: rgba(99,102,241,0.1); color: var(--primary); font-weight: 700; }
 
-.game-tab:hover { border-color: var(--primary-light); color: var(--primary); }
-.game-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-.game-tab .emoji { font-size: 16px; }
+.content-area { flex: 1; min-width: 0; }
+
+/* ===== 섹션 헤더 ===== */
+.content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.content-title { font-size: 20px; font-weight: 800; }
+.content-count { font-size: 14px; color: var(--text-muted); }
+
+/* ===== 필터 바 ===== */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+/* ===== 매물 그리드 ===== */
+.listings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
 
 /* ===== 카드 ===== */
 .card {
@@ -112,10 +159,13 @@ body {
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   padding: 16px;
-  margin-bottom: 12px;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
 }
-.card:hover { box-shadow: 0 4px 20px rgba(99,102,241,0.15); }
+.card:hover {
+  box-shadow: 0 6px 24px rgba(99,102,241,0.15);
+  transform: translateY(-2px);
+}
 
 .card-header {
   display: flex;
@@ -134,17 +184,19 @@ body {
 }
 
 .card-price {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--text);
+  text-align: right;
 }
-.card-price small { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+.card-price small { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+.card-discount { font-size: 12px; color: #10b981; font-weight: 600; }
 
 .card-characters {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 5px;
+  margin-bottom: 10px;
 }
 
 .char-badge {
@@ -152,18 +204,12 @@ body {
   align-items: center;
   gap: 4px;
   background: #f3f4f6;
-  border-radius: 8px;
-  padding: 4px 10px;
-  font-size: 13px;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 500;
 }
-
-.char-badge img {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
+.char-badge img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
 .tier-s { background: #fef3c7; color: #92400e; }
 .tier-a { background: #ede9fe; color: #5b21b6; }
 
@@ -171,12 +217,55 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.trust-score { color: #10b981; font-weight: 600; }
+
+/* ===== 메인 페이지 히어로 ===== */
+.hero {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  padding: 56px 24px;
+  text-align: center;
+}
+.hero h1 { font-size: 36px; font-weight: 900; margin-bottom: 12px; line-height: 1.2; }
+.hero p { font-size: 16px; opacity: 0.85; margin-bottom: 32px; }
+.hero-stats { display: flex; justify-content: center; gap: 48px; }
+.hero-stat strong { display: block; font-size: 28px; font-weight: 900; }
+.hero-stat span { font-size: 13px; opacity: 0.75; }
+
+/* ===== 메인 게임 그리드 ===== */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 36px;
 }
 
-.seller-info { display: flex; align-items: center; gap: 6px; }
-.trust-score { color: #10b981; font-weight: 600; }
+.game-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 16px;
+  text-decoration: none;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow);
+  transition: all 0.2s;
+  text-align: center;
+}
+.game-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(99,102,241,0.18); }
+.game-card .game-emoji { font-size: 36px; }
+.game-card .game-name { font-size: 15px; font-weight: 700; }
+.game-card .game-count { font-size: 13px; color: var(--text-muted); }
+.game-card .game-arrow { font-size: 12px; color: var(--primary); font-weight: 600; }
 
 /* ===== 버튼 ===== */
 .btn {
@@ -192,37 +281,28 @@ body {
   text-decoration: none;
   border: none;
   transition: all 0.2s;
+  font-family: inherit;
 }
-
-.btn-primary {
-  background: var(--primary);
-  color: #fff;
-}
+.btn-primary { background: var(--primary); color: #fff; }
 .btn-primary:hover { background: var(--primary-dark); }
-
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--primary);
-  color: var(--primary);
-}
+.btn-outline { background: transparent; border: 1.5px solid var(--primary); color: var(--primary); }
 .btn-outline:hover { background: var(--primary); color: #fff; }
-
 .btn-full { width: 100%; }
 
-/* ===== FAB (판매글 등록 버튼) ===== */
+/* ===== FAB ===== */
 .fab {
   position: fixed;
-  bottom: 24px;
-  right: 20px;
+  bottom: 28px;
+  right: 28px;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: #fff;
   border: none;
   border-radius: 999px;
-  padding: 14px 22px;
+  padding: 14px 24px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+  box-shadow: 0 4px 20px rgba(99,102,241,0.45);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -230,61 +310,7 @@ body {
   transition: transform 0.2s;
   z-index: 50;
 }
-.fab:hover { transform: translateY(-2px); }
-
-/* ===== 섹션 타이틀 ===== */
-.section-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.count-badge {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-/* ===== 로딩 / 빈 상태 ===== */
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-muted);
-}
-
-.empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-muted);
-}
-.empty .empty-icon { font-size: 48px; margin-bottom: 12px; }
-.empty p { font-size: 15px; }
-
-/* ===== 페이지네이션 ===== */
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 24px;
-  padding-bottom: 80px;
-}
-
-.page-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1.5px solid var(--border);
-  background: var(--card);
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--text-muted);
-  transition: all 0.2s;
-}
-.page-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-.page-btn:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+.fab:hover { transform: translateY(-3px); }
 
 /* ===== 폼 ===== */
 .form-group { margin-bottom: 16px; }
@@ -306,26 +332,20 @@ body {
 }
 .form-textarea { resize: vertical; min-height: 100px; }
 
-/* ===== 반응형 (PC) ===== */
-@media (min-width: 768px) {
-  .navbar-inner { max-width: 1100px; }
+/* ===== 로딩 / 빈 상태 ===== */
+.loading { text-align: center; padding: 40px; color: var(--text-muted); }
+.empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty .empty-icon { font-size: 48px; margin-bottom: 12px; }
 
-  .container {
-    max-width: 1100px;
-    padding: 32px 40px;
-  }
-
-  /* 매물 카드 2열 그리드 */
-  .listings-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  .listings-grid .card { margin-bottom: 0; }
-
-  .card-price { font-size: 24px; }
-
-  /* 게임 탭 여유 */
-  .game-tabs { gap: 10px; }
-  .game-tab { padding: 10px 20px; font-size: 15px; }
+/* ===== 모바일 (768px 이하) ===== */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 24px; }
+  .hero-stats { gap: 28px; }
+  .game-grid { grid-template-columns: 1fr 1fr; }
+  .layout-with-sidebar { flex-direction: column; }
+  .sidebar { width: 100%; position: static; }
+  .sidebar-game-list { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+  .sidebar-game-item { padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; }
+  .listings-grid { grid-template-columns: 1fr; }
+  .fab { bottom: 16px; right: 16px; padding: 12px 18px; font-size: 14px; }
 }

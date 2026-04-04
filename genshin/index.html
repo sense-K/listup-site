@@ -6,68 +6,66 @@
   <title>원신 리세계 판매 | 리스트업</title>
   <meta name="description" content="원신 리세계 계정 직거래 매물. 고성능 원신 계정을 안전하게 구매하세요. 원신 판매계정, 원신 리세계 거래.">
   <meta property="og:title" content="원신 리세계 판매 매물 | 리스트업">
-  <meta property="og:description" content="원신 리세계 계정을 직접 거래하세요.">
   <meta property="og:type" content="website">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-
 <div id="navbar"></div>
-
-<div class="container">
-  <!-- 게임 탭 -->
-  <div class="game-tabs" id="game-tabs"></div>
-
-  <!-- 필터 -->
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-    <select class="form-select" id="server-filter" style="flex:1;min-width:120px;">
-      <option value="">전체 서버</option>
-    </select>
+<div class="page-wrapper">
+  <div class="layout-with-sidebar">
+    <!-- 사이드바 -->
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title">게임 선택</div>
+        <div class="sidebar-game-list" id="sidebar-games"></div>
+      </div>
+      <div class="sidebar-card">
+        <div class="sidebar-title">서버</div>
+        <select class="form-select" id="server-filter" style="font-size:13px;">
+          <option value="">전체 서버</option>
+        </select>
+      </div>
+    </aside>
+    <!-- 콘텐츠 -->
+    <div class="content-area">
+      <div class="content-header">
+        <div class="content-title">🌙 원신 매물</div>
+        <span class="content-count" id="listing-count"></span>
+      </div>
+      <div id="listings-container">
+        <div class="loading">불러오는 중...</div>
+      </div>
+    </div>
   </div>
-
-  <!-- 매물 목록 -->
-  <div class="section-title">
-    원신 매물 <span class="count-badge" id="listing-count"></span>
-  </div>
-  <div id="listings-container"></div>
 </div>
-
 <a href="/trade/register.html" class="fab">✏️ 판매글 등록</a>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/config.js"></script>
 <script src="/js/listings.js"></script>
 <script>
   const GAME_SLUG = 'genshin'
-
   document.getElementById('navbar').innerHTML = renderNavbar()
-  document.getElementById('game-tabs').innerHTML = renderGameTabs(GAME_SLUG)
+  document.getElementById('sidebar-games').innerHTML = GAMES.map(g => `
+    <a href="${g.path}" class="sidebar-game-item ${g.slug === GAME_SLUG ? 'active' : ''}">${g.emoji} ${g.nameKo}</a>
+  `).join('')
 
-  // 서버 목록 로드
   async function loadServers() {
     const { data: game } = await db.from('Game').select('id').eq('slug', GAME_SLUG).single()
     if (!game) return
     const { data: servers } = await db.from('Server').select('id, nameKo').eq('gameId', game.id)
-    const select = document.getElementById('server-filter')
+    const sel = document.getElementById('server-filter')
     servers?.forEach(s => {
       const opt = document.createElement('option')
-      opt.value = s.id
-      opt.textContent = s.nameKo
-      select.appendChild(opt)
+      opt.value = s.id; opt.textContent = s.nameKo; sel.appendChild(opt)
     })
-    select.addEventListener('change', () => loadPage(1))
+    sel.addEventListener('change', () => loadPage(1))
   }
 
-  // 매물 수 업데이트
   async function updateCount() {
     const { data: game } = await db.from('Game').select('id').eq('slug', GAME_SLUG).single()
     if (!game) return
-    const { count } = await db
-      .from('Listing')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
-      .eq('gameId', game.id)
-    document.getElementById('listing-count').textContent = `${count ?? 0}개`
+    const { count } = await db.from('Listing').select('*', { count: 'exact', head: true }).eq('status', 'active').eq('gameId', game.id)
+    document.getElementById('listing-count').textContent = count + '개'
   }
 
   function loadPage(page = 1) {
@@ -75,9 +73,7 @@
     loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId, page })
   }
 
-  loadServers()
-  updateCount()
-  loadPage(1)
+  loadServers(); updateCount(); loadPage(1)
 </script>
 </body>
 </html>

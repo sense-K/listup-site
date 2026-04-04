@@ -9,59 +9,13 @@
   <meta property="og:description" content="모바일 게임 리세계 계정 직거래 매물을 한 곳에서.">
   <meta property="og:type" content="website">
   <link rel="stylesheet" href="/css/style.css">
-  <style>
-    .hero {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      color: #fff;
-      padding: 40px 20px 48px;
-      text-align: center;
-    }
-    .hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 10px; line-height: 1.3; }
-    .hero p { font-size: 15px; opacity: 0.85; margin-bottom: 28px; }
-    .hero-stats {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-    }
-    .hero-stat strong { display: block; font-size: 24px; font-weight: 800; }
-    .hero-stat span { font-size: 12px; opacity: 0.75; }
-    .game-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 32px;
-    }
-    .game-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px 16px;
-      text-decoration: none;
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      box-shadow: var(--shadow);
-      transition: all 0.2s;
-    }
-    .game-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(99,102,241,0.15); }
-    .game-card .game-emoji { font-size: 32px; }
-    .game-card .game-name { font-size: 15px; font-weight: 700; }
-    .game-card .game-count { font-size: 13px; color: var(--text-muted); }
-    .game-card .game-arrow { font-size: 12px; color: var(--primary); font-weight: 600; margin-top: 4px; }
-    .recent-title {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 14px;
-    }
-  </style>
 </head>
 <body>
 
 <div id="navbar"></div>
 
 <div class="hero">
-  <h1>리세계 매물,<br>한 곳에서 거래하세요</h1>
+  <h1>리세계 매물, 한 곳에서 거래하세요</h1>
   <p>원신 · 블루아카이브 · 니케 · 쿠키런킹덤</p>
   <div class="hero-stats">
     <div class="hero-stat">
@@ -69,30 +23,30 @@
       <span>전체 매물</span>
     </div>
     <div class="hero-stat">
-      <strong id="stat-games">4</strong>
+      <strong>4</strong>
       <span>지원 게임</span>
     </div>
   </div>
 </div>
 
-<div class="container">
-  <!-- 게임 선택 -->
+<div class="page-wrapper">
+  <!-- 게임 선택 4열 그리드 -->
   <div class="game-grid" id="game-grid"></div>
 
   <!-- 최근 매물 -->
-  <div class="recent-title">최근 등록 매물</div>
+  <div class="content-header">
+    <div class="content-title">최근 등록 매물</div>
+    <a href="/trade/register.html" class="btn btn-primary">✏️ 판매글 등록</a>
+  </div>
   <div id="recent-listings">
     <div class="loading">불러오는 중...</div>
   </div>
 </div>
 
-<a href="/trade/register.html" class="fab">✏️ 판매글 등록</a>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/config.js"></script>
 <script src="/js/listings.js"></script>
 <script>
-  // 네비게이션
   document.getElementById('navbar').innerHTML = renderNavbar('home')
 
   // 게임 그리드
@@ -100,40 +54,27 @@
     <a href="${g.path}" class="game-card">
       <span class="game-emoji">${g.emoji}</span>
       <span class="game-name">${g.nameKo}</span>
-      <span class="game-count" id="count-${g.slug}">매물 조회 중...</span>
+      <span class="game-count" id="count-${g.slug}">조회 중...</span>
       <span class="game-arrow">매물 보기 →</span>
     </a>
   `).join('')
 
-  // 게임별 매물 수 로드
   async function loadGameCounts() {
     for (const g of GAMES) {
-      const { count } = await db
-        .from('Listing')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active')
-        .eq('gameId', await getGameId(g.slug))
+      const { data: game } = await db.from('Game').select('id').eq('slug', g.slug).single()
+      if (!game) continue
+      const { count } = await db.from('Listing').select('*', { count: 'exact', head: true }).eq('status', 'active').eq('gameId', game.id)
       const el = document.getElementById(`count-${g.slug}`)
       if (el) el.textContent = `매물 ${count ?? 0}개`
     }
   }
 
-  async function getGameId(slug) {
-    const { data } = await db.from('Game').select('id').eq('slug', slug).single()
-    return data?.id
-  }
-
-  // 전체 매물 수
   async function loadStats() {
-    const { count } = await db
-      .from('Listing')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
+    const { count } = await db.from('Listing').select('*', { count: 'exact', head: true }).eq('status', 'active')
     document.getElementById('stat-listings').textContent = (count ?? 0) + '개'
   }
 
-  // 최근 매물 (전체)
-  loadListings({ container: 'recent-listings', limit: 5 })
+  loadListings({ container: 'recent-listings', limit: 6 })
   loadStats()
   loadGameCounts()
 </script>
