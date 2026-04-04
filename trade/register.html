@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>판매글 등록 | 리스트업</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px 0;
+      margin-bottom: 8px;
+    }
+    .step {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      background: var(--border); color: var(--text-muted);
+      transition: all 0.3s;
+    }
+    .step.active { background: var(--primary); color: #fff; }
+    .step.done { background: #10b981; color: #fff; }
+    .step-line { flex: 1; max-width: 40px; height: 2px; background: var(--border); }
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .char-item {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .char-item.selected { border-color: var(--primary); background: rgba(99,102,241,0.06); }
+    .char-item img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-bottom: 4px; }
+    .char-item .char-name { font-size: 12px; font-weight: 600; }
+    .char-item .char-tier { font-size: 11px; color: var(--text-muted); }
+    .selected-chars {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      min-height: 36px;
+      padding: 8px;
+      border: 1.5px dashed var(--border);
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .selected-char-tag {
+      background: var(--primary);
+      color: #fff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 13px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .selected-char-tag button {
+      background: none; border: none; color: #fff; cursor: pointer; font-size: 14px; line-height: 1;
+    }
+    .price-input-wrap { position: relative; }
+    .price-input-wrap input { padding-right: 40px; }
+    .price-unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+    .summary-box {
+      background: #f3f4f6;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .summary-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
+    .summary-row strong { font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div id="navbar"></div>
+
+<div class="container" style="max-width:480px;">
+  <div class="step-indicator">
+    <div class="step active" id="step-dot-1">1</div>
+    <div class="step-line"></div>
+    <div class="step" id="step-dot-2">2</div>
+    <div class="step-line"></div>
+    <div class="step" id="step-dot-3">3</div>
+  </div>
+
+  <!-- STEP 1: 게임/서버 선택 -->
+  <div class="step-panel active" id="panel-1">
+    <div class="section-title" style="margin-bottom:20px;">게임과 서버를 선택하세요</div>
+    <div class="form-group">
+      <label class="form-label">게임</label>
+      <select class="form-select" id="game-select">
+        <option value="">게임 선택</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">서버</label>
+      <select class="form-select" id="server-select" disabled>
+        <option value="">게임을 먼저 선택하세요</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="goStep(2)">다음 →</button>
+  </div>
+
+  <!-- STEP 2: 캐릭터 선택 -->
+  <div class="step-panel" id="panel-2">
+    <div class="section-title" style="margin-bottom:12px;">보유 캐릭터를 선택하세요</div>
+    <div class="selected-chars" id="selected-chars">
+      <span style="color:var(--text-muted);font-size:13px;">캐릭터를 선택하면 여기 표시돼요</span>
+    </div>
+    <div class="char-grid" id="char-grid">
+      <div class="loading">불러오는 중...</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-outline" onclick="goStep(1)" style="flex:1;">← 이전</button>
+      <button class="btn btn-primary" onclick="goStep(3)" style="flex:2;">다음 →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: 가격/연락처 -->
+  <div class="step-panel" id="panel-3">
+    <div class="section-title" style="margin-bottom:20px;">가격과 연락처를 입력하세요</div>
+
+    <div class="summary-box" id="summary-box"></div>
+
+    <div class="form-group">
+      <label class="form-label">판매가격 <span style="color:red">*</span></label>
+      <div class="price-input-wrap">
+        <input type="number" class="form-input" id="price-input" placeholder="50000" min="0">
+        <span class="price-unit">원</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">할인금액 <span style="color:var(--text-muted);font-size:12px;">(선택)</span></label>
+      <div class="price-input-wrap">
+        <input type="number" class="form-input" id="discount-input" placeholder="5000" min="0">
+        <span class="price-unit">원</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">계정 설명 <span style="color:var(--text-muted);font-size:12px;">(선택)</span></label>
+      <textarea class="form-textarea" id="desc-input" placeholder="계정 상태, 보유 재화 등 자유롭게 적어주세요"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">연락처 <span style="color:red">*</span></label>
+      <input type="text" class="form-input" id="contact-input" placeholder="카카오톡 ID, 오픈채팅 링크 등">
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline" onclick="goStep(2)" style="flex:1;">← 이전</button>
+      <button class="btn btn-primary" onclick="submitListing()" style="flex:2;" id="submit-btn">판매글 등록</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script>
+  document.getElementById('navbar').innerHTML = renderNavbar('sell')
+
+  let selectedGameId = null
+  let selectedServerId = null
+  let selectedChars = [] // { id, nameKo, tier, imageUrl }
+
+  // 게임 목록 로드
+  async function init() {
+    const { data: games } = await db.from('Game').select('id, nameKo, slug, emoji').eq('isActive', true)
+    const sel = document.getElementById('game-select')
+    games?.forEach(g => {
+      const opt = document.createElement('option')
+      opt.value = g.id
+      opt.textContent = g.emoji + ' ' + g.nameKo
+      opt.dataset.slug = g.slug
+      sel.appendChild(opt)
+    })
+    sel.addEventListener('change', onGameChange)
+  }
+
+  async function onGameChange() {
+    const sel = document.getElementById('game-select')
+    selectedGameId = sel.value
+    const serverSel = document.getElementById('server-select')
+    serverSel.innerHTML = '<option value="">서버 선택</option>'
+    serverSel.disabled = true
+    selectedChars = []
+    if (!selectedGameId) return
+    const { data: servers } = await db.from('Server').select('id, nameKo').eq('gameId', selectedGameId)
+    servers?.forEach(s => {
+      const opt = document.createElement('option')
+      opt.value = s.id; opt.textContent = s.nameKo; serverSel.appendChild(opt)
+    })
+    serverSel.disabled = false
+    serverSel.addEventListener('change', () => { selectedServerId = serverSel.value })
+  }
+
+  // 캐릭터 로드
+  async function loadChars() {
+    if (!selectedGameId) return
+    const { data: chars } = await db
+      .from('Character')
+      .select('id, nameKo, tier, imageUrl')
+      .eq('gameId', selectedGameId)
+      .eq('isActive', true)
+      .order('tier')
+    const grid = document.getElementById('char-grid')
+    grid.innerHTML = chars?.map(c => `
+      <div class="char-item" id="char-${c.id}" onclick="toggleChar(${JSON.stringify(c).replace(/"/g, '&quot;')})">
+        ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : '<div style="width:48px;height:48px;border-radius:50%;background:#e5e7eb;margin:0 auto 4px;"></div>'}
+        <div class="char-name">${c.nameKo}</div>
+        <div class="char-tier">${c.tier}티어</div>
+      </div>
+    `).join('') ?? '<div class="empty">캐릭터 없음</div>'
+  }
+
+  function toggleChar(c) {
+    const idx = selectedChars.findIndex(x => x.id === c.id)
+    if (idx >= 0) {
+      selectedChars.splice(idx, 1)
+      document.getElementById('char-' + c.id)?.classList.remove('selected')
+    } else {
+      selectedChars.push(c)
+      document.getElementById('char-' + c.id)?.classList.add('selected')
+    }
+    renderSelectedChars()
+  }
+
+  function renderSelectedChars() {
+    const el = document.getElementById('selected-chars')
+    if (selectedChars.length === 0) {
+      el.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">캐릭터를 선택하면 여기 표시돼요</span>'
+      return
+    }
+    el.innerHTML = selectedChars.map(c => `
+      <span class="selected-char-tag">
+        ${c.nameKo}
+        <button onclick="toggleChar(${JSON.stringify(c).replace(/"/g, '&quot;')})">×</button>
+      </span>
+    `).join('')
+  }
+
+  // 스텝 이동
+  function goStep(n) {
+    if (n === 2) {
+      if (!selectedGameId) { alert('게임을 선택해주세요'); return }
+      if (!document.getElementById('server-select').value) { alert('서버를 선택해주세요'); return }
+      selectedServerId = document.getElementById('server-select').value
+      loadChars()
+    }
+    if (n === 3) {
+      renderSummary()
+    }
+    document.querySelectorAll('.step-panel').forEach((p, i) => {
+      p.classList.toggle('active', i + 1 === n)
+    })
+    document.querySelectorAll('.step').forEach((s, i) => {
+      s.classList.remove('active', 'done')
+      if (i + 1 < n) s.classList.add('done')
+      else if (i + 1 === n) s.classList.add('active')
+    })
+  }
+
+  function renderSummary() {
+    const gameSel = document.getElementById('game-select')
+    const serverSel = document.getElementById('server-select')
+    const gameText = gameSel.options[gameSel.selectedIndex]?.text ?? ''
+    const serverText = serverSel.options[serverSel.selectedIndex]?.text ?? ''
+    document.getElementById('summary-box').innerHTML = `
+      <div class="summary-row"><span>게임</span><strong>${gameText}</strong></div>
+      <div class="summary-row"><span>서버</span><strong>${serverText}</strong></div>
+      <div class="summary-row"><span>캐릭터</span><strong>${selectedChars.map(c => c.nameKo).join(', ') || '없음'}</strong></div>
+    `
+  }
+
+  // 등록
+  async function submitListing() {
+    const price = Number(document.getElementById('price-input').value)
+    const contact = document.getElementById('contact-input').value.trim()
+    if (!price || price <= 0) { alert('판매가격을 입력해주세요'); return }
+    if (!contact) { alert('연락처를 입력해주세요'); return }
+
+    const btn = document.getElementById('submit-btn')
+    btn.disabled = true; btn.textContent = '등록 중...'
+
+    try {
+      // 임시 유저 처리 (추후 로그인으로 교체)
+      let { data: user } = await db.from('User').select('id').limit(1).single()
+      if (!user) {
+        const { data: newUser } = await db
+          .from('User')
+          .insert({ nickname: '익명', isPhoneVerified: false, createdAt: new Date().toISOString() })
+          .select().single()
+        user = newUser
+      }
+
+      const { data: listing, error } = await db.from('Listing').insert({
+        userId: user.id,
+        gameId: selectedGameId,
+        serverId: selectedServerId,
+        price,
+        discountAmount: Number(document.getElementById('discount-input').value) || null,
+        description: document.getElementById('desc-input').value || null,
+        contactInfo: contact,
+        status: 'active',
+        viewCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }).select().single()
+
+      if (error) throw error
+
+      if (selectedChars.length > 0) {
+        await db.from('ListingCharacter').insert(
+          selectedChars.map(c => ({ listingId: listing.id, characterId: c.id }))
+        )
+      }
+
+      alert('판매글이 등록됐어요!')
+      window.location.href = '/'
+    } catch (e) {
+      console.error(e)
+      alert('등록에 실패했어요. 다시 시도해주세요.')
+      btn.disabled = false; btn.textContent = '판매글 등록'
+    }
+  }
+
+  init()
+</script>
+</body>
+</html>
