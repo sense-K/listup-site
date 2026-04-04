@@ -89,7 +89,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 2
       return
     }
 
-    el.innerHTML = listings.map(renderListingCard).join('')
+    el.innerHTML = `<div class="listings-grid">${listings.map(renderListingCard).join('')}</div>`
   } catch (e) {
     console.error(e)
     el.innerHTML = '<div class="empty"><p>매물을 불러오지 못했어요</p></div>'
