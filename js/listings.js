@@ -98,7 +98,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       el.innerHTML = `
         <div class="empty">
           <div class="empty-icon">📭</div>
-          <p>아직 등록된 매물이 없어요</p>
+          <p>아직 등록된 계정이 없어요</p>
         </div>
       `
       return
@@ -107,6 +107,6 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
     el.innerHTML = `<div class="listings-grid">${listings.map(renderListingCard).join('')}</div>`
   } catch (e) {
     console.error(e)
-    el.innerHTML = '<div class="empty"><p>매물을 불러오지 못했어요</p></div>'
+    el.innerHTML = '<div class="empty"><p>계정을 불러오지 못했어요</p></div>'
   }
 }

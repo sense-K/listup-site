@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 | 리스트업</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background: #f4f4f4; }
+
+    .admin-layout { display: flex; min-height: 100vh; }
+
+    /* 사이드바 */
+    .admin-sidebar {
+      width: 220px;
+      background: #111;
+      flex-shrink: 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      padding: 24px 0;
+      z-index: 100;
+    }
+    .admin-logo {
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+      padding: 0 24px 24px;
+      border-bottom: 1px solid #222;
+      display: block;
+    }
+    .admin-logo small { display: block; font-size: 11px; font-weight: 400; color: #666; margin-top: 2px; }
+    .admin-nav { padding: 16px 0; }
+    .admin-nav-item {
+      display: block;
+      padding: 10px 24px;
+      font-size: 14px;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+    .admin-nav-item:hover { color: #fff; background: #1a1a1a; }
+    .admin-nav-item.active { color: #fff; background: #222; font-weight: 700; border-left: 3px solid #fff; }
+    .admin-nav-label { font-size: 11px; color: #444; padding: 16px 24px 6px; letter-spacing: 0.8px; text-transform: uppercase; }
+
+    /* 메인 콘텐츠 */
+    .admin-main {
+      margin-left: 220px;
+      flex: 1;
+      padding: 36px 40px;
+      min-height: 100vh;
+    }
+
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 24px;
+      letter-spacing: -0.5px;
+    }
+
+    /* 카드 */
+    .admin-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    }
+
+    .admin-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* 테이블 */
+    .admin-table { width: 100%; border-collapse: collapse; }
+    .admin-table th {
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      color: #888;
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .admin-table td {
+      padding: 12px 12px;
+      font-size: 14px;
+      border-bottom: 1px solid #f8f8f8;
+      vertical-align: middle;
+    }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table tr:hover td { background: #fafafa; }
+
+    /* 버튼 */
+    .btn-sm {
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: opacity 0.2s;
+    }
+    .btn-sm:hover { opacity: 0.8; }
+    .btn-black { background: #111; color: #fff; }
+    .btn-red { background: #ef4444; color: #fff; }
+    .btn-gray { background: #f3f4f6; color: #374151; }
+
+    /* 인라인 폼 */
+    .inline-form {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .inline-form input, .inline-form select {
+      padding: 8px 12px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #111;
+    }
+    .inline-form input:focus, .inline-form select:focus {
+      outline: none;
+      border-color: #111;
+    }
+
+    /* 배지 */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-gray { background: #f3f4f6; color: #6b7280; }
+    .badge-s { background: #fef3c7; color: #92400e; }
+    .badge-a { background: #ede9fe; color: #5b21b6; }
+
+    /* 게임 선택 탭 */
+    .game-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .game-selector-btn {
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: 1.5px solid #e5e7eb;
+      background: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .game-selector-btn.active { background: #111; border-color: #111; color: #fff; font-weight: 700; }
+    .game-selector-btn:hover:not(.active) { border-color: #111; }
+
+    .empty-row td { text-align: center; color: #aaa; padding: 32px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="admin-layout">
+  <!-- 사이드바 -->
+  <aside class="admin-sidebar">
+    <a href="/" class="admin-logo">
+      리스트업
+      <small>관리자 패널</small>
+    </a>
+    <nav class="admin-nav">
+      <div class="admin-nav-label">콘텐츠</div>
+      <button class="admin-nav-item active" onclick="showSection('games')">🎮 게임 관리</button>
+      <button class="admin-nav-item" onclick="showSection('servers')">🗺 서버 관리</button>
+      <button class="admin-nav-item" onclick="showSection('characters')">⭐ 캐릭터 관리</button>
+      <div class="admin-nav-label">거래</div>
+      <button class="admin-nav-item" onclick="showSection('listings')">📋 판매글 관리</button>
+    </nav>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="admin-main">
+
+    <!-- 게임 관리 -->
+    <div class="admin-section active" id="section-games">
+      <div class="section-title">게임 관리</div>
+      <div class="admin-card">
+        <div class="admin-card-title">새 게임 추가</div>
+        <div class="inline-form">
+          <input type="text" id="new-game-nameko" placeholder="게임 이름 (한국어)" style="width:180px;">
+          <input type="text" id="new-game-slug" placeholder="slug (영문, 예: genshin)" style="width:180px;">
+          <input type="text" id="new-game-emoji" placeholder="이모지" style="width:80px;">
+          <button class="btn-sm btn-black" onclick="addGame()">+ 추가</button>
+        </div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-card-title">게임 목록</div>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>이모지</th>
+              <th>게임명</th>
+              <th>Slug</th>
+              <th>상태</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="games-table-body">
+            <tr class="empty-row"><td colspan="5">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 서버 관리 -->
+    <div class="admin-section" id="section-servers">
+      <div class="section-title">서버 관리</div>
+      <div class="admin-card">
+        <div class="admin-card-title">새 서버 추가</div>
+        <div class="inline-form">
+          <select id="server-game-select" style="width:180px;">
+            <option value="">게임 선택</option>
+          </select>
+          <input type="text" id="new-server-name" placeholder="서버 이름 (예: 아시아)" style="width:160px;">
+          <button class="btn-sm btn-black" onclick="addServer()">+ 추가</button>
+        </div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-card-title">서버 목록</div>
+        <div class="game-selector" id="server-game-filter"></div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>게임</th><th>서버명</th><th>관리</th></tr>
+          </thead>
+          <tbody id="servers-table-body">
+            <tr class="empty-row"><td colspan="3">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 캐릭터 관리 -->
+    <div class="admin-section" id="section-characters">
+      <div class="section-title">캐릭터 관리</div>
+      <div class="admin-card">
+        <div class="admin-card-title">새 캐릭터 추가</div>
+        <div class="inline-form" style="margin-bottom:8px;">
+          <select id="char-game-select" style="width:160px;" onchange="loadCharsForGame()">
+            <option value="">게임 선택</option>
+          </select>
+          <input type="text" id="new-char-name" placeholder="캐릭터 이름" style="width:150px;">
+          <select id="new-char-tier" style="width:90px;">
+            <option value="S">S 티어</option>
+            <option value="A">A 티어</option>
+            <option value="B">B 티어</option>
+          </select>
+          <input type="text" id="new-char-image" placeholder="이미지 URL (선택)" style="width:260px;">
+          <button class="btn-sm btn-black" onclick="addCharacter()">+ 추가</button>
+        </div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-card-title">캐릭터 목록</div>
+        <div class="game-selector" id="char-game-filter"></div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>이미지</th><th>이름</th><th>티어</th><th>게임</th><th>관리</th></tr>
+          </thead>
+          <tbody id="chars-table-body">
+            <tr class="empty-row"><td colspan="5">게임을 선택하세요</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 판매글 관리 -->
+    <div class="admin-section" id="section-listings">
+      <div class="section-title">판매글 관리</div>
+      <div class="admin-card">
+        <table class="admin-table">
+          <thead>
+            <tr><th>게임</th><th>서버</th><th>가격</th><th>판매자</th><th>등록일</th><th>상태</th><th>관리</th></tr>
+          </thead>
+          <tbody id="listings-table-body">
+            <tr class="empty-row"><td colspan="7">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script>
+  let allGames = []
+  let selectedServerGameId = null
+  let selectedCharGameId = null
+
+  // ===== 섹션 전환 =====
+  function showSection(name) {
+    document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'))
+    document.querySelectorAll('.admin-nav-item').forEach(b => b.classList.remove('active'))
+    document.getElementById('section-' + name).classList.add('active')
+    event.currentTarget.classList.add('active')
+    if (name === 'games') loadGames()
+    if (name === 'servers') { loadGamesForSelects(); loadServers() }
+    if (name === 'characters') { loadGamesForSelects(); }
+    if (name === 'listings') loadAdminListings()
+  }
+
+  // ===== 게임 로드 =====
+  async function loadGames() {
+    const { data: games } = await db.from('Game').select('*').order('nameKo')
+    allGames = games ?? []
+    const tbody = document.getElementById('games-table-body')
+    if (!games || games.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">등록된 게임이 없어요</td></tr>'
+      return
+    }
+    tbody.innerHTML = games.map(g => `
+      <tr>
+        <td style="font-size:22px;">${g.emoji ?? ''}</td>
+        <td><strong>${g.nameKo}</strong></td>
+        <td><code style="font-size:12px;background:#f3f4f6;padding:2px 6px;border-radius:4px;">${g.slug}</code></td>
+        <td>
+          <span class="badge ${g.isActive ? 'badge-green' : 'badge-gray'}">${g.isActive ? '활성' : '비활성'}</span>
+        </td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn-sm btn-gray" onclick="toggleGame('${g.id}', ${g.isActive})">${g.isActive ? '비활성화' : '활성화'}</button>
+          <button class="btn-sm btn-red" onclick="deleteGame('${g.id}', '${g.nameKo}')">삭제</button>
+        </td>
+      </tr>
+    `).join('')
+  }
+
+  async function addGame() {
+    const nameKo = document.getElementById('new-game-nameko').value.trim()
+    const slug = document.getElementById('new-game-slug').value.trim()
+    const emoji = document.getElementById('new-game-emoji').value.trim()
+    if (!nameKo || !slug) { alert('이름과 slug를 입력하세요'); return }
+    const { error } = await db.from('Game').insert({ nameKo, slug, emoji, isActive: true, createdAt: new Date().toISOString() })
+    if (error) { alert('추가 실패: ' + error.message); return }
+    document.getElementById('new-game-nameko').value = ''
+    document.getElementById('new-game-slug').value = ''
+    document.getElementById('new-game-emoji').value = ''
+    loadGames()
+  }
+
+  async function toggleGame(id, isActive) {
+    await db.from('Game').update({ isActive: !isActive }).eq('id', id)
+    loadGames()
+  }
+
+  async function deleteGame(id, name) {
+    if (!confirm(`"${name}" 게임을 삭제할까요?\n관련 서버와 캐릭터도 모두 삭제됩니다.`)) return
+    await db.from('Game').delete().eq('id', id)
+    loadGames()
+  }
+
+  // ===== 게임 select 채우기 =====
+  async function loadGamesForSelects() {
+    const { data: games } = await db.from('Game').select('id, nameKo, emoji').order('nameKo')
+    allGames = games ?? []
+
+    // 서버 추가용 select
+    const serverSel = document.getElementById('server-game-select')
+    serverSel.innerHTML = '<option value="">게임 선택</option>' +
+      (games ?? []).map(g => `<option value="${g.id}">${g.emoji} ${g.nameKo}</option>`).join('')
+
+    // 캐릭터 추가용 select
+    const charSel = document.getElementById('char-game-select')
+    charSel.innerHTML = '<option value="">게임 선택</option>' +
+      (games ?? []).map(g => `<option value="${g.id}">${g.emoji} ${g.nameKo}</option>`).join('')
+
+    // 필터 버튼
+    const serverFilter = document.getElementById('server-game-filter')
+    serverFilter.innerHTML = `<button class="game-selector-btn active" onclick="filterServers(null, this)">전체</button>` +
+      (games ?? []).map(g => `<button class="game-selector-btn" onclick="filterServers('${g.id}', this)">${g.emoji} ${g.nameKo}</button>`).join('')
+
+    const charFilter = document.getElementById('char-game-filter')
+    charFilter.innerHTML = (games ?? []).map((g, i) =>
+      `<button class="game-selector-btn ${i === 0 ? 'active' : ''}" onclick="filterChars('${g.id}', this)">${g.emoji} ${g.nameKo}</button>`
+    ).join('')
+
+    if (games && games.length > 0) {
+      selectedCharGameId = games[0].id
+      loadCharsForGame()
+    }
+  }
+
+  // ===== 서버 =====
+  async function loadServers(gameId = null) {
+    let query = db.from('Server').select('id, nameKo, gameId, game:Game(nameKo, emoji)').order('nameKo')
+    if (gameId) query = query.eq('gameId', gameId)
+    const { data: servers } = await query
+    const tbody = document.getElementById('servers-table-body')
+    if (!servers || servers.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="3">등록된 서버가 없어요</td></tr>'
+      return
+    }
+    tbody.innerHTML = servers.map(s => `
+      <tr>
+        <td>${s.game?.emoji ?? ''} ${s.game?.nameKo ?? ''}</td>
+        <td><strong>${s.nameKo}</strong></td>
+        <td><button class="btn-sm btn-red" onclick="deleteServer('${s.id}', '${s.nameKo}')">삭제</button></td>
+      </tr>
+    `).join('')
+  }
+
+  async function addServer() {
+    const gameId = document.getElementById('server-game-select').value
+    const nameKo = document.getElementById('new-server-name').value.trim()
+    if (!gameId) { alert('게임을 선택하세요'); return }
+    if (!nameKo) { alert('서버 이름을 입력하세요'); return }
+    const { error } = await db.from('Server').insert({ gameId, nameKo })
+    if (error) { alert('추가 실패: ' + error.message); return }
+    document.getElementById('new-server-name').value = ''
+    loadServers(selectedServerGameId)
+  }
+
+  async function deleteServer(id, name) {
+    if (!confirm(`"${name}" 서버를 삭제할까요?`)) return
+    await db.from('Server').delete().eq('id', id)
+    loadServers(selectedServerGameId)
+  }
+
+  function filterServers(gameId, btn) {
+    selectedServerGameId = gameId
+    document.querySelectorAll('#server-game-filter .game-selector-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    loadServers(gameId)
+  }
+
+  // ===== 캐릭터 =====
+  async function loadCharsForGame() {
+    const selVal = document.getElementById('char-game-select').value
+    if (selVal) selectedCharGameId = selVal
+    if (!selectedCharGameId) return
+
+    const { data: chars } = await db
+      .from('Character')
+      .select('id, nameKo, tier, imageUrl, isActive, game:Game(nameKo, emoji)')
+      .eq('gameId', selectedCharGameId)
+      .order('tier')
+      .order('nameKo')
+
+    const tbody = document.getElementById('chars-table-body')
+    if (!chars || chars.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">등록된 캐릭터가 없어요</td></tr>'
+      return
+    }
+    tbody.innerHTML = chars.map(c => `
+      <tr>
+        <td>${c.imageUrl
+          ? `<img src="${c.imageUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" alt="${c.nameKo}">`
+          : '<div style="width:32px;height:32px;border-radius:50%;background:#e5e7eb;"></div>'
+        }</td>
+        <td><strong>${c.nameKo}</strong></td>
+        <td><span class="badge ${c.tier === 'S' ? 'badge-s' : 'badge-a'}">${c.tier}</span></td>
+        <td>${c.game?.emoji ?? ''} ${c.game?.nameKo ?? ''}</td>
+        <td><button class="btn-sm btn-red" onclick="deleteChar('${c.id}', '${c.nameKo}')">삭제</button></td>
+      </tr>
+    `).join('')
+  }
+
+  async function addCharacter() {
+    const gameId = document.getElementById('char-game-select').value
+    const nameKo = document.getElementById('new-char-name').value.trim()
+    const tier = document.getElementById('new-char-tier').value
+    const imageUrl = document.getElementById('new-char-image').value.trim()
+    if (!gameId) { alert('게임을 선택하세요'); return }
+    if (!nameKo) { alert('캐릭터 이름을 입력하세요'); return }
+    const { error } = await db.from('Character').insert({
+      gameId, nameKo, tier,
+      imageUrl: imageUrl || null,
+      isActive: true,
+      createdAt: new Date().toISOString()
+    })
+    if (error) { alert('추가 실패: ' + error.message); return }
+    document.getElementById('new-char-name').value = ''
+    document.getElementById('new-char-image').value = ''
+    loadCharsForGame()
+  }
+
+  async function deleteChar(id, name) {
+    if (!confirm(`"${name}" 캐릭터를 삭제할까요?`)) return
+    await db.from('Character').delete().eq('id', id)
+    loadCharsForGame()
+  }
+
+  function filterChars(gameId, btn) {
+    selectedCharGameId = gameId
+    document.getElementById('char-game-select').value = gameId
+    document.querySelectorAll('#char-game-filter .game-selector-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    loadCharsForGame()
+  }
+
+  // ===== 판매글 관리 =====
+  async function loadAdminListings() {
+    const { data: listings } = await db
+      .from('Listing')
+      .select('id, price, status, createdAt, game:Game(nameKo, emoji), server:Server(nameKo), user:User(nickname)')
+      .order('createdAt', { ascending: false })
+      .limit(50)
+
+    const tbody = document.getElementById('listings-table-body')
+    if (!listings || listings.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">판매글이 없어요</td></tr>'
+      return
+    }
+    tbody.innerHTML = listings.map(l => `
+      <tr>
+        <td>${l.game?.emoji ?? ''} ${l.game?.nameKo ?? ''}</td>
+        <td>${l.server?.nameKo ?? ''}</td>
+        <td><strong>${formatPrice(l.price)}</strong></td>
+        <td>${l.user?.nickname ?? '익명'}</td>
+        <td style="color:#888;font-size:12px;">${new Date(l.createdAt).toLocaleDateString('ko-KR')}</td>
+        <td><span class="badge ${l.status === 'active' ? 'badge-green' : 'badge-gray'}">${l.status === 'active' ? '활성' : '비활성'}</span></td>
+        <td><button class="btn-sm btn-red" onclick="deleteListing('${l.id}')">삭제</button></td>
+      </tr>
+    `).join('')
+  }
+
+  async function deleteListing(id) {
+    if (!confirm('이 판매글을 삭제할까요?')) return
+    await db.from('Listing').delete().eq('id', id)
+    loadAdminListings()
+  }
+
+  // ===== 초기화 =====
+  loadGames()
+</script>
+</body>
+</html>
