@@ -84,8 +84,7 @@ async function requireAuth() {
       id: session.user.id,
       nickname: session.user.email?.split('@')[0] ?? '사용자',
       isPhoneVerified: false,
-      createdAt: now,
-      updatedAt: now
+      createdAt: now
     })
   }
   return session.user

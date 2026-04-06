@@ -200,7 +200,7 @@
       if (!user) {
         const now = new Date().toISOString()
         const nickname = authUser.email?.split('@')[0] ?? '사용자'
-        await db.from('User').insert({ id: authUser.id, nickname, isPhoneVerified: false, createdAt: now, updatedAt: now })
+        await db.from('User').insert({ id: authUser.id, nickname, isPhoneVerified: false, createdAt: now })
         user = { id: authUser.id, nickname }
       }
 
@@ -283,7 +283,7 @@
   async function saveNickname(userId) {
     const val = document.getElementById('nickname-input').value.trim()
     if (!val) return
-    const { error } = await db.from('User').update({ nickname: val, updatedAt: new Date().toISOString() }).eq('id', userId)
+    const { error } = await db.from('User').update({ nickname: val }).eq('id', userId)
     if (!error) {
       document.getElementById('display-nickname').textContent = val
       toggleNicknameEdit()
