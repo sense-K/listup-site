@@ -36,7 +36,7 @@ function renderListingCard(listing) {
   const hotBadge = listing.viewCount > 50 ? `<div class="badge-hot">🔥 HOT</div>` : ''
 
   return `
-    <article class="card">
+    <a href="/listing/?id=${listing.id}" class="card">
       <div class="card-art ${artClass}" ${gameArtUrl ? `style="background-image:url('${gameArtUrl}');background-size:cover;background-position:center top;"` : ''}>
         ${gameArtUrl ? `<div style="position:absolute;inset:0;border-radius:16px 16px 0 0;background:linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%);"></div>` : ''}
         ${hotBadge}
@@ -56,7 +56,7 @@ function renderListingCard(listing) {
           <span>${timeAgo(listing.createdAt)}</span>
         </div>
       </div>
-    </article>
+    </a>
   `
 }
 

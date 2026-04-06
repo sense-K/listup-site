@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>판매글 상세 | 리스트업</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .detail-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    /* 상단 배너 */
+    .detail-banner {
+      position: relative;
+      height: 200px;
+      background: #222;
+      border-radius: 0 0 20px 20px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .detail-banner img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    .detail-banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 100%);
+    }
+    .detail-banner-info {
+      position: absolute;
+      bottom: 16px; left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .detail-game-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    .detail-game-name {
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .detail-server-badge {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* 가격 영역 */
+    .detail-price-block {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .detail-price {
+      font-size: 32px;
+      font-weight: 900;
+      color: #111;
+    }
+    .detail-discount {
+      font-size: 14px;
+      color: #ef4444;
+      font-weight: 600;
+    }
+
+    /* 섹션 */
+    .detail-section {
+      margin-bottom: 24px;
+    }
+    .detail-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    /* 캐릭터 그리드 */
+    .detail-chars-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+    .detail-char-card {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      aspect-ratio: 1/1;
+      background: #f3f4f6;
+      border: 1.5px solid var(--border);
+    }
+    .detail-char-card img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+    .detail-char-card .char-name-label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 12px 3px 4px;
+      text-align: center;
+    }
+    .detail-char-no-img {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; color: #ccc;
+    }
+
+    /* 설명 */
+    .detail-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #444;
+      background: #f8f8f8;
+      border-radius: 12px;
+      padding: 16px;
+      white-space: pre-wrap;
+    }
+
+    /* 판매자 정보 */
+    .detail-seller-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-seller-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .detail-seller-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .detail-seller-name { font-size: 14px; font-weight: 700; }
+    .detail-seller-meta { font-size: 12px; color: #888; }
+
+    /* 연락하기 버튼 */
+    .contact-box {
+      background: #111;
+      border-radius: 14px;
+      padding: 20px;
+      margin-top: 24px;
+      text-align: center;
+    }
+    .contact-box .contact-label {
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .contact-info-text {
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      word-break: break-all;
+    }
+    .contact-copy-btn {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .contact-copy-btn:hover { background: rgba(255,255,255,0.25); }
+
+    /* 메타 정보 */
+    .detail-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 12px;
+    }
+
+    .loading-full {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .detail-chars-grid { grid-template-columns: repeat(5, 1fr); }
+      .detail-price { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div id="detail-content">
+  <div class="loading-full">불러오는 중...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script>
+  document.getElementById('navbar').innerHTML = renderNavbar()
+
+  const listingId = new URLSearchParams(location.search).get('id')
+
+  if (!listingId) {
+    document.getElementById('detail-content').innerHTML = '<div class="loading-full">잘못된 접근이에요.</div>'
+  } else {
+    loadDetail()
+  }
+
+  async function loadDetail() {
+    const { data: listing, error } = await db
+      .from('Listing')
+      .select(`
+        id, price, discountAmount, description, contactInfo, createdAt, viewCount, status,
+        game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
+        server:Server(nameKo),
+        user:User(nickname),
+        characters:ListingCharacter(
+          character:Character(nameKo, tier, imageUrl)
+        )
+      `)
+      .eq('id', listingId)
+      .single()
+
+    if (error || !listing) {
+      document.getElementById('detail-content').innerHTML = '<div class="loading-full">판매글을 찾을 수 없어요.</div>'
+      return
+    }
+
+    // 조회수 증가 (비동기, 결과 무시)
+    db.from('Listing').update({ viewCount: (listing.viewCount || 0) + 1 }).eq('id', listingId)
+
+    render(listing)
+  }
+
+  function render(l) {
+    const gameArtUrl = l.game?.artImageUrl ?? ''
+    const gameImageUrl = l.game?.imageUrl ?? ''
+    const gameName = l.game?.nameKo ?? ''
+    const gameEmoji = l.game?.emoji ?? ''
+    const serverName = l.server?.nameKo ?? ''
+    const nickname = l.user?.nickname ?? '익명'
+    const chars = (l.characters ?? []).map(lc => lc.character).filter(Boolean)
+
+    document.title = `${gameName} 계정 판매 | 리스트업`
+
+    const charsHtml = chars.length > 0
+      ? chars.map(c => {
+          const gc = gradeClass(c.tier)
+          return `
+            <div class="detail-char-card${gc ? ' grade-border-' + gc : ''}">
+              ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy">` : '<div class="detail-char-no-img">?</div>'}
+              ${gc ? `<span class="grade-tag grade-${gc}" style="font-size:8px;padding:1px 4px;">${gradeShort(c.tier)}</span>` : ''}
+              <div class="char-name-label">${c.nameKo}</div>
+            </div>`
+        }).join('')
+      : '<span style="color:#aaa;font-size:13px;">선택된 캐릭터 없음</span>'
+
+    const discountHtml = l.discountAmount
+      ? `<span class="detail-discount">↓ ${formatPrice(l.discountAmount)} 할인</span>` : ''
+
+    document.getElementById('detail-content').innerHTML = `
+      <div class="detail-banner">
+        ${gameArtUrl ? `<img src="${gameArtUrl}" alt="${gameName}">` : ''}
+        <div class="detail-banner-overlay"></div>
+        <div class="detail-banner-info">
+          ${gameImageUrl
+            ? `<img class="detail-game-icon" src="${gameImageUrl}" alt="${gameName}">`
+            : `<span style="font-size:24px;">${gameEmoji}</span>`}
+          <span class="detail-game-name">${gameName}</span>
+          ${serverName ? `<span class="detail-server-badge">${serverName}</span>` : ''}
+        </div>
+      </div>
+
+      <div class="detail-wrap">
+        <div class="detail-price-block">
+          <span class="detail-price">${formatPrice(l.price)}</span>
+          ${discountHtml}
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-title">보유 캐릭터 (${chars.length}개)</div>
+          <div class="detail-chars-grid">${charsHtml}</div>
+        </div>
+
+        ${l.description ? `
+        <div class="detail-section">
+          <div class="detail-section-title">계정 설명</div>
+          <div class="detail-desc">${l.description}</div>
+        </div>` : ''}
+
+        <div class="detail-seller-row">
+          <div class="detail-seller-info">
+            <div class="detail-seller-avatar">👤</div>
+            <div>
+              <div class="detail-seller-name">${nickname}</div>
+              <div class="detail-seller-meta">${timeAgo(l.createdAt)} 등록</div>
+            </div>
+          </div>
+          <div class="detail-meta">
+            <span>👁 ${l.viewCount || 0}</span>
+          </div>
+        </div>
+
+        <div class="contact-box">
+          <div class="contact-label">판매자 연락처</div>
+          <div class="contact-info-text" id="contact-text">${l.contactInfo ?? '연락처 없음'}</div>
+          <button class="contact-copy-btn" onclick="copyContact()">연락처 복사</button>
+        </div>
+      </div>
+    `
+  }
+
+  function copyContact() {
+    const text = document.getElementById('contact-text')?.textContent ?? ''
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.contact-copy-btn')
+      btn.textContent = '복사됐어요 ✓'
+      setTimeout(() => { btn.textContent = '연락처 복사' }, 2000)
+    })
+  }
+</script>
+</body>
+</html>

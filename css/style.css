@@ -398,12 +398,14 @@ a { text-decoration: none; color: inherit; }
 
 /* ===== 카드 ===== */
 .card {
+  display: block;
   background: var(--card);
   border-radius: var(--radius-card);
   overflow: hidden;
   box-shadow: var(--shadow-card);
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  color: inherit;
 }
 .card:hover {
   transform: translateY(-4px);
