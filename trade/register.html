@@ -11,70 +11,173 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 20px 0;
-      margin-bottom: 8px;
+      padding: 24px 0 16px;
     }
     .step {
-      width: 28px; height: 28px;
+      width: 30px; height: 30px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; font-weight: 700;
       background: var(--border); color: var(--text-muted);
       transition: all 0.3s;
     }
-    .step.active { background: var(--primary); color: #fff; }
+    .step.active { background: #111; color: #fff; }
     .step.done { background: #10b981; color: #fff; }
-    .step-line { flex: 1; max-width: 40px; height: 2px; background: var(--border); }
+    .step-line { flex: 1; max-width: 48px; height: 2px; background: var(--border); }
+
     .step-panel { display: none; }
     .step-panel.active { display: block; }
+
+    /* 캐릭터 티어 필터 탭 */
+    .tier-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .tier-tab {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--text-muted);
+    }
+    .tier-tab.active { background: #111; color: #fff; border-color: #111; }
+    .tier-tab.s { }
+    .tier-tab.s.active { background: #f59e0b; border-color: #f59e0b; }
+    .tier-tab.a.active { background: #6366f1; border-color: #6366f1; }
+
+    /* 캐릭터 그리드 */
     .char-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      max-height: 320px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      max-height: 380px;
       overflow-y: auto;
+      padding-right: 2px;
     }
+    .char-grid::-webkit-scrollbar { width: 4px; }
+    .char-grid::-webkit-scrollbar-track { background: transparent; }
+    .char-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
     .char-item {
+      position: relative;
       border: 2px solid var(--border);
-      border-radius: 10px;
-      padding: 8px;
-      text-align: center;
+      border-radius: 12px;
+      overflow: hidden;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
+      aspect-ratio: 3/4;
+      background: #f3f4f6;
     }
-    .char-item.selected { border-color: var(--primary); background: rgba(99,102,241,0.06); }
-    .char-item img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-bottom: 4px; }
-    .char-item .char-name { font-size: 12px; font-weight: 600; }
-    .char-item .char-tier { font-size: 11px; color: var(--text-muted); }
-    .selected-chars {
-      display: flex; flex-wrap: wrap; gap: 6px;
-      min-height: 36px;
-      padding: 8px;
+    .char-item:hover { border-color: #aaa; transform: translateY(-1px); }
+    .char-item.selected {
+      border-color: #111;
+      box-shadow: 0 0 0 1px #111;
+    }
+    .char-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .char-item .char-no-img {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #ccc;
+    }
+    .char-item .char-tier-badge {
+      position: absolute;
+      top: 6px; left: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1.4;
+    }
+    .char-item .char-tier-badge.s { background: #f59e0b; color: #fff; }
+    .char-item .char-tier-badge.a { background: #6366f1; color: #fff; }
+    .char-item .char-tier-badge.b { background: #6b7280; color: #fff; }
+    .char-item .char-name-label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 16px 6px 6px;
+      text-align: center;
+    }
+    .char-item .check-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      align-items: center;
+      justify-content: center;
+    }
+    .char-item.selected .check-overlay {
+      display: flex;
+    }
+    .check-overlay svg {
+      width: 28px; height: 28px;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+    }
+
+    /* 선택된 캐릭터 표시 */
+    .selected-chars-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 40px;
+      padding: 10px 12px;
       border: 1.5px dashed var(--border);
       border-radius: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      align-items: center;
     }
     .selected-char-tag {
-      background: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #111;
       color: #fff;
       border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 13px;
-      display: flex; align-items: center; gap: 4px;
+      padding: 4px 10px 4px 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .selected-char-tag img {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
     }
     .selected-char-tag button {
-      background: none; border: none; color: #fff; cursor: pointer; font-size: 14px; line-height: 1;
+      background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer;
+      font-size: 14px; line-height: 1; padding: 0; margin-left: 2px;
     }
+    .selected-char-tag button:hover { color: #fff; }
+
     .price-input-wrap { position: relative; }
     .price-input-wrap input { padding-right: 40px; }
     .price-unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+
     .summary-box {
-      background: #f3f4f6;
+      background: #f8f8f8;
+      border: 1.5px solid var(--border);
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 20px;
     }
     .summary-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
+    .summary-row:last-child { margin-bottom: 0; }
     .summary-row strong { font-weight: 600; }
   </style>
 </head>
@@ -82,7 +185,7 @@
 
 <div id="navbar"></div>
 
-<div class="container" style="max-width:480px;">
+<div class="container" style="max-width:520px;">
   <div class="step-indicator">
     <div class="step active" id="step-dot-1">1</div>
     <div class="step-line"></div>
@@ -112,12 +215,22 @@
   <!-- STEP 2: 캐릭터 선택 -->
   <div class="step-panel" id="panel-2">
     <div class="section-title" style="margin-bottom:12px;">보유 캐릭터를 선택하세요</div>
-    <div class="selected-chars" id="selected-chars">
-      <span style="color:var(--text-muted);font-size:13px;">캐릭터를 선택하면 여기 표시돼요</span>
+
+    <div class="selected-chars-bar" id="selected-chars">
+      <span style="color:var(--text-muted);font-size:13px;" id="selected-placeholder">캐릭터를 선택하면 여기 표시돼요</span>
     </div>
+
+    <div class="tier-tabs" id="tier-tabs">
+      <button class="tier-tab active" onclick="filterTier('all', this)">전체</button>
+      <button class="tier-tab s" onclick="filterTier('S', this)">S티어</button>
+      <button class="tier-tab a" onclick="filterTier('A', this)">A티어</button>
+      <button class="tier-tab" onclick="filterTier('B', this)">B티어</button>
+    </div>
+
     <div class="char-grid" id="char-grid">
-      <div class="loading">불러오는 중...</div>
+      <div class="loading" style="grid-column:1/-1;">불러오는 중...</div>
     </div>
+
     <div style="display:flex;gap:8px;margin-top:16px;">
       <button class="btn btn-outline" onclick="goStep(1)" style="flex:1;">← 이전</button>
       <button class="btn btn-primary" onclick="goStep(3)" style="flex:2;">다음 →</button>
@@ -167,9 +280,10 @@
 
   let selectedGameId = null
   let selectedServerId = null
-  let selectedChars = [] // { id, nameKo, tier, imageUrl }
+  let selectedChars = []
+  let allChars = []
+  let currentTierFilter = 'all'
 
-  // 게임 목록 로드
   async function init() {
     const { data: games } = await db.from('Game').select('id, nameKo, slug, emoji').eq('isActive', true)
     const sel = document.getElementById('game-select')
@@ -190,6 +304,7 @@
     serverSel.innerHTML = '<option value="">서버 선택</option>'
     serverSel.disabled = true
     selectedChars = []
+    allChars = []
     if (!selectedGameId) return
     const { data: servers } = await db.from('Server').select('id, nameKo').eq('gameId', selectedGameId)
     servers?.forEach(s => {
@@ -200,7 +315,6 @@
     serverSel.addEventListener('change', () => { selectedServerId = serverSel.value })
   }
 
-  // 캐릭터 로드
   async function loadChars() {
     if (!selectedGameId) return
     const { data: chars } = await db
@@ -209,43 +323,83 @@
       .eq('gameId', selectedGameId)
       .eq('isActive', true)
       .order('tier')
+    allChars = chars ?? []
+    currentTierFilter = 'all'
+    document.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('active'))
+    document.querySelector('.tier-tab').classList.add('active')
+    renderCharGrid()
+  }
+
+  function filterTier(tier, btn) {
+    currentTierFilter = tier
+    document.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('active'))
+    btn.classList.add('active')
+    renderCharGrid()
+  }
+
+  function renderCharGrid() {
+    const filtered = currentTierFilter === 'all'
+      ? allChars
+      : allChars.filter(c => c.tier === currentTierFilter)
+
     const grid = document.getElementById('char-grid')
-    grid.innerHTML = chars?.map(c => `
-      <div class="char-item" id="char-${c.id}" onclick="toggleChar(${JSON.stringify(c).replace(/"/g, '&quot;')})">
-        ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : '<div style="width:48px;height:48px;border-radius:50%;background:#e5e7eb;margin:0 auto 4px;"></div>'}
-        <div class="char-name">${c.nameKo}</div>
-        <div class="char-tier">${c.tier}티어</div>
-      </div>
-    `).join('') ?? '<div class="empty">캐릭터 없음</div>'
+    if (!filtered.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text-muted);">캐릭터가 없어요</div>'
+      return
+    }
+
+    grid.innerHTML = filtered.map(c => {
+      const tierClass = (c.tier || '').toLowerCase()
+      const isSelected = selectedChars.some(x => x.id === c.id)
+      return `
+        <div class="char-item${isSelected ? ' selected' : ''}" id="char-${c.id}" onclick="toggleChar(${JSON.stringify(c).replace(/"/g, '&quot;')})">
+          ${c.imageUrl
+            ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy">`
+            : `<div class="char-no-img">?</div>`
+          }
+          <span class="char-tier-badge ${tierClass}">${c.tier}</span>
+          <div class="char-name-label">${c.nameKo}</div>
+          <div class="check-overlay">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+        </div>
+      `
+    }).join('')
   }
 
   function toggleChar(c) {
     const idx = selectedChars.findIndex(x => x.id === c.id)
     if (idx >= 0) {
       selectedChars.splice(idx, 1)
-      document.getElementById('char-' + c.id)?.classList.remove('selected')
     } else {
       selectedChars.push(c)
-      document.getElementById('char-' + c.id)?.classList.add('selected')
     }
+    // DOM 업데이트 (그리드 전체 재렌더 없이)
+    const el = document.getElementById('char-' + c.id)
+    if (el) el.classList.toggle('selected', selectedChars.some(x => x.id === c.id))
     renderSelectedChars()
   }
 
   function renderSelectedChars() {
     const el = document.getElementById('selected-chars')
+    const placeholder = document.getElementById('selected-placeholder')
+
     if (selectedChars.length === 0) {
-      el.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">캐릭터를 선택하면 여기 표시돼요</span>'
+      el.innerHTML = '<span style="color:var(--text-muted);font-size:13px;" id="selected-placeholder">캐릭터를 선택하면 여기 표시돼요</span>'
       return
     }
+
     el.innerHTML = selectedChars.map(c => `
       <span class="selected-char-tag">
+        ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}
         ${c.nameKo}
-        <button onclick="toggleChar(${JSON.stringify(c).replace(/"/g, '&quot;')})">×</button>
+        <button onclick="event.stopPropagation();toggleChar(${JSON.stringify(c).replace(/"/g, '&quot;')})">×</button>
       </span>
     `).join('')
   }
 
-  // 스텝 이동
   function goStep(n) {
     if (n === 2) {
       if (!selectedGameId) { alert('게임을 선택해주세요'); return }
@@ -274,11 +428,10 @@
     document.getElementById('summary-box').innerHTML = `
       <div class="summary-row"><span>게임</span><strong>${gameText}</strong></div>
       <div class="summary-row"><span>서버</span><strong>${serverText}</strong></div>
-      <div class="summary-row"><span>캐릭터</span><strong>${selectedChars.map(c => c.nameKo).join(', ') || '없음'}</strong></div>
+      <div class="summary-row"><span>캐릭터</span><strong>${selectedChars.length > 0 ? selectedChars.map(c => c.nameKo).join(', ') : '선택 안 함'}</strong></div>
     `
   }
 
-  // 등록
   async function submitListing() {
     const price = Number(document.getElementById('price-input').value)
     const contact = document.getElementById('contact-input').value.trim()
@@ -289,7 +442,6 @@
     btn.disabled = true; btn.textContent = '등록 중...'
 
     try {
-      // 임시 유저 처리 (추후 로그인으로 교체)
       let { data: user } = await db.from('User').select('id').limit(1).single()
       if (!user) {
         const { data: newUser } = await db
