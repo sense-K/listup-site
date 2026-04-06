@@ -208,9 +208,42 @@
       padding: 16px;
       margin-bottom: 20px;
     }
-    .summary-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
+    .summary-row { display: flex; justify-content: space-between; align-items: flex-start; font-size: 14px; margin-bottom: 10px; gap: 12px; }
     .summary-row:last-child { margin-bottom: 0; }
-    .summary-row strong { font-weight: 600; }
+    .summary-row > span:first-child { color: var(--text-muted); white-space: nowrap; padding-top: 2px; }
+    .summary-row strong { font-weight: 600; text-align: right; }
+    .summary-chars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+    .summary-char-card {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 8px 4px 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .summary-char-card img {
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+    .summary-char-card .summary-tier {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 4px;
+      line-height: 1.4;
+    }
+    .summary-tier.s { background: #f59e0b; color: #fff; }
+    .summary-tier.a { background: #6366f1; color: #fff; }
+    .summary-tier.b { background: #6b7280; color: #fff; }
   </style>
 </head>
 <body>
@@ -469,10 +502,24 @@
     const gameText = selectedCard?.textContent ?? ''
     const serverSel = document.getElementById('server-select')
     const serverText = serverSel.options[serverSel.selectedIndex]?.text ?? ''
+
+    const charsHtml = selectedChars.length > 0
+      ? `<div class="summary-chars">${selectedChars.map(c => {
+          const tierClass = (c.tier || '').toLowerCase()
+          return `
+            <div class="summary-char-card">
+              ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}
+              <span class="summary-tier ${tierClass}">${c.tier}</span>
+              <span>${c.nameKo}</span>
+            </div>
+          `
+        }).join('')}</div>`
+      : '<strong style="color:var(--text-muted);">선택 안 함</strong>'
+
     document.getElementById('summary-box').innerHTML = `
       <div class="summary-row"><span>게임</span><strong>${gameText}</strong></div>
       <div class="summary-row"><span>서버</span><strong>${serverText}</strong></div>
-      <div class="summary-row"><span>캐릭터</span><strong>${selectedChars.length > 0 ? selectedChars.map(c => c.nameKo).join(', ') : '선택 안 함'}</strong></div>
+      <div class="summary-row"><span>캐릭터</span>${charsHtml}</div>
     `
   }
 
