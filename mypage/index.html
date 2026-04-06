@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마이페이지 | 리스트업</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .mypage-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    /* 프로필 카드 */
+    .profile-card {
+      background: #111;
+      border-radius: 16px;
+      padding: 28px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 32px;
+      color: #fff;
+    }
+    .profile-avatar {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: #333;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .profile-info { flex: 1; }
+    .profile-nickname {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .profile-email {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+    }
+    .profile-edit-btn {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .profile-edit-btn:hover { background: rgba(255,255,255,0.22); }
+
+    /* 닉네임 수정 폼 */
+    .nickname-edit-form {
+      display: none;
+      background: #f8f8f8;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .nickname-edit-form.show { display: flex; gap: 8px; }
+    .nickname-edit-form input { flex: 1; }
+
+    /* 섹션 */
+    .mypage-section-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mypage-section-title span { color: #aaa; font-size: 13px; font-weight: 400; }
+
+    /* 내 판매글 목록 */
+    .my-listing-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .my-listing-item:hover { opacity: 0.7; }
+    .my-listing-item:last-child { border-bottom: none; }
+    .my-listing-thumb {
+      width: 56px; height: 56px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #e5e7eb;
+      flex-shrink: 0;
+    }
+    .my-listing-thumb-placeholder {
+      width: 56px; height: 56px;
+      border-radius: 10px;
+      background: #e5e7eb;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .my-listing-info { flex: 1; min-width: 0; }
+    .my-listing-game {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .my-listing-price {
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .my-listing-chars {
+      font-size: 12px;
+      color: #888;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .my-listing-meta {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .my-listing-status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+    .status-active { background: #dcfce7; color: #16a34a; }
+    .status-sold { background: #f3f4f6; color: #888; }
+    .my-listing-time { font-size: 11px; color: #aaa; }
+
+    .my-listing-delete {
+      background: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 11px;
+      padding: 4px 8px;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: all 0.15s;
+    }
+    .my-listing-delete:hover { border-color: #ef4444; color: #ef4444; }
+
+    .empty-my { text-align: center; padding: 40px 0; color: #aaa; font-size: 14px; }
+    .empty-my a { color: #111; font-weight: 700; text-decoration: underline; }
+
+    .logout-btn {
+      width: 100%;
+      margin-top: 32px;
+      padding: 14px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: #aaa;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .logout-btn:hover { border-color: #ef4444; color: #ef4444; }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="mypage-wrap" id="mypage-content">
+  <div class="loading">불러오는 중...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script>
+  document.getElementById('navbar').innerHTML = renderNavbar()
+
+  async function init() {
+    const authUser = await requireAuth()
+    if (!authUser) return
+
+    const { data: user } = await db.from('User').select('id, nickname').eq('id', authUser.id).single()
+    if (!user) return
+
+    const { data: listings } = await db
+      .from('Listing')
+      .select(`
+        id, price, status, createdAt,
+        game:Game(nameKo, emoji, imageUrl, artImageUrl),
+        characters:ListingCharacter(character:Character(nameKo))
+      `)
+      .eq('userId', authUser.id)
+      .order('createdAt', { ascending: false })
+
+    render(authUser, user, listings ?? [])
+  }
+
+  function render(authUser, user, listings) {
+    const listingsHtml = listings.length === 0
+      ? `<div class="empty-my">아직 등록한 판매글이 없어요<br><br><a href="/trade/register.html">첫 판매글 올리기 →</a></div>`
+      : listings.map(l => {
+          const gameName = l.game?.nameKo ?? ''
+          const gameEmoji = l.game?.emoji ?? ''
+          const gameImg = l.game?.artImageUrl ?? ''
+          const chars = (l.characters ?? []).map(lc => lc.character?.nameKo).filter(Boolean)
+          const statusClass = l.status === 'active' ? 'status-active' : 'status-sold'
+          const statusText = l.status === 'active' ? '판매중' : '판매완료'
+          return `
+            <div class="my-listing-item" onclick="location.href='/listing/?id=${l.id}'">
+              ${gameImg
+                ? `<img class="my-listing-thumb" src="${gameImg}" alt="${gameName}">`
+                : `<div class="my-listing-thumb-placeholder">${gameEmoji}</div>`
+              }
+              <div class="my-listing-info">
+                <div class="my-listing-game">${gameName}</div>
+                <div class="my-listing-price">${formatPrice(l.price)}</div>
+                <div class="my-listing-chars">${chars.length > 0 ? chars.join(', ') : '캐릭터 없음'}</div>
+              </div>
+              <div class="my-listing-meta">
+                <div class="my-listing-status ${statusClass}">${statusText}</div>
+                <div class="my-listing-time">${timeAgo(l.createdAt)}</div>
+                <button class="my-listing-delete" onclick="event.stopPropagation();deleteListing('${l.id}')">삭제</button>
+              </div>
+            </div>`
+        }).join('')
+
+    document.getElementById('mypage-content').innerHTML = `
+      <div class="profile-card">
+        <div class="profile-avatar">👤</div>
+        <div class="profile-info">
+          <div class="profile-nickname" id="display-nickname">${user.nickname}</div>
+          <div class="profile-email">${authUser.email}</div>
+        </div>
+        <button class="profile-edit-btn" onclick="toggleNicknameEdit()">닉네임 변경</button>
+      </div>
+
+      <div class="nickname-edit-form" id="nickname-form">
+        <input type="text" class="form-input" id="nickname-input" placeholder="새 닉네임" value="${user.nickname}">
+        <button class="btn btn-primary" onclick="saveNickname('${authUser.id}')">저장</button>
+        <button class="btn btn-outline" onclick="toggleNicknameEdit()">취소</button>
+      </div>
+
+      <div class="mypage-section-title">
+        내 판매글 <span>${listings.length}개</span>
+      </div>
+      <div id="my-listings">${listingsHtml}</div>
+
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    `
+  }
+
+  function toggleNicknameEdit() {
+    document.getElementById('nickname-form').classList.toggle('show')
+  }
+
+  async function saveNickname(userId) {
+    const val = document.getElementById('nickname-input').value.trim()
+    if (!val) return
+    const { error } = await db.from('User').update({ nickname: val, updatedAt: new Date().toISOString() }).eq('id', userId)
+    if (!error) {
+      document.getElementById('display-nickname').textContent = val
+      toggleNicknameEdit()
+    }
+  }
+
+  async function deleteListing(id) {
+    if (!confirm('이 판매글을 삭제할까요?')) return
+    await db.from('ListingCharacter').delete().eq('listingId', id)
+    await db.from('Listing').delete().eq('id', id)
+    init()
+  }
+
+  async function logout() {
+    await db.auth.signOut()
+    window.location.href = '/'
+  }
+
+  init()
+</script>
+</body>
+</html>

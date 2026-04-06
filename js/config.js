@@ -58,7 +58,7 @@ async function initNavbarAuth() {
     const { data: user } = await db.from('User').select('nickname').eq('id', session.user.id).single()
     const nickname = user?.nickname ?? '사용자'
     el.innerHTML = `
-      <span style="font-size:13px;color:#888;font-weight:600;">${nickname}</span>
+      <a href="/mypage/" style="font-size:13px;color:#888;font-weight:600;">${nickname}</a>
       <button class="login-btn" onclick="authSignOut()" style="background:none;border:none;cursor:pointer;">로그아웃</button>
       <a href="/trade/register.html" class="navbar-sell-btn">판매하기 ↗</a>
     `
