@@ -76,6 +76,18 @@ async function requireAuth() {
     window.location.href = '/auth/?next=' + encodeURIComponent(location.pathname + location.search)
     return null
   }
+  // User 테이블에 없으면 자동 생성 (기존 가입자 대비)
+  const { data: existing } = await db.from('User').select('id').eq('id', session.user.id).single()
+  if (!existing) {
+    const now = new Date().toISOString()
+    await db.from('User').insert({
+      id: session.user.id,
+      nickname: session.user.email?.split('@')[0] ?? '사용자',
+      isPhoneVerified: false,
+      createdAt: now,
+      updatedAt: now
+    })
+  }
   return session.user
 }
 
