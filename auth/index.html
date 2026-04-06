@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 | 리스트업</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .auth-wrap {
+      max-width: 400px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+    .auth-logo {
+      font-size: 26px;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .auth-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    }
+    .auth-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: #aaa;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+    .auth-tab.active { color: #111; border-bottom-color: #111; }
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+    .auth-error {
+      background: #fef2f2;
+      color: #dc2626;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .auth-success {
+      background: #f0fdf4;
+      color: #16a34a;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .auth-divider {
+      text-align: center;
+      color: #aaa;
+      font-size: 12px;
+      margin: 20px 0;
+      position: relative;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: var(--border);
+    }
+    .auth-divider::before { left: 0; }
+    .auth-divider::after { right: 0; }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="auth-wrap">
+  <div class="auth-logo">리스트업</div>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">로그인</div>
+      <div class="auth-tab" onclick="switchTab('signup')">회원가입</div>
+    </div>
+
+    <!-- 로그인 -->
+    <div class="auth-panel active" id="panel-login">
+      <div class="auth-error" id="login-error"></div>
+      <div class="form-group">
+        <label class="form-label">이메일</label>
+        <input type="email" class="form-input" id="login-email" placeholder="example@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비밀번호</label>
+        <input type="password" class="form-input" id="login-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')login()">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="login()" id="login-btn">로그인</button>
+    </div>
+
+    <!-- 회원가입 -->
+    <div class="auth-panel" id="panel-signup">
+      <div class="auth-error" id="signup-error"></div>
+      <div class="auth-success" id="signup-success"></div>
+      <div class="form-group">
+        <label class="form-label">닉네임 <span style="color:red">*</span></label>
+        <input type="text" class="form-input" id="signup-nickname" placeholder="활동할 닉네임">
+      </div>
+      <div class="form-group">
+        <label class="form-label">이메일 <span style="color:red">*</span></label>
+        <input type="email" class="form-input" id="signup-email" placeholder="example@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비밀번호 <span style="color:red">*</span></label>
+        <input type="password" class="form-input" id="signup-pw" placeholder="6자 이상">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="signup()" id="signup-btn">회원가입</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script>
+  document.getElementById('navbar').innerHTML = renderNavbar()
+
+  // 이미 로그인된 경우 홈으로
+  db.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.href = (new URLSearchParams(location.search).get('next') || '/')
+  })
+
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')))
+    document.getElementById('panel-login').classList.toggle('active', tab === 'login')
+    document.getElementById('panel-signup').classList.toggle('active', tab === 'signup')
+  }
+
+  async function login() {
+    const email = document.getElementById('login-email').value.trim()
+    const pw = document.getElementById('login-pw').value
+    const errEl = document.getElementById('login-error')
+    const btn = document.getElementById('login-btn')
+
+    if (!email || !pw) { showErr(errEl, '이메일과 비밀번호를 입력해주세요'); return }
+
+    btn.disabled = true; btn.textContent = '로그인 중...'
+    errEl.style.display = 'none'
+
+    const { error } = await db.auth.signInWithPassword({ email, password: pw })
+
+    if (error) {
+      showErr(errEl, '이메일 또는 비밀번호가 틀렸어요')
+      btn.disabled = false; btn.textContent = '로그인'
+    } else {
+      window.location.href = new URLSearchParams(location.search).get('next') || '/'
+    }
+  }
+
+  async function signup() {
+    const nickname = document.getElementById('signup-nickname').value.trim()
+    const email = document.getElementById('signup-email').value.trim()
+    const pw = document.getElementById('signup-pw').value
+    const errEl = document.getElementById('signup-error')
+    const sucEl = document.getElementById('signup-success')
+    const btn = document.getElementById('signup-btn')
+
+    if (!nickname) { showErr(errEl, '닉네임을 입력해주세요'); return }
+    if (!email) { showErr(errEl, '이메일을 입력해주세요'); return }
+    if (pw.length < 6) { showErr(errEl, '비밀번호는 6자 이상이어야 해요'); return }
+
+    btn.disabled = true; btn.textContent = '가입 중...'
+    errEl.style.display = 'none'; sucEl.style.display = 'none'
+
+    const { data, error } = await db.auth.signUp({ email, password: pw })
+
+    if (error) {
+      showErr(errEl, error.message.includes('already') ? '이미 사용중인 이메일이에요' : '회원가입에 실패했어요')
+      btn.disabled = false; btn.textContent = '회원가입'
+      return
+    }
+
+    // User 테이블에 프로필 저장
+    if (data.user) {
+      await db.from('User').insert({
+        id: data.user.id,
+        nickname,
+        isPhoneVerified: false,
+        createdAt: new Date().toISOString()
+      })
+    }
+
+    sucEl.textContent = '가입 완료! 로그인해주세요.'
+    sucEl.style.display = 'block'
+    btn.disabled = false; btn.textContent = '회원가입'
+
+    // 이메일 인증 없이 바로 로그인 가능한 경우 자동 이동
+    if (data.session) {
+      window.location.href = new URLSearchParams(location.search).get('next') || '/'
+    } else {
+      sucEl.textContent = '가입 완료! 이메일을 확인한 뒤 로그인해주세요.'
+    }
+  }
+
+  function showErr(el, msg) {
+    el.textContent = msg
+    el.style.display = 'block'
+  }
+</script>
+</body>
+</html>

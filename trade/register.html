@@ -497,14 +497,10 @@
     btn.disabled = true; btn.textContent = '등록 중...'
 
     try {
-      let { data: user } = await db.from('User').select('id').limit(1).single()
-      if (!user) {
-        const { data: newUser } = await db
-          .from('User')
-          .insert({ nickname: '익명', isPhoneVerified: false, createdAt: new Date().toISOString() })
-          .select().single()
-        user = newUser
-      }
+      const authUser = await requireAuth()
+      if (!authUser) return
+      const { data: user } = await db.from('User').select('id').eq('id', authUser.id).single()
+      if (!user) { alert('사용자 정보를 찾을 수 없어요. 다시 로그인해주세요.'); btn.disabled = false; btn.textContent = '판매글 등록'; return }
 
       const { data: listing, error } = await db.from('Listing').insert({
         userId: user.id,

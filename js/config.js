@@ -30,6 +30,8 @@ function timeAgo(dateStr) {
 }
 
 function renderNavbar(activePage = '') {
+  // 렌더 후 비동기로 로그인 상태 업데이트
+  setTimeout(initNavbarAuth, 0)
   return `
     <nav class="navbar">
       <div class="navbar-inner">
@@ -39,13 +41,42 @@ function renderNavbar(activePage = '') {
           <a href="#" class="muted">공지사항</a>
           <a href="#" class="muted">이용안내</a>
         </div>
-        <div class="navbar-actions">
-          <a href="#" class="login-btn">로그인</a>
+        <div class="navbar-actions" id="navbar-actions">
+          <a href="/auth/" class="login-btn">로그인</a>
           <a href="/trade/register.html" class="navbar-sell-btn">판매하기 ↗</a>
         </div>
       </div>
     </nav>
   `
+}
+
+async function initNavbarAuth() {
+  const { data: { session } } = await db.auth.getSession()
+  const el = document.getElementById('navbar-actions')
+  if (!el) return
+  if (session?.user) {
+    const { data: user } = await db.from('User').select('nickname').eq('id', session.user.id).single()
+    const nickname = user?.nickname ?? '사용자'
+    el.innerHTML = `
+      <span style="font-size:13px;color:#888;font-weight:600;">${nickname}</span>
+      <button class="login-btn" onclick="authSignOut()" style="background:none;border:none;cursor:pointer;">로그아웃</button>
+      <a href="/trade/register.html" class="navbar-sell-btn">판매하기 ↗</a>
+    `
+  }
+}
+
+async function authSignOut() {
+  await db.auth.signOut()
+  window.location.reload()
+}
+
+async function requireAuth() {
+  const { data: { session } } = await db.auth.getSession()
+  if (!session) {
+    window.location.href = '/auth/?next=' + encodeURIComponent(location.pathname + location.search)
+    return null
+  }
+  return session.user
 }
 
 // 게임 아이콘 렌더 (앱 아이콘 or 이모지 fallback)
