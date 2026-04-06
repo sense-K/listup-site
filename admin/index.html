@@ -395,28 +395,33 @@
   }
 
   // ===== 게임 select 채우기 =====
+  function adminGameIcon(g, size = 20) {
+    if (g.imageUrl) return `<img src="${g.imageUrl}" style="width:${size}px;height:${size}px;border-radius:${Math.round(size*0.22)}px;object-fit:cover;flex-shrink:0;vertical-align:middle;">`
+    return `<span style="font-size:${size*0.85}px;line-height:1;vertical-align:middle;">${g.emoji ?? ''}</span>`
+  }
+
   async function loadGamesForSelects() {
-    const { data: games } = await db.from('Game').select('id, nameKo, emoji').order('nameKo')
+    const { data: games } = await db.from('Game').select('id, nameKo, emoji, imageUrl').order('nameKo')
     allGames = games ?? []
 
-    // 서버 추가용 select
+    // 서버 추가용 select (select는 img 불가 → 이모지 유지)
     const serverSel = document.getElementById('server-game-select')
     serverSel.innerHTML = '<option value="">게임 선택</option>' +
-      (games ?? []).map(g => `<option value="${g.id}">${g.emoji} ${g.nameKo}</option>`).join('')
+      (games ?? []).map(g => `<option value="${g.id}">${g.nameKo}</option>`).join('')
 
     // 캐릭터 추가용 select
     const charSel = document.getElementById('char-game-select')
     charSel.innerHTML = '<option value="">게임 선택</option>' +
-      (games ?? []).map(g => `<option value="${g.id}">${g.emoji} ${g.nameKo}</option>`).join('')
+      (games ?? []).map(g => `<option value="${g.id}">${g.nameKo}</option>`).join('')
 
-    // 필터 버튼
+    // 필터 버튼 (앱 아이콘 사용)
     const serverFilter = document.getElementById('server-game-filter')
     serverFilter.innerHTML = `<button class="game-selector-btn active" onclick="filterServers(null, this)">전체</button>` +
-      (games ?? []).map(g => `<button class="game-selector-btn" onclick="filterServers('${g.id}', this)">${g.emoji} ${g.nameKo}</button>`).join('')
+      (games ?? []).map(g => `<button class="game-selector-btn" onclick="filterServers('${g.id}', this)" style="display:inline-flex;align-items:center;gap:6px;">${adminGameIcon(g, 18)} ${g.nameKo}</button>`).join('')
 
     const charFilter = document.getElementById('char-game-filter')
     charFilter.innerHTML = (games ?? []).map((g, i) =>
-      `<button class="game-selector-btn ${i === 0 ? 'active' : ''}" onclick="filterChars('${g.id}', this)">${g.emoji} ${g.nameKo}</button>`
+      `<button class="game-selector-btn ${i === 0 ? 'active' : ''}" onclick="filterChars('${g.id}', this)" style="display:inline-flex;align-items:center;gap:6px;">${adminGameIcon(g, 18)} ${g.nameKo}</button>`
     ).join('')
 
     if (games && games.length > 0) {
@@ -427,7 +432,7 @@
 
   // ===== 서버 =====
   async function loadServers(gameId = null) {
-    let query = db.from('Server').select('id, nameKo, gameId, game:Game(nameKo, emoji)').order('nameKo')
+    let query = db.from('Server').select('id, nameKo, gameId, game:Game(nameKo, emoji, imageUrl)').order('nameKo')
     if (gameId) query = query.eq('gameId', gameId)
     const { data: servers } = await query
     const tbody = document.getElementById('servers-table-body')
@@ -437,7 +442,7 @@
     }
     tbody.innerHTML = servers.map(s => `
       <tr>
-        <td>${s.game?.emoji ?? ''} ${s.game?.nameKo ?? ''}</td>
+        <td style="display:flex;align-items:center;gap:8px;">${adminGameIcon(s.game ?? {}, 22)} ${s.game?.nameKo ?? ''}</td>
         <td><strong>${s.nameKo}</strong></td>
         <td><button class="btn-sm btn-red" onclick="deleteServer('${s.id}', '${s.nameKo}')">삭제</button></td>
       </tr>
@@ -476,7 +481,7 @@
 
     const { data: chars } = await db
       .from('Character')
-      .select('id, nameKo, tier, imageUrl, isActive, game:Game(nameKo, emoji)')
+      .select('id, nameKo, tier, imageUrl, isActive, game:Game(nameKo, emoji, imageUrl)')
       .eq('gameId', selectedCharGameId)
       .order('tier')
       .order('nameKo')
@@ -494,7 +499,7 @@
         }</td>
         <td><strong>${c.nameKo}</strong></td>
         <td><span class="badge ${c.tier === 'S' ? 'badge-s' : 'badge-a'}">${c.tier}</span></td>
-        <td>${c.game?.emoji ?? ''} ${c.game?.nameKo ?? ''}</td>
+        <td style="display:flex;align-items:center;gap:8px;">${adminGameIcon(c.game ?? {}, 22)} ${c.game?.nameKo ?? ''}</td>
         <td><button class="btn-sm btn-red" onclick="deleteChar('${c.id}', '${c.nameKo}')">삭제</button></td>
       </tr>
     `).join('')
@@ -537,7 +542,7 @@
   async function loadAdminListings() {
     const { data: listings } = await db
       .from('Listing')
-      .select('id, price, status, createdAt, game:Game(nameKo, emoji), server:Server(nameKo), user:User(nickname)')
+      .select('id, price, status, createdAt, game:Game(nameKo, emoji, imageUrl), server:Server(nameKo), user:User(nickname)')
       .order('createdAt', { ascending: false })
       .limit(50)
 
@@ -548,7 +553,7 @@
     }
     tbody.innerHTML = listings.map(l => `
       <tr>
-        <td>${l.game?.emoji ?? ''} ${l.game?.nameKo ?? ''}</td>
+        <td style="display:flex;align-items:center;gap:8px;">${adminGameIcon(l.game ?? {}, 22)} ${l.game?.nameKo ?? ''}</td>
         <td>${l.server?.nameKo ?? ''}</td>
         <td><strong>${formatPrice(l.price)}</strong></td>
         <td>${l.user?.nickname ?? '익명'}</td>
