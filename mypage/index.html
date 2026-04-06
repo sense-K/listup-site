@@ -186,29 +186,40 @@
   document.getElementById('navbar').innerHTML = renderNavbar()
 
   async function init() {
-    const authUser = await requireAuth()
-    if (!authUser) return
+    try {
+      // 로그인 상태 확인
+      const { data: { session } } = await db.auth.getSession()
+      if (!session) {
+        window.location.href = '/auth/?next=/mypage/'
+        return
+      }
+      const authUser = session.user
 
-    // User 테이블 조회, 없으면 생성
-    let { data: user } = await db.from('User').select('id, nickname').eq('id', authUser.id).single()
-    if (!user) {
-      const now = new Date().toISOString()
-      const nickname = authUser.email?.split('@')[0] ?? '사용자'
-      await db.from('User').insert({ id: authUser.id, nickname, isPhoneVerified: false, createdAt: now, updatedAt: now })
-      user = { id: authUser.id, nickname }
+      // User 프로필 조회 또는 생성
+      let { data: user } = await db.from('User').select('id, nickname').eq('id', authUser.id).single()
+      if (!user) {
+        const now = new Date().toISOString()
+        const nickname = authUser.email?.split('@')[0] ?? '사용자'
+        await db.from('User').insert({ id: authUser.id, nickname, isPhoneVerified: false, createdAt: now, updatedAt: now })
+        user = { id: authUser.id, nickname }
+      }
+
+      // 내 판매글 조회
+      const { data: listings } = await db
+        .from('Listing')
+        .select(`
+          id, price, status, createdAt,
+          game:Game(nameKo, emoji, imageUrl, artImageUrl),
+          characters:ListingCharacter(character:Character(nameKo))
+        `)
+        .eq('userId', authUser.id)
+        .order('createdAt', { ascending: false })
+
+      render(authUser, user, listings ?? [])
+    } catch(e) {
+      console.error(e)
+      document.getElementById('mypage-content').innerHTML = '<div style="text-align:center;padding:60px 20px;color:#888;">오류가 발생했어요. 새로고침 해주세요.</div>'
     }
-
-    const { data: listings } = await db
-      .from('Listing')
-      .select(`
-        id, price, status, createdAt,
-        game:Game(nameKo, emoji, imageUrl, artImageUrl),
-        characters:ListingCharacter(character:Character(nameKo))
-      `)
-      .eq('userId', authUser.id)
-      .order('createdAt', { ascending: false })
-
-    render(authUser, user, listings ?? [])
   }
 
   function render(authUser, user, listings) {
