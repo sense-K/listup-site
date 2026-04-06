@@ -28,27 +28,6 @@
     .step-panel { display: none; }
     .step-panel.active { display: block; }
 
-    /* 캐릭터 티어 필터 탭 */
-    .tier-tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-    .tier-tab {
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: 1.5px solid var(--border);
-      background: #fff;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      color: var(--text-muted);
-    }
-    .tier-tab.active { background: #111; color: #fff; border-color: #111; }
-    .tier-tab.s { }
-    .tier-tab.s.active { background: #f59e0b; border-color: #f59e0b; }
-    .tier-tab.a.active { background: #6366f1; border-color: #6366f1; }
 
     /* 캐릭터 그리드 */
     .char-grid {
@@ -125,18 +104,6 @@
       font-size: 28px;
       color: #ccc;
     }
-    .char-item .char-tier-badge {
-      position: absolute;
-      top: 6px; left: 6px;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 4px;
-      line-height: 1.4;
-    }
-    .char-item .char-tier-badge.s { background: #f59e0b; color: #fff; }
-    .char-item .char-tier-badge.a { background: #6366f1; color: #fff; }
-    .char-item .char-tier-badge.b { background: #6b7280; color: #fff; }
     .char-item .char-name-label {
       position: absolute;
       bottom: 0; left: 0; right: 0;
@@ -234,16 +201,6 @@
       border-radius: 6px;
       object-fit: cover;
     }
-    .summary-char-card .summary-tier {
-      font-size: 10px;
-      font-weight: 800;
-      padding: 1px 4px;
-      border-radius: 4px;
-      line-height: 1.4;
-    }
-    .summary-tier.s { background: #f59e0b; color: #fff; }
-    .summary-tier.a { background: #6366f1; color: #fff; }
-    .summary-tier.b { background: #6b7280; color: #fff; }
   </style>
 </head>
 <body>
@@ -283,13 +240,6 @@
 
     <div class="selected-chars-bar" id="selected-chars">
       <span style="color:var(--text-muted);font-size:13px;" id="selected-placeholder">캐릭터를 선택하면 여기 표시돼요</span>
-    </div>
-
-    <div class="tier-tabs" id="tier-tabs">
-      <button class="tier-tab active" onclick="filterTier('all', this)">전체</button>
-      <button class="tier-tab s" onclick="filterTier('S', this)">S티어</button>
-      <button class="tier-tab a" onclick="filterTier('A', this)">A티어</button>
-      <button class="tier-tab" onclick="filterTier('B', this)">B티어</button>
     </div>
 
     <div class="char-grid" id="char-grid">
@@ -347,7 +297,6 @@
   let selectedServerId = null
   let selectedChars = []
   let allChars = []
-  let currentTierFilter = 'all'
 
   async function init() {
     const { data: games } = await db.from('Game').select('id, nameKo, slug, emoji, imageUrl').eq('isActive', true).order('sortOrder', { nullsFirst: false }).order('nameKo')
@@ -395,37 +344,22 @@
     if (!selectedGameId) return
     const { data: chars } = await db
       .from('Character')
-      .select('id, nameKo, tier, imageUrl')
+      .select('id, nameKo, imageUrl')
       .eq('gameId', selectedGameId)
       .eq('isActive', true)
-      .order('tier')
+      .order('nameKo')
     allChars = chars ?? []
-    currentTierFilter = 'all'
-    document.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('active'))
-    document.querySelector('.tier-tab').classList.add('active')
-    renderCharGrid()
-  }
-
-  function filterTier(tier, btn) {
-    currentTierFilter = tier
-    document.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('active'))
-    btn.classList.add('active')
     renderCharGrid()
   }
 
   function renderCharGrid() {
-    const filtered = currentTierFilter === 'all'
-      ? allChars
-      : allChars.filter(c => c.tier === currentTierFilter)
-
     const grid = document.getElementById('char-grid')
-    if (!filtered.length) {
+    if (!allChars.length) {
       grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text-muted);">캐릭터가 없어요</div>'
       return
     }
 
-    grid.innerHTML = filtered.map(c => {
-      const tierClass = (c.tier || '').toLowerCase()
+    grid.innerHTML = allChars.map(c => {
       const isSelected = selectedChars.some(x => x.id === c.id)
       return `
         <div class="char-item${isSelected ? ' selected' : ''}" id="char-${c.id}" onclick="toggleChar(${JSON.stringify(c).replace(/"/g, '&quot;')})">
@@ -433,7 +367,6 @@
             ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy">`
             : `<div class="char-no-img">?</div>`
           }
-          <span class="char-tier-badge ${tierClass}">${c.tier}</span>
           <div class="char-name-label">${c.nameKo}</div>
           <div class="check-overlay">
             <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -504,16 +437,12 @@
     const serverText = serverSel.options[serverSel.selectedIndex]?.text ?? ''
 
     const charsHtml = selectedChars.length > 0
-      ? `<div class="summary-chars">${selectedChars.map(c => {
-          const tierClass = (c.tier || '').toLowerCase()
-          return `
+      ? `<div class="summary-chars">${selectedChars.map(c => `
             <div class="summary-char-card">
               ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}
-              <span class="summary-tier ${tierClass}">${c.tier}</span>
               <span>${c.nameKo}</span>
             </div>
-          `
-        }).join('')}</div>`
+          `).join('')}</div>`
       : '<strong style="color:var(--text-muted);">선택 안 함</strong>'
 
     document.getElementById('summary-box').innerHTML = `
