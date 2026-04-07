@@ -491,8 +491,9 @@
   async function submitListing() {
     const price = Number(document.getElementById('price-input').value)
     const contact = document.getElementById('contact-input').value.trim()
+    if (!selectedServerId) { alert('서버를 선택해주세요'); goStep(1); return }
     if (!price || price <= 0) { alert('판매가격을 입력해주세요'); return }
-    if (!contact) { alert('연락처를 입력해주세요'); return }
+    if (!contact) { alert('카카오 오픈채팅 링크를 입력해주세요'); return }
 
     const btn = document.getElementById('submit-btn')
     btn.disabled = true; btn.textContent = '등록 중...'
