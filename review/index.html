@@ -220,15 +220,15 @@
         tradeId,
         listingId,
         reviewerId,
-        targetId: sellerId,
+        sellerId,
         rating: selectedRating,
-        content,
+        content: content ?? '',
         createdAt: new Date().toISOString(),
       })
       if (error) throw new Error('Review insert: ' + error.message)
 
       // 판매자 avgRating 재계산
-      const { data: reviews, error: re } = await db.from('Review').select('rating').eq('targetId', sellerId)
+      const { data: reviews, error: re } = await db.from('Review').select('rating').eq('sellerId', sellerId)
       if (re) throw new Error('Review select: ' + re.message)
       if (reviews && reviews.length > 0) {
         const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length

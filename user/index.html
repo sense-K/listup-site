@@ -104,7 +104,7 @@
   async function loadProfile() {
     const [{ data: user }, { data: reviews }, { data: listings }] = await Promise.all([
       db.from('User').select('id, nickname, tradeCount, avgRating').eq('id', userId).single(),
-      db.from('Review').select('rating, content, createdAt').eq('targetId', userId).order('createdAt', { ascending: false }).limit(10),
+      db.from('Review').select('rating, content, createdAt').eq('sellerId', userId).order('createdAt', { ascending: false }).limit(10),
       db.from('Listing').select(`
         id, price, status, createdAt,
         game:Game(nameKo, emoji, artImageUrl),
