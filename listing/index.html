@@ -617,12 +617,12 @@
           </div>
           <div class="buy-options">
             <button class="buy-option-btn" onclick="requestTrade('normal')">
-              <span class="buy-label">일반 구매</span>
+              <span class="buy-label">일반 구매 신청</span>
               <span class="buy-price">${formatPrice(l.price)}</span>
               <span class="buy-sublabel">리뷰 없음</span>
             </button>
             <button class="buy-option-btn review-btn" onclick="requestTrade('review_discount')" ${!l.discountAmount ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>
-              <span class="buy-label">리뷰할인 구매</span>
+              <span class="buy-label">리뷰할인 구매 신청</span>
               <span class="buy-price">${discountPrice ? formatPrice(discountPrice) : formatPrice(l.price)}</span>
               <span class="buy-sublabel">${l.discountAmount ? formatPrice(l.discountAmount) + ' 할인 · 리뷰 작성' : '할인 없음'}</span>
             </button>
@@ -647,8 +647,8 @@
 
     const l = currentListing
     const confirmMsg = type === 'review_discount'
-      ? `리뷰할인 구매로 신청할까요?\n\n구매 확정 시 판매자의 오픈채팅 링크가 공개돼요.\n거래 완료 후 리뷰를 남겨주세요.`
-      : `일반 구매로 신청할까요?\n\n구매 확정 시 판매자의 오픈채팅 링크가 공개돼요.`
+      ? `리뷰할인 구매로 신청할까요?\n\n구매 신청 시 판매자의 오픈채팅 링크가 공개돼요.\n거래 완료 후 리뷰를 남겨주세요.`
+      : `일반 구매로 신청할까요?\n\n구매 신청 시 판매자의 오픈채팅 링크가 공개돼요.`
     if (!confirm(confirmMsg)) return
 
     const btn = event.currentTarget
