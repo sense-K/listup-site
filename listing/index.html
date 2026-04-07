@@ -433,7 +433,7 @@
   async function loadSellerReviews(sellerId) {
     const { data: reviews } = await db
       .from('Review')
-      .select('rating, content, createdAt, listingId, listing:Listing(game:Game(nameKo, emoji))')
+      .select('rating, content, createdAt, listing:Listing(game:Game(nameKo, imageUrl, emoji))')
       .eq('sellerId', sellerId)
       .order('createdAt', { ascending: false })
       .limit(10)
@@ -454,14 +454,21 @@
       <div style="font-size:15px;font-weight:800;margin-bottom:14px;">판매자 후기 <span style="color:#aaa;font-size:13px;font-weight:400;">${reviews.length}개</span></div>
       <div style="border-top:1px solid var(--border);">
         ${reviews.map(r => {
-          const gameName = r.listing?.game?.nameKo ?? ''
-          const gameEmoji = r.listing?.game?.emoji ?? ''
+          const gImg = r.listing?.game?.imageUrl ?? ''
+          const gEmoji = r.listing?.game?.emoji ?? ''
+          const gName = r.listing?.game?.nameKo ?? ''
+          const gameTag = gName
+            ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#888;background:#f3f4f6;padding:2px 7px 2px 4px;border-radius:999px;">
+                ${gImg ? `<img src="${gImg}" style="width:14px;height:14px;border-radius:3px;object-fit:cover;">` : gEmoji}
+                ${gName}
+              </span>`
+            : ''
           return `
             <div style="padding:14px 0;border-bottom:1px solid var(--border);">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
                 <div style="display:flex;align-items:center;gap:8px;">
                   <span style="font-size:13px;">${stars(r.rating)}</span>
-                  ${gameName ? `<span style="font-size:11px;color:#888;background:#f3f4f6;padding:2px 7px;border-radius:999px;">${gameEmoji} ${gameName}</span>` : ''}
+                  ${gameTag}
                 </div>
                 <span style="font-size:11px;color:#aaa;">${timeAgo(r.createdAt)}</span>
               </div>
