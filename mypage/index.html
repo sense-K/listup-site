@@ -138,6 +138,7 @@
       display: inline-block;
     }
     .status-active { background: #dcfce7; color: #16a34a; }
+    .status-trading { background: #fef3c7; color: #d97706; }
     .status-sold { background: #f3f4f6; color: #888; }
     .my-listing-time { font-size: 11px; color: #aaa; }
 
@@ -215,14 +216,27 @@
         .eq('userId', authUser.id)
         .order('createdAt', { ascending: false })
 
-      render(authUser, user, listings ?? [])
+      // 내 구매 거래 조회
+      const { data: myTrades } = await db
+        .from('Trade')
+        .select(`
+          id, type, status, createdAt,
+          listing:Listing(id, price, status,
+            game:Game(nameKo, emoji, imageUrl, artImageUrl),
+            characters:ListingCharacter(character:Character(nameKo))
+          )
+        `)
+        .eq('buyerId', authUser.id)
+        .order('createdAt', { ascending: false })
+
+      render(authUser, user, listings ?? [], myTrades ?? [])
     } catch(e) {
       console.error(e)
       document.getElementById('mypage-content').innerHTML = '<div style="text-align:center;padding:60px 20px;color:#888;">오류가 발생했어요. 새로고침 해주세요.</div>'
     }
   }
 
-  function render(authUser, user, listings) {
+  function render(authUser, user, listings, myTrades) {
     const listingsHtml = listings.length === 0
       ? `<div class="empty-my">아직 등록한 판매글이 없어요<br><br><a href="/trade/register.html">첫 판매글 올리기 →</a></div>`
       : listings.map(l => {
@@ -230,8 +244,8 @@
           const gameEmoji = l.game?.emoji ?? ''
           const gameImg = l.game?.artImageUrl ?? ''
           const chars = (l.characters ?? []).map(lc => lc.character?.nameKo).filter(Boolean)
-          const statusClass = l.status === 'active' ? 'status-active' : 'status-sold'
-          const statusText = l.status === 'active' ? '판매중' : '판매완료'
+          const statusClass = l.status === 'active' ? 'status-active' : l.status === 'trading' ? 'status-trading' : 'status-sold'
+          const statusText = l.status === 'active' ? '판매중' : l.status === 'trading' ? '거래중' : '판매완료'
           return `
             <div class="my-listing-item" onclick="location.href='/listing/?id=${l.id}'">
               ${gameImg
@@ -247,6 +261,40 @@
                 <div class="my-listing-status ${statusClass}">${statusText}</div>
                 <div class="my-listing-time">${timeAgo(l.createdAt)}</div>
                 <button class="my-listing-delete" onclick="event.stopPropagation();deleteListing('${l.id}')">삭제</button>
+              </div>
+            </div>`
+        }).join('')
+
+    const tradesHtml = myTrades.length === 0
+      ? `<div class="empty-my">아직 구매한 계정이 없어요</div>`
+      : myTrades.map(t => {
+          const l = t.listing
+          if (!l) return ''
+          const gameName = l.game?.nameKo ?? ''
+          const gameEmoji = l.game?.emoji ?? ''
+          const gameImg = l.game?.artImageUrl ?? ''
+          const chars = (l.characters ?? []).map(lc => lc.character?.nameKo).filter(Boolean)
+          const tradeStatusClass = t.status === 'active' ? 'status-trading' : t.status === 'completed' ? 'status-sold' : 'status-sold'
+          const tradeStatusText = t.status === 'active' ? '거래중' : t.status === 'completed' ? '거래완료' : '취소됨'
+          const typeLabel = t.type === 'review_discount' ? ' · 리뷰할인' : ''
+          const reviewBtn = t.status === 'completed' && t.type === 'review_discount'
+            ? `<button class="my-listing-delete" style="border-color:#f97316;color:#f97316;" onclick="event.stopPropagation();location.href='/review/?tradeId=${t.id}'">리뷰작성</button>`
+            : ''
+          return `
+            <div class="my-listing-item" onclick="location.href='/listing/?id=${l.id}'">
+              ${gameImg
+                ? `<img class="my-listing-thumb" src="${gameImg}" alt="${gameName}">`
+                : `<div class="my-listing-thumb-placeholder">${gameEmoji}</div>`
+              }
+              <div class="my-listing-info">
+                <div class="my-listing-game">${gameName}${typeLabel}</div>
+                <div class="my-listing-price">${formatPrice(l.price)}</div>
+                <div class="my-listing-chars">${chars.length > 0 ? chars.join(', ') : '캐릭터 없음'}</div>
+              </div>
+              <div class="my-listing-meta">
+                <div class="my-listing-status ${tradeStatusClass}">${tradeStatusText}</div>
+                <div class="my-listing-time">${timeAgo(t.createdAt)}</div>
+                ${reviewBtn}
               </div>
             </div>`
         }).join('')
@@ -271,6 +319,11 @@
         내 판매글 <span>${listings.length}개</span>
       </div>
       <div id="my-listings">${listingsHtml}</div>
+
+      <div class="mypage-section-title" style="margin-top:32px;">
+        구매 내역 <span>${myTrades.length}개</span>
+      </div>
+      <div id="my-trades">${tradesHtml}</div>
 
       <button class="logout-btn" onclick="logout()">로그아웃</button>
     `
