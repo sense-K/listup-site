@@ -144,9 +144,10 @@
     }
 
     // 이미 리뷰 작성했는지 확인
-    const { data: existing } = await db.from('Review').select('id').eq('tradeId', tradeId).maybeSingle()
+    const { data: existing } = await db.from('Review').select('id')
+      .eq('listingId', trade.listingId).eq('reviewerId', authUser.id).maybeSingle()
     if (existing) {
-      document.getElementById('review-content').innerHTML = '<div style="text-align:center;padding:60px;color:#888;">이미 리뷰를 작성했어요.</div>'
+      document.getElementById('review-content').innerHTML = '<div style="text-align:center;padding:60px;color:#888;">이미 후기를 작성했어요.</div>'
       return
     }
 
@@ -217,7 +218,6 @@
       const reviewId = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
       const { error } = await db.from('Review').insert({
         id: reviewId,
-        tradeId,
         listingId,
         reviewerId,
         sellerId,
