@@ -193,7 +193,6 @@
       const { error: userErr } = await db.from('User').insert({
         id: data.user.id,
         nickname,
-        phone: '',
         isPhoneVerified: false,
         createdAt: now
       })
