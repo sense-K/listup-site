@@ -531,7 +531,7 @@
       window.location.href = '/'
     } catch (e) {
       console.error(e)
-      alert('등록에 실패했어요. 다시 시도해주세요.')
+      alert('에러: ' + (e?.message ?? JSON.stringify(e)))
       btn.disabled = false; btn.textContent = '판매글 등록'
     }
   }
