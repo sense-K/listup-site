@@ -447,6 +447,20 @@ a { text-decoration: none; color: inherit; }
   border-radius: 4px;
 }
 
+/* 거래중 배지 */
+.badge-trading {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(217, 119, 6, 0.9);
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
 /* 카드 본문 */
 .card-body { padding: 14px 16px 16px; }
 

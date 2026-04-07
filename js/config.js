@@ -99,6 +99,17 @@ function gameIcon(game, size = 20) {
   return `<span style="font-size:${size*0.9}px;line-height:1;">${game.emoji ?? ''}</span>`
 }
 
+// DB slug → 실제 URL 경로 매핑
+const SLUG_TO_PATH = {
+  'genshin': '/genshin/',
+  'blue-archive': '/bluearchive/',
+  'nikke': '/nikke/',
+  'cookie-run': '/cookierunkingdom/',
+}
+function gameSlugToPath(slug) {
+  return SLUG_TO_PATH[slug] ?? `/${slug}/`
+}
+
 // DB에서 게임 목록 동적으로 가져와서 탭/사이드바 렌더
 async function loadAndRenderGameUI(activeSlug) {
   const { data: games } = await db.from('Game').select('id, nameKo, slug, emoji, imageUrl').eq('isActive', true).order('sortOrder', { nullsFirst: false }).order('nameKo')
@@ -109,7 +120,7 @@ async function loadAndRenderGameUI(activeSlug) {
   if (tabList) {
     tabList.innerHTML = `<a href="/" class="tab-item ${!activeSlug ? 'active' : ''}">전체</a>` +
       games.map(g => `
-        <a href="/${g.slug}/" class="tab-item ${g.slug === activeSlug ? 'active' : ''}" style="display:inline-flex;align-items:center;gap:5px;">
+        <a href="${gameSlugToPath(g.slug)}" class="tab-item ${g.slug === activeSlug ? 'active' : ''}" style="display:inline-flex;align-items:center;gap:5px;">
           ${gameIcon(g, 18)} ${g.nameKo}
         </a>
       `).join('')
@@ -124,7 +135,7 @@ async function loadAndRenderGameUI(activeSlug) {
         <div class="sidebar-game-list">
           <a href="/" class="sidebar-game-item ${!activeSlug ? 'active' : ''}">전체</a>
           ${games.map(g => `
-            <a href="/${g.slug}/" class="sidebar-game-item ${g.slug === activeSlug ? 'active' : ''}" style="display:flex;align-items:center;gap:8px;">
+            <a href="${gameSlugToPath(g.slug)}" class="sidebar-game-item ${g.slug === activeSlug ? 'active' : ''}" style="display:flex;align-items:center;gap:8px;">
               ${gameIcon(g, 22)} ${g.nameKo}
             </a>
           `).join('')}
@@ -137,7 +148,7 @@ async function loadAndRenderGameUI(activeSlug) {
   const heroGames = document.querySelector('.hero-games')
   if (heroGames) {
     heroGames.innerHTML = games.map((g, i) => `
-      <a href="/${g.slug}/" class="hero-game-card ${g.slug}" style="${i === 0 ? 'grid-row:1/2;' : ''}">
+      <a href="${gameSlugToPath(g.slug)}" class="hero-game-card ${g.slug}" style="${i === 0 ? 'grid-row:1/2;' : ''}">
         ${g.imageUrl
           ? `<img src="${g.imageUrl}" alt="${g.nameKo}" style="width:64px;height:64px;border-radius:14px;object-fit:cover;box-shadow:0 4px 16px rgba(0,0,0,0.4);">`
           : `<span class="emoji">${g.emoji}</span>`

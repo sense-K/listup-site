@@ -646,6 +646,11 @@
     }
 
     const l = currentListing
+    const confirmMsg = type === 'review_discount'
+      ? `리뷰할인 구매로 신청할까요?\n\n구매 확정 시 판매자의 오픈채팅 링크가 공개돼요.\n거래 완료 후 리뷰를 남겨주세요.`
+      : `일반 구매로 신청할까요?\n\n구매 확정 시 판매자의 오픈채팅 링크가 공개돼요.`
+    if (!confirm(confirmMsg)) return
+
     const btn = event.currentTarget
     btn.disabled = true
 

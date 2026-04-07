@@ -34,12 +34,14 @@ function renderListingCard(listing) {
     : ''
 
   const hotBadge = listing.viewCount > 50 ? `<div class="badge-hot">🔥 HOT</div>` : ''
+  const tradingBadge = listing.status === 'trading' ? `<div class="badge-trading">거래중</div>` : ''
 
   return `
     <a href="/listing/?id=${listing.id}" class="card">
       <div class="card-art ${artClass}" ${gameArtUrl ? `style="background-image:url('${gameArtUrl}');background-size:cover;background-position:center top;"` : ''}>
         ${gameArtUrl ? `<div style="position:absolute;inset:0;border-radius:16px 16px 0 0;background:linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%);"></div>` : ''}
         ${hotBadge}
+        ${tradingBadge}
         ${serverName ? `<span style="position:absolute;bottom:10px;left:12px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;backdrop-filter:blur(4px);">${serverName}</span>` : ''}
       </div>
       <div class="card-body">
@@ -85,7 +87,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
           character:Character(nameKo, tier, imageUrl)
         )
       `)
-      .eq('status', 'active')
+      .in('status', ['active', 'trading'])
       .order(sort === 'price' ? 'price' : 'createdAt', { ascending: sort === 'price' })
       .range((page - 1) * limit, page * limit - 1)
 
