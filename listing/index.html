@@ -307,6 +307,20 @@
       }
     }
 
+    // 거래 완료된 경우 → 취소 불가
+    if (myTrade && myTrade.status === 'completed') {
+      const { data: existingReview } = await db.from('Review').select('id')
+        .eq('listingId', listingId).eq('reviewerId', currentUser.id).maybeSingle()
+      if (existingReview) {
+        return `<div class="status-info-box">거래가 완료됐어요. 후기도 남겨주셨네요 😊</div>`
+      }
+      return `
+        <div class="review-prompt-box" style="margin-top:16px;">
+          <p>거래가 완료됐어요!<br>후기를 남겨 다른 구매자에게 도움을 주세요 😊</p>
+          <button class="review-write-btn" onclick="location.href='/review/?tradeId=${myTrade.id}'">후기 작성하기</button>
+        </div>`
+    }
+
     // 내가 신청한 거래 진행중
     if (myTrade && myTrade.status === 'active') {
       const chatUrl = l.kakaoOpenChatUrl ?? ''
