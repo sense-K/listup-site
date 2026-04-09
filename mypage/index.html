@@ -313,7 +313,8 @@
     const activeListings = listings.filter(l => l.status !== 'sold')
     const soldListings = listings.filter(l => l.status === 'sold')
     const activeTrades = myTrades.filter(t => t.status === 'active')
-    const doneTrades = myTrades.filter(t => t.status !== 'active')
+    const doneTrades = myTrades.filter(t => t.status === 'completed')
+    const cancelledTrades = myTrades.filter(t => t.status === 'cancelled')
 
     document.getElementById('mypage-content').innerHTML = `
       <div class="profile-card">
@@ -347,6 +348,11 @@
       ${sectionHtml('sec-buy-done', '구매 완료', doneTrades.length,
         doneTrades.length ? doneTrades.map(renderTradeItem).join('') : '<div class="empty-my">완료된 구매가 없어요</div>',
         doneTrades.length === 0
+      )}
+
+      ${sectionHtml('sec-buy-cancelled', '취소된 거래', cancelledTrades.length,
+        cancelledTrades.length ? cancelledTrades.map(renderTradeItem).join('') : '<div class="empty-my">취소된 거래가 없어요</div>',
+        true
       )}
 
       <button class="logout-btn" onclick="logout()">로그아웃</button>
