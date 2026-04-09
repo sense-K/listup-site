@@ -194,7 +194,10 @@ async function loadAndRenderGameUI(activeSlug) {
   if (gameCardsEl) {
     gameCardsEl.innerHTML = games.map(g => `
       <a href="${gameSlugToPath(g.slug)}" class="game-select-card">
-        ${g.artImageUrl ? `<img class="game-select-card-bg" src="${g.artImageUrl}" alt="${g.nameKo}">` : ''}
+        ${g.artImageUrl
+          ? `<img class="game-select-card-bg" src="${g.artImageUrl}" alt="${g.nameKo}">`
+          : `<div class="game-select-card-bg" style="background:linear-gradient(135deg,#1a1a2e,#2d2d4e);"></div>`
+        }
         <div class="game-select-card-overlay"></div>
         <div class="game-select-card-info">
           ${g.imageUrl ? `<img class="game-select-card-icon" src="${g.imageUrl}" alt="${g.nameKo}">` : `<span style="font-size:28px;">${g.emoji}</span>`}
