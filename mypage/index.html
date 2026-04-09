@@ -260,7 +260,11 @@
         .eq('buyerId', authUser.id)
         .order('createdAt', { ascending: false })
 
-      render(authUser, user, listings ?? [], myTrades ?? [])
+      // 내가 작성한 리뷰의 listingId 목록
+      const { data: myReviews } = await db.from('Review').select('listingId').eq('reviewerId', authUser.id)
+      const reviewedListingIds = new Set((myReviews ?? []).map(r => r.listingId))
+
+      render(authUser, user, listings ?? [], myTrades ?? [], reviewedListingIds)
     } catch(e) {
       console.error(e)
       document.getElementById('mypage-content').innerHTML = '<div style="text-align:center;padding:60px 20px;color:#888;">오류가 발생했어요. 새로고침 해주세요.</div>'
@@ -300,7 +304,8 @@
     const tradeStatusClass = t.status === 'active' ? 'status-trading' : 'status-sold'
     const tradeStatusText = t.status === 'active' ? '거래중' : t.status === 'completed' ? '거래완료' : '취소됨'
     const typeLabel = ''
-    const reviewBtn = t.status === 'completed'
+    const alreadyReviewed = reviewedListingIds.has(l.id)
+    const reviewBtn = t.status === 'completed' && !alreadyReviewed
       ? `<button class="my-listing-delete" style="border-color:#f97316;color:#f97316;" onclick="event.stopPropagation();location.href='/review/?tradeId=${t.id}'">후기작성</button>`
       : ''
     return `
@@ -330,7 +335,7 @@
       </div>`
   }
 
-  function render(authUser, user, listings, myTrades) {
+  function render(authUser, user, listings, myTrades, reviewedListingIds) {
     const activeListings = listings.filter(l => l.status !== 'sold')
     const soldListings = listings.filter(l => l.status === 'sold')
     const activeTrades = myTrades.filter(t => t.status === 'active')

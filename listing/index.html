@@ -296,7 +296,7 @@
         .eq('listingId', listingId).eq('buyerId', currentUser.id).eq('status', 'completed')
         .maybeSingle()
       if (completedTrade) {
-        const { data: existingReview } = await db.from('Review').select('id').eq('tradeId', completedTrade.id).maybeSingle()
+        const { data: existingReview } = await db.from('Review').select('id').eq('listingId', listingId).eq('reviewerId', currentUser.id).maybeSingle()
         if (!existingReview) {
           return `
             <div class="review-prompt-box" style="margin-top:16px;">
