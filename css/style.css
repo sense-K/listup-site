@@ -742,12 +742,92 @@ a { text-decoration: none; color: inherit; }
 .empty-icon { font-size: 48px; margin-bottom: 16px; }
 .empty p { font-size: 15px; }
 
+/* ===== 햄버거 메뉴 ===== */
+.navbar-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.navbar-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--black);
+  border-radius: 2px;
+  transition: all 0.25s;
+  transform-origin: center;
+}
+.navbar-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.navbar-hamburger.open span:nth-child(2) { opacity: 0; }
+.navbar-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 60px;
+  left: 0; right: 0;
+  background: #fff;
+  z-index: 99;
+  border-bottom: 1px solid var(--border);
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: transform 0.2s, opacity 0.2s;
+  pointer-events: none;
+}
+.mobile-menu.open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+.mobile-menu-inner {
+  padding: 20px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.mobile-menu-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mobile-menu-links a {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--black);
+  padding: 10px 4px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.mobile-menu-links a:last-child { border-bottom: none; }
+.mobile-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mobile-menu-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  top: 60px;
+  background: rgba(0,0,0,0.3);
+  z-index: 98;
+}
+.mobile-menu-backdrop.open { display: block; }
+
 /* ===== 모바일 ===== */
-@media (max-width: 900px) {
-  .navbar-inner, .page-wrapper { padding: 0 16px; gap: 16px; }
-  .navbar-menu { gap: 16px; }
-  .navbar-menu a { font-size: 13px; }
-  .navbar-sell-btn { padding: 8px 14px; font-size: 12px; }
+@media (max-width: 768px) {
+  .navbar-inner { padding: 0 16px; gap: 0; }
+  .navbar-menu { display: none; }
+  .navbar-actions { display: none; }
+  .navbar-hamburger { display: flex; }
+  .mobile-menu { display: block; }
+
   .hero { padding: 48px 20px 40px; }
   .hero-inner { flex-direction: column; }
   .hero-text h1 { font-size: 32px; }
@@ -761,4 +841,10 @@ a { text-decoration: none; color: inherit; }
   .main-game-grid { grid-template-columns: 1fr 1fr; }
   .listings-grid { grid-template-columns: 1fr; }
   .fab { bottom: 16px; right: 16px; padding: 12px 18px; font-size: 13px; }
+}
+
+@media (min-width: 769px) {
+  .navbar-hamburger { display: none !important; }
+  .mobile-menu { display: none !important; }
+  .page-wrapper { padding: 0 60px; }
 }

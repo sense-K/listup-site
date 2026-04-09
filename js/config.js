@@ -30,7 +30,6 @@ function timeAgo(dateStr) {
 }
 
 function renderNavbar(activePage = '') {
-  // 렌더 후 비동기로 로그인 상태 업데이트
   setTimeout(initNavbarAuth, 0)
   return `
     <nav class="navbar">
@@ -45,14 +44,42 @@ function renderNavbar(activePage = '') {
           <a href="/auth/" class="login-btn">로그인</a>
           <a href="/trade/register.html" class="navbar-sell-btn">판매하기 ↗</a>
         </div>
+        <button class="navbar-hamburger" id="navbar-hamburger" onclick="toggleMobileMenu()" aria-label="메뉴">
+          <span></span><span></span><span></span>
+        </button>
       </div>
     </nav>
+    <div class="mobile-menu" id="mobile-menu">
+      <div class="mobile-menu-inner">
+        <div class="mobile-menu-links">
+          <a href="/">거래소</a>
+          <a href="#">공지사항</a>
+          <a href="#">이용안내</a>
+        </div>
+        <div class="mobile-menu-actions" id="mobile-menu-actions">
+          <a href="/auth/" class="btn btn-outline" style="text-align:center;">로그인</a>
+          <a href="/trade/register.html" class="btn btn-primary" style="text-align:center;">판매하기 ↗</a>
+        </div>
+      </div>
+    </div>
+    <div class="mobile-menu-backdrop" id="mobile-menu-backdrop" onclick="toggleMobileMenu()"></div>
   `
+}
+
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu')
+  const backdrop = document.getElementById('mobile-menu-backdrop')
+  const hamburger = document.getElementById('navbar-hamburger')
+  const open = menu.classList.toggle('open')
+  backdrop.classList.toggle('open', open)
+  hamburger.classList.toggle('open', open)
+  document.body.style.overflow = open ? 'hidden' : ''
 }
 
 async function initNavbarAuth() {
   const { data: { session } } = await db.auth.getSession()
   const el = document.getElementById('navbar-actions')
+  const mobileEl = document.getElementById('mobile-menu-actions')
   if (!el) return
   if (session?.user) {
     const { data: user } = await db.from('User').select('nickname').eq('id', session.user.id).single()
@@ -62,6 +89,13 @@ async function initNavbarAuth() {
       <button class="login-btn" onclick="authSignOut()" style="background:none;border:none;cursor:pointer;">로그아웃</button>
       <a href="/trade/register.html" class="navbar-sell-btn">판매하기 ↗</a>
     `
+    if (mobileEl) {
+      mobileEl.innerHTML = `
+        <a href="/mypage/" class="btn btn-outline" style="text-align:center;">마이페이지 (${nickname})</a>
+        <button class="btn btn-outline" onclick="authSignOut()" style="color:#ef4444;border-color:#ef4444;">로그아웃</button>
+        <a href="/trade/register.html" class="btn btn-primary" style="text-align:center;">판매하기 ↗</a>
+      `
+    }
   }
 }
 
