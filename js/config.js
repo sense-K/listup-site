@@ -35,7 +35,12 @@ function renderNavbar(activePage = '') {
       <div class="navbar-inner">
         <a href="/" class="navbar-logo">리스트업</a>
         <div class="navbar-menu">
-          <a href="/" class="${activePage === 'home' ? '' : 'muted'}">거래소</a>
+          <div class="nav-dropdown-wrap">
+            <span class="navbar-menu-item ${activePage === 'home' ? '' : 'muted'}">거래소 ▾</span>
+            <div class="nav-dropdown" id="nav-game-dropdown">
+              <div class="nav-dropdown-loading">불러오는 중...</div>
+            </div>
+          </div>
           <a href="#" class="muted">공지사항</a>
           <a href="#" class="muted">이용안내</a>
         </div>
@@ -51,7 +56,8 @@ function renderNavbar(activePage = '') {
     <div class="mobile-menu" id="mobile-menu">
       <div class="mobile-menu-inner">
         <div class="mobile-menu-links">
-          <a href="/">거래소</a>
+          <div class="mobile-menu-section-label">거래소</div>
+          <div id="mobile-game-links"></div>
           <a href="#">공지사항</a>
           <a href="#">이용안내</a>
         </div>
@@ -150,6 +156,24 @@ function gameSlugToPath(slug) {
 async function loadAndRenderGameUI(activeSlug) {
   const { data: games } = await db.from('Game').select('id, nameKo, slug, emoji, imageUrl, artImageUrl').eq('isActive', true).order('sortOrder', { nullsFirst: false }).order('nameKo')
   if (!games) return
+
+  // 거래소 드롭다운 업데이트
+  const dropdown = document.getElementById('nav-game-dropdown')
+  if (dropdown) {
+    dropdown.innerHTML = games.map(g => `
+      <a href="${gameSlugToPath(g.slug)}" class="nav-dropdown-item ${g.slug === activeSlug ? 'active' : ''}">
+        ${gameIcon(g, 20)} <span>${g.nameKo}</span>
+      </a>
+    `).join('')
+  }
+  const mobileGameLinks = document.getElementById('mobile-game-links')
+  if (mobileGameLinks) {
+    mobileGameLinks.innerHTML = games.map(g => `
+      <a href="${gameSlugToPath(g.slug)}" style="padding-left:16px;font-size:14px;color:#555;">
+        ${gameIcon(g, 18)} ${g.nameKo}
+      </a>
+    `).join('')
+  }
 
   // 탭 바 업데이트
   const tabList = document.querySelector('.tab-list')
