@@ -168,6 +168,15 @@ async function loadAndRenderGameUI(activeSlug) {
   const { data: games } = await db.from('Game').select('id, nameKo, slug, emoji, imageUrl, artImageUrl').eq('isActive', true).order('sortOrder', { nullsFirst: false }).order('nameKo')
   if (!games) return
 
+  // 게임 페이지 타이틀 업데이트 (이모지 → 앱아이콘)
+  const titleEl = document.getElementById('game-page-title')
+  if (titleEl && activeSlug) {
+    const activeGame = games.find(g => g.slug === activeSlug)
+    if (activeGame) {
+      titleEl.innerHTML = `${gameIcon(activeGame, 26)} ${activeGame.nameKo} 계정`
+    }
+  }
+
   // 거래소 드롭다운 업데이트
   const dropdown = document.getElementById('nav-game-dropdown')
   if (dropdown) {

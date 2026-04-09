@@ -80,6 +80,10 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
     if (gameSlug) {
       const { data: game } = await db.from('Game').select('id').eq('slug', gameSlug).single()
       gameId = game?.id ?? null
+      if (!gameId) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">🎮</div><p>게임 정보를 찾을 수 없어요</p></div>'
+        return
+      }
     }
 
     let query = db
