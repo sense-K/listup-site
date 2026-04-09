@@ -217,6 +217,8 @@
 <script>
   document.getElementById('navbar').innerHTML = renderNavbar()
 
+  let reviewedListingIds = new Set()
+
   async function init() {
     try {
       // 로그인 상태 확인
@@ -262,9 +264,9 @@
 
       // 내가 작성한 리뷰의 listingId 목록
       const { data: myReviews } = await db.from('Review').select('listingId').eq('reviewerId', authUser.id)
-      const reviewedListingIds = new Set((myReviews ?? []).map(r => r.listingId))
+      reviewedListingIds = new Set((myReviews ?? []).map(r => r.listingId))
 
-      render(authUser, user, listings ?? [], myTrades ?? [], reviewedListingIds)
+      render(authUser, user, listings ?? [], myTrades ?? [])
     } catch(e) {
       console.error(e)
       document.getElementById('mypage-content').innerHTML = '<div style="text-align:center;padding:60px 20px;color:#888;">오류가 발생했어요. 새로고침 해주세요.</div>'
@@ -335,7 +337,7 @@
       </div>`
   }
 
-  function render(authUser, user, listings, myTrades, reviewedListingIds) {
+  function render(authUser, user, listings, myTrades) {
     const activeListings = listings.filter(l => l.status !== 'sold')
     const soldListings = listings.filter(l => l.status === 'sold')
     const activeTrades = myTrades.filter(t => t.status === 'active')
