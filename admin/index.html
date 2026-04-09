@@ -205,10 +205,11 @@
       <div class="admin-card">
         <div class="admin-card-title">새 게임 추가</div>
         <div class="inline-form">
-          <input type="text" id="new-game-nameko" placeholder="게임 이름 (한국어)" style="width:160px;">
-          <input type="text" id="new-game-slug" placeholder="slug (영문, 예: genshin)" style="width:160px;">
+          <input type="text" id="new-game-nameko" placeholder="게임 이름 (한국어)" style="width:140px;">
+          <input type="text" id="new-game-nameen" placeholder="게임 이름 (영문, 예: Genshin Impact)" style="width:180px;">
+          <input type="text" id="new-game-slug" placeholder="slug (영문, 예: genshin)" style="width:140px;">
           <input type="text" id="new-game-emoji" placeholder="이모지" style="width:70px;">
-          <input type="text" id="new-game-image" placeholder="앱 아이콘 이미지 URL" style="width:280px;">
+          <input type="text" id="new-game-image" placeholder="앱 아이콘 이미지 URL" style="width:240px;">
           <button class="btn-sm btn-black" onclick="addGame()">+ 추가</button>
         </div>
       </div>
@@ -362,13 +363,15 @@
 
   async function addGame() {
     const nameKo = document.getElementById('new-game-nameko').value.trim()
+    const nameEn = document.getElementById('new-game-nameen').value.trim()
     const slug = document.getElementById('new-game-slug').value.trim()
     const emoji = document.getElementById('new-game-emoji').value.trim()
     const imageUrl = document.getElementById('new-game-image').value.trim()
-    if (!nameKo || !slug) { alert('이름과 slug를 입력하세요'); return }
-    const { error } = await db.from('Game').insert({ id: crypto.randomUUID(), nameKo, slug, emoji, imageUrl: imageUrl || null, isActive: true, createdAt: new Date().toISOString() })
+    if (!nameKo || !nameEn || !slug) { alert('한국어 이름, 영문 이름, slug를 모두 입력하세요'); return }
+    const { error } = await db.from('Game').insert({ id: crypto.randomUUID(), nameKo, nameEn, slug, emoji, imageUrl: imageUrl || null, isActive: true, createdAt: new Date().toISOString() })
     if (error) { alert('추가 실패: ' + error.message); return }
     document.getElementById('new-game-nameko').value = ''
+    document.getElementById('new-game-nameen').value = ''
     document.getElementById('new-game-slug').value = ''
     document.getElementById('new-game-emoji').value = ''
     document.getElementById('new-game-image').value = ''
