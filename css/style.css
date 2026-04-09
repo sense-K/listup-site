@@ -576,12 +576,12 @@ a { text-decoration: none; color: inherit; }
 }
 
 .card-chars {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, 36px);
+  grid-template-rows: repeat(2, 36px);
   gap: 5px;
   margin-bottom: 10px;
-  min-height: 36px;
-  align-items: center;
+  overflow: hidden;
 }
 
 .char-badge {

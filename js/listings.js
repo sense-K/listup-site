@@ -15,22 +15,25 @@ function renderListingCard(listing) {
   const artClass = getArtClass(gameSlug)
 
   const chars = listing.characters ?? []
-  const visibleChars = chars.slice(0, 8)
-  const extraCount = chars.length - visibleChars.length
+  const TOTAL_SLOTS = 8
 
-  const charBadges = visibleChars.map(lc => {
-    const c = lc.character
+  let charBadges, extraBadge
+  if (chars.length <= TOTAL_SLOTS) {
+    // 8개 이하: 전부 표시, +X 없음
+    charBadges = chars.map(lc => renderCharIcon(lc.character)).join('')
+    extraBadge = ''
+  } else {
+    // 8개 초과: 앞 7개 + 마지막 슬롯에 +X
+    charBadges = chars.slice(0, TOTAL_SLOTS - 1).map(lc => renderCharIcon(lc.character)).join('')
+    extraBadge = `<span class="char-img-more">+${chars.length - (TOTAL_SLOTS - 1)}</span>`
+  }
+
+  function renderCharIcon(c) {
     if (!c) return ''
     const gc = typeof gradeClass === 'function' ? gradeClass(c.tier) : ''
-    if (c.imageUrl) {
-      return `<img class="char-img-badge${gc ? ' grade-' + gc : ''}" src="${c.imageUrl}" alt="${c.nameKo}" title="${c.nameKo}">`
-    }
+    if (c.imageUrl) return `<img class="char-img-badge${gc ? ' grade-' + gc : ''}" src="${c.imageUrl}" alt="${c.nameKo}" title="${c.nameKo}">`
     return `<span class="char-badge${gc ? ' grade-' + gc : ''}">${c.nameKo}</span>`
-  }).join('')
-
-  const extraBadge = extraCount > 0
-    ? `<span class="char-img-more">+${extraCount}</span>`
-    : ''
+  }
 
   const discountHtml = listing.discountAmount
     ? `<span class="card-discount">↓ ${formatPrice(listing.discountAmount)} 할인</span>`
