@@ -390,7 +390,10 @@
 
   async function deleteGame(id, name) {
     if (!confirm(`"${name}" 게임을 삭제할까요?\n관련 서버와 캐릭터도 모두 삭제됩니다.`)) return
-    await db.from('Game').delete().eq('id', id)
+    await db.from('Character').delete().eq('gameId', id)
+    await db.from('Server').delete().eq('gameId', id)
+    const { error } = await db.from('Game').delete().eq('id', id)
+    if (error) { alert('삭제 실패: ' + error.message); return }
     loadGames()
   }
 
