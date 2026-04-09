@@ -296,8 +296,17 @@
   let selectedServerId = null
   let selectedChars = []
   let allChars = []
+  let editListingId = null
 
   async function init() {
+    const params = new URLSearchParams(location.search)
+    editListingId = params.get('edit') || null
+
+    if (editListingId) {
+      document.querySelector('h1') && (document.querySelector('h1').textContent = '판매글 수정')
+      document.getElementById('submit-btn').textContent = '수정 완료'
+    }
+
     const { data: games } = await db.from('Game').select('id, nameKo, slug, emoji, imageUrl').eq('isActive', true).order('sortOrder', { nullsFirst: false }).order('nameKo')
     const grid = document.getElementById('game-select-grid')
     if (!games || games.length === 0) {
@@ -315,6 +324,45 @@
         <span class="game-name">${g.nameKo}</span>
       </div>
     `).join('')
+
+    // 수정 모드: 기존 데이터 불러오기
+    if (editListingId) {
+      const { data: listing } = await db.from('Listing')
+        .select(`id, price, description, kakaoOpenChatUrl, gameId, serverId,
+          game:Game(id, nameKo, slug, emoji, imageUrl),
+          server:Server(id, nameKo),
+          characters:ListingCharacter(character:Character(id, nameKo, tier, imageUrl))`)
+        .eq('id', editListingId).single()
+      if (!listing) { alert('판매글을 찾을 수 없어요'); return }
+
+      // 게임 선택
+      const gameObj = games.find(g => g.id === listing.gameId)
+      if (gameObj) {
+        await selectGame(gameObj)
+        // 서버 선택
+        if (listing.serverId) {
+          const serverSel = document.getElementById('server-select')
+          serverSel.value = listing.serverId
+          selectedServerId = listing.serverId
+        }
+      }
+
+      // 캐릭터 선택
+      await loadChars()
+      selectedChars = (listing.characters ?? []).map(lc => lc.character).filter(Boolean)
+      selectedChars.forEach(c => {
+        const el = document.getElementById('char-' + c.id)
+        if (el) el.classList.add('selected')
+      })
+      renderSelectedChars()
+
+      // 가격/설명/연락처
+      document.getElementById('price-input').value = listing.price
+      document.getElementById('desc-input').value = listing.description ?? ''
+      document.getElementById('contact-input').value = listing.kakaoOpenChatUrl ?? ''
+
+      goStep(3)
+    }
   }
 
   async function selectGame(g) {
@@ -495,32 +543,56 @@
       const authUser = await requireAuth()
       if (!authUser) return
 
-      const listingId = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
+      const desc = document.getElementById('desc-input').value || null
+      const updatedAt = new Date().toISOString()
 
-      const { data: listing, error } = await db.from('Listing').insert({
-        id: listingId,
-        userId: authUser.id,
-        gameId: selectedGameId,
-        serverId: selectedServerId,
-        price,
-        description: document.getElementById('desc-input').value || null,
-        kakaoOpenChatUrl: contact,
-        status: 'active',
-        viewCount: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }).select().single()
+      if (editListingId) {
+        // 수정 모드
+        const { error } = await db.from('Listing').update({
+          gameId: selectedGameId,
+          serverId: selectedServerId,
+          price,
+          description: desc,
+          kakaoOpenChatUrl: contact,
+          updatedAt,
+        }).eq('id', editListingId)
+        if (error) throw error
 
-      if (error) throw error
+        // 캐릭터 재등록
+        await db.from('ListingCharacter').delete().eq('listingId', editListingId)
+        if (selectedChars.length > 0) {
+          await db.from('ListingCharacter').insert(
+            selectedChars.map(c => ({ listingId: editListingId, characterId: c.id }))
+          )
+        }
+        alert('판매글이 수정됐어요!')
+        window.location.href = '/listing/?id=' + editListingId
+      } else {
+        // 신규 등록
+        const listingId = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
+        const { data: listing, error } = await db.from('Listing').insert({
+          id: listingId,
+          userId: authUser.id,
+          gameId: selectedGameId,
+          serverId: selectedServerId,
+          price,
+          description: desc,
+          kakaoOpenChatUrl: contact,
+          status: 'active',
+          viewCount: 0,
+          createdAt: updatedAt,
+          updatedAt,
+        }).select().single()
+        if (error) throw error
 
-      if (selectedChars.length > 0) {
-        await db.from('ListingCharacter').insert(
-          selectedChars.map(c => ({ listingId: listing.id, characterId: c.id }))
-        )
+        if (selectedChars.length > 0) {
+          await db.from('ListingCharacter').insert(
+            selectedChars.map(c => ({ listingId: listing.id, characterId: c.id }))
+          )
+        }
+        alert('판매글이 등록됐어요!')
+        window.location.href = '/'
       }
-
-      alert('판매글이 등록됐어요!')
-      window.location.href = '/'
     } catch (e) {
       console.error(e)
       alert('에러: ' + (e?.message ?? JSON.stringify(e)))

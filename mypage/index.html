@@ -291,7 +291,10 @@
         <div class="my-listing-meta">
           <div class="my-listing-status ${statusClass}">${statusText}</div>
           <div class="my-listing-time">${timeAgo(l.createdAt)}</div>
-          ${l.status === 'sold' ? '' : `<button class="my-listing-delete" onclick="event.stopPropagation();deleteListing('${l.id}')">삭제</button>`}
+          ${l.status === 'sold' ? '' : `
+            <button class="my-listing-delete" onclick="event.stopPropagation();location.href='/trade/register.html?edit=${l.id}'" style="margin-bottom:4px;">수정</button>
+            <button class="my-listing-delete" onclick="event.stopPropagation();deleteListing('${l.id}')">삭제</button>
+          `}
         </div>
       </div>`
   }
