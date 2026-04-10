@@ -389,6 +389,7 @@
         )}
       </div>
 
+      ${authUser.email === 'zzabhm@gmail.com' ? `<a href="/admin/" class="btn btn-primary" style="display:block;text-align:center;margin-bottom:10px;">관리자 페이지 →</a>` : ''}
       <button class="logout-btn" onclick="logout()">로그아웃</button>
     `
   }

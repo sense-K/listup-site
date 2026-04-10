@@ -212,7 +212,6 @@ async function loadAndRenderGameUI(activeSlug) {
       <div class="sidebar-section">
         <div class="sidebar-label">게임</div>
         <div class="sidebar-game-list">
-          <a href="/" class="sidebar-game-item ${!activeSlug ? 'active' : ''}">전체</a>
           ${games.map(g => `
             <a href="${gameSlugToPath(g.slug)}" class="sidebar-game-item ${g.slug === activeSlug ? 'active' : ''}" style="display:flex;align-items:center;gap:8px;">
               ${gameIcon(g, 22)} ${g.nameKo}
