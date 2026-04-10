@@ -96,7 +96,13 @@ async function initNavbarAuth() {
   const mobileEl = document.getElementById('mobile-menu-actions')
   if (!el) return
   if (session?.user) {
-    const { data: user } = await db.from('User').select('nickname').eq('id', session.user.id).single()
+    let { data: user } = await db.from('User').select('nickname').eq('id', session.user.id).maybeSingle()
+    if (!user) {
+      const meta = session.user.user_metadata
+      const nickname = meta?.full_name ?? meta?.name ?? session.user.email?.split('@')[0] ?? '사용자'
+      await db.from('User').insert({ id: session.user.id, nickname, isPhoneVerified: false, createdAt: new Date().toISOString() })
+      user = { nickname }
+    }
     const nickname = user?.nickname ?? '사용자'
     el.innerHTML = `
       <a href="/mypage/" style="font-size:13px;color:#888;font-weight:600;">${nickname}</a>
