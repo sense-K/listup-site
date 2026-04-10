@@ -305,20 +305,8 @@ function renderSidebarGames(activeSlug) {
   return `<div class="sidebar-section"><div class="sidebar-label">게임</div><div class="sidebar-game-list" style="color:#aaa;font-size:13px;padding:8px;">불러오는 중...</div></div>`
 }
 
-// 푸터 자동 렌더링 + FAB 가시성 제어
+// 푸터 자동 렌더링
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('footer')
-  if (el) {
-    el.innerHTML = renderFooter()
-
-    // 푸터가 보이면 FAB 숨기기
-    const fab = document.querySelector('.fab')
-    if (fab) {
-      const observer = new IntersectionObserver(([entry]) => {
-        fab.style.opacity = entry.isIntersecting ? '0' : ''
-        fab.style.pointerEvents = entry.isIntersecting ? 'none' : ''
-      }, { threshold: 0.1 })
-      observer.observe(el)
-    }
-  }
+  if (el) el.innerHTML = renderFooter()
 })

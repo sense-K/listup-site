@@ -20,7 +20,11 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
+
+#footer { margin-top: auto; }
 
 a { text-decoration: none; color: inherit; }
 
@@ -1037,6 +1041,7 @@ a { text-decoration: none; color: inherit; }
   .navbar-hamburger { display: none !important; }
   .mobile-menu { display: none !important; }
   .page-wrapper { padding: 0 60px; }
+  .fab { display: none !important; }
 }
 
 /* ===== 푸터 ===== */
