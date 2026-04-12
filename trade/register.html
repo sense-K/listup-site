@@ -293,6 +293,7 @@
   document.getElementById('navbar').innerHTML = renderNavbar('sell')
 
   let selectedGameId = null
+  let selectedGame = null
   let selectedServerId = null
   let selectedChars = []
   let allChars = []
@@ -367,6 +368,7 @@
 
   async function selectGame(g) {
     selectedGameId = g.id
+    selectedGame = g
     selectedChars = []
     allChars = []
 
@@ -399,14 +401,31 @@
     renderCharGrid()
   }
 
-  // 등급 표시 순서
-  const GRADE_ORDER = ['위치','비스트','에인션트 각성','에인션트','레전더리','드래곤','슈퍼에픽','에픽','레어','커먼']
+  // 게임별 등급 표시 순서
+  const GRADE_ORDER_MAP = {
+    'nikke':           ['SSS','SS','S','A','B','C'],
+    'genshin':         ['5성','4성'],
+    'bluearchive':     ['UE','E','SR','R'],
+    'cookierunkingdom':['위치','비스트','에인션트 각성','에인션트','레전더리','드래곤','슈퍼에픽','에픽','레어','커먼'],
+  }
+
+  function getGradeOrder() {
+    const slug = selectedGame?.slug
+    return GRADE_ORDER_MAP[slug] || []
+  }
 
   // 등급별 점 색상
   const GRADE_DOT_COLOR = {
+    // 니케
+    'SSS': '#c026d3', 'SS': '#ea580c', 'S': '#d97706', 'A': '#7c3aed', 'B': '#3b82f6', 'C': '#9ca3af',
+    // 쿠키런
     '위치': '#7c3aed', '비스트': '#334155', '에인션트 각성': '#d97706',
     '에인션트': '#b45309', '레전더리': '#ea580c', '드래곤': '#059669',
-    '슈퍼에픽': '#7c3aed', '에픽': '#3b82f6', '레어': '#22c55e', '커먼': '#9ca3af'
+    '슈퍼에픽': '#7c3aed', '에픽': '#3b82f6', '레어': '#22c55e', '커먼': '#9ca3af',
+    // 원신
+    '5성': '#ea580c', '4성': '#7c3aed',
+    // 블루아카이브
+    'UE': '#c026d3', 'E': '#ea580c', 'SR': '#7c3aed', 'R': '#3b82f6',
   }
 
   function renderCharGrid() {
@@ -425,6 +444,7 @@
     })
 
     // 순서대로 렌더링
+    const GRADE_ORDER = getGradeOrder()
     const orderedGrades = [...GRADE_ORDER.filter(g => groups[g]), ...Object.keys(groups).filter(g => !GRADE_ORDER.includes(g))]
 
     container.innerHTML = orderedGrades.map(grade => {
