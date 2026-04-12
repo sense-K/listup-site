@@ -162,10 +162,18 @@
       myTrade = trade
     }
 
-    render(listing, myTrade)
+    // 다른 사람이 거래 중인지 확인 (RLS 우회용)
+    const { data: anyActiveTrade } = await db
+      .from('Trade')
+      .select('id, buyerId')
+      .eq('listingId', listingId)
+      .in('status', ['active', 'seller_confirmed'])
+      .maybeSingle()
+
+    render(listing, myTrade, anyActiveTrade)
   }
 
-  async function render(l, myTrade) {
+  async function render(l, myTrade, anyActiveTrade) {
     const gameArtUrl = l.game?.artImageUrl ?? ''
     const gameImageUrl = l.game?.imageUrl ?? ''
     const gameName = l.game?.nameKo ?? ''
@@ -203,7 +211,7 @@
     const trustBadge = trustBadgeHtml(tradeCount)
     const ratingHtml = avgRating ? `<span class="seller-stat">⭐ ${avgRating}</span>` : ''
 
-    const actionHtml = await buildActionBox(l, myTrade, isMine)
+    const actionHtml = await buildActionBox(l, myTrade, isMine, anyActiveTrade)
 
     document.getElementById('detail-content').innerHTML = `
       <div class="detail-banner">
@@ -269,7 +277,7 @@
     return '<span class="trust-badge lv1">신규</span>'
   }
 
-  async function buildActionBox(l, myTrade, isMine) {
+  async function buildActionBox(l, myTrade, isMine, anyActiveTrade) {
     // 내 글
     if (isMine) {
       if (l.status === 'trading') {
@@ -346,8 +354,8 @@
         <button class="cancel-trade-btn" onclick="cancelTrade('${myTrade.id}')">거래 취소</button>`
     }
 
-    // 판매중 → 구매 신청
-    if (l.status === 'active') {
+    // 판매중 → 구매 신청 (단, 다른 사람이 거래 중이면 차단)
+    if (l.status === 'active' && !anyActiveTrade) {
       return `
         <div class="buy-box">
           <div class="buy-box-title">구매 신청</div>
@@ -356,7 +364,7 @@
         </div>`
     }
 
-    if (l.status === 'trading' || l.status === 'seller_confirmed') {
+    if (anyActiveTrade || l.status === 'trading' || l.status === 'seller_confirmed') {
       return `<div class="status-info-box">현재 다른 분과 거래 진행 중이에요.</div>`
     }
 
@@ -385,7 +393,8 @@
         createdAt: new Date().toISOString(),
       })
       if (error) throw error
-      await db.from('Listing').update({ status: 'trading' }).eq('id', currentListing.id)
+      const { error: listingError } = await db.from('Listing').update({ status: 'trading' }).eq('id', currentListing.id)
+      if (listingError) console.error('Listing 상태 업데이트 실패 (RLS 정책 확인 필요):', listingError)
       location.reload()
     } catch (e) {
       console.error(e)
