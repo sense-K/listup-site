@@ -228,30 +228,51 @@ async function loadAndRenderGameUI(activeSlug) {
     `
   }
 
-  // 히어로 캐러셀
+  // 히어로 캐러셀 (peek 스타일)
   const heroCollage = document.getElementById('hero-collage')
   if (heroCollage) {
     const validGames = games.filter(g => g.artImageUrl)
     if (validGames.length === 0) return
-    heroCollage.innerHTML =
-      validGames.map((g, i) =>
-        `<div class="collage-item${i === 0 ? ' active' : ''}" style="background-image:url('${g.artImageUrl}')"></div>`
-      ).join('') +
-      `<div class="collage-dots">${validGames.map((_, i) =>
-        `<div class="collage-dot${i === 0 ? ' active' : ''}"></div>`
-      ).join('')}</div>`
+
+    const CARD_W = 420
+    const GAP = 14
+    // 트랙 앞뒤로 복제 없이 peek 효과: 카드 중앙 정렬 오프셋
+    const PEEK = 70 // 양옆에 보이는 너비
+
+    const track = document.createElement('div')
+    track.className = 'hero-collage-track'
+    track.innerHTML = validGames.map((g, i) =>
+      `<div class="collage-item${i === 0 ? ' active' : ''}" style="background-image:url('${g.artImageUrl}')"></div>`
+    ).join('')
+
+    const dotsEl = document.createElement('div')
+    dotsEl.className = 'collage-dots'
+    dotsEl.innerHTML = validGames.map((_, i) =>
+      `<div class="collage-dot${i === 0 ? ' active' : ''}"></div>`
+    ).join('')
+
+    heroCollage.appendChild(track)
+    heroCollage.appendChild(dotsEl)
+
+    let idx = 0
+    const items = track.querySelectorAll('.collage-item')
+    const dots = dotsEl.querySelectorAll('.collage-dot')
+
+    function goTo(newIdx) {
+      items[idx].classList.remove('active')
+      dots[idx].classList.remove('active')
+      idx = newIdx
+      items[idx].classList.add('active')
+      dots[idx].classList.add('active')
+      // 중앙 카드가 560px 컨테이너 정중앙에 오도록 이동
+      const offset = idx * (CARD_W + GAP) - PEEK
+      track.style.transform = `translateX(${-offset}px)`
+    }
+
+    goTo(0)
 
     if (validGames.length > 1) {
-      let idx = 0
-      const items = heroCollage.querySelectorAll('.collage-item')
-      const dots = heroCollage.querySelectorAll('.collage-dot')
-      setInterval(() => {
-        items[idx].classList.remove('active')
-        dots[idx].classList.remove('active')
-        idx = (idx + 1) % items.length
-        items[idx].classList.add('active')
-        dots[idx].classList.add('active')
-      }, 3500)
+      setInterval(() => goTo((idx + 1) % items.length), 3500)
     }
   }
 
