@@ -33,7 +33,7 @@ function renderNavbar(activePage = '') {
   return `
     <nav class="navbar">
       <div class="navbar-inner">
-        <a href="/" class="navbar-logo">리세 리스트</a>
+        <a href="/" class="navbar-logo">리세리스트</a>
         <div class="navbar-menu">
           <div class="nav-dropdown-wrap" id="nav-dropdown-wrap">
             <span class="navbar-menu-item ${activePage === 'home' ? '' : 'muted'}" onclick="toggleNavDropdown()">거래소 ▾</span>
@@ -272,7 +272,7 @@ async function loadAndRenderGameUI(activeSlug) {
     goTo(0)
 
     if (validGames.length > 1) {
-      setInterval(() => goTo((idx + 1) % items.length), 3500)
+      setInterval(() => goTo((idx + 1) % items.length), 2000)
     }
   }
 
