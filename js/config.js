@@ -33,7 +33,7 @@ function renderNavbar(activePage = '') {
   return `
     <nav class="navbar">
       <div class="navbar-inner">
-        <a href="/" class="navbar-logo">리셋리스트</a>
+        <a href="/" class="navbar-logo">리세 리스트</a>
         <div class="navbar-menu">
           <div class="nav-dropdown-wrap" id="nav-dropdown-wrap">
             <span class="navbar-menu-item ${activePage === 'home' ? '' : 'muted'}" onclick="toggleNavDropdown()">거래소 ▾</span>
@@ -336,12 +336,12 @@ function renderFooter() {
       <div class="site-footer-inner">
         <div class="footer-top">
           <div class="footer-brand">
-            <span class="footer-logo">리셋리스트</span>
+            <span class="footer-logo">리세 리스트</span>
             <p class="footer-desc">모바일 게임 계정 시세 조회 및 직거래 플랫폼</p>
           </div>
         </div>
         <div class="footer-bottom">
-          <span>© 2025 리셋리스트. All rights reserved.</span>
+          <span>© 2025 리세 리스트. All rights reserved.</span>
         </div>
       </div>
     </footer>
