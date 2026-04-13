@@ -301,7 +301,16 @@
   async function buildActionBox(l, myTrade, isMine, anyActiveTrade) {
     // 내 글
     if (isMine) {
-      if (l.status === 'trading') {
+      if (l.status === 'sold') {
+        return `<div class="status-info-box">판매 완료된 계정이에요.</div>`
+      }
+      // trading/seller_confirmed 상태이지만 실제 진행중인 거래가 없으면 → 취소 후 Listing 상태가 덜 반영된 것
+      if ((l.status === 'trading' || l.status === 'seller_confirmed') && !anyActiveTrade) {
+        // 백그라운드에서 Listing 상태 복구
+        db.from('Listing').update({ status: 'active' }).eq('id', listingId)
+        return `<div class="status-info-box">내가 등록한 판매글이에요.</div>`
+      }
+      if (l.status === 'trading' && anyActiveTrade) {
         return `
           <div class="status-info-box">
             거래 진행 중이에요. 구매자와 연락하세요.<br>
@@ -309,11 +318,8 @@
             <button class="cancel-trade-btn" style="margin-top:8px;border-color:#10b981;color:#10b981;" onclick="sellerConfirm()">계정 전달 완료</button>
           </div>`
       }
-      if (l.status === 'seller_confirmed') {
+      if (l.status === 'seller_confirmed' && anyActiveTrade) {
         return `<div class="status-info-box" style="background:#e0f2fe;color:#0369a1;">구매자의 수령 확인을 기다리고 있어요.</div>`
-      }
-      if (l.status === 'sold') {
-        return `<div class="status-info-box">판매 완료된 계정이에요.</div>`
       }
       return `<div class="status-info-box">내가 등록한 판매글이에요.</div>`
     }
@@ -375,21 +381,23 @@
         <button class="cancel-trade-btn" onclick="cancelTrade('${myTrade.id}')">거래 취소</button>`
     }
 
-    // 판매중 → 구매 신청 (단, 다른 사람이 거래 중이면 차단)
-    if (l.status === 'active' && !anyActiveTrade) {
-      return `
-        <div class="buy-box">
-          <div class="buy-box-title">구매 신청</div>
-          <div class="buy-box-desc">신청 후 판매자의 오픈채팅 링크가 공개돼요</div>
-          <button class="buy-btn" onclick="requestTrade()">구매 신청하기 · ${formatPrice(l.price)}</button>
-        </div>`
+    // 판매완료
+    if (l.status === 'sold') {
+      return `<div class="status-info-box">판매 완료된 계정이에요.</div>`
     }
 
-    if (anyActiveTrade || l.status === 'trading' || l.status === 'seller_confirmed') {
+    // 실제 진행중인 거래가 있으면 거래중 표시
+    if (anyActiveTrade) {
       return `<div class="status-info-box">현재 다른 분과 거래 진행 중이에요.</div>`
     }
 
-    return `<div class="status-info-box">판매 완료된 계정이에요.</div>`
+    // 구매 신청 가능: 진행중인 거래 없고 판매완료 아닐 때 (Listing.status가 'trading'으로 잘못 남아있어도 허용)
+    return `
+      <div class="buy-box">
+        <div class="buy-box-title">구매 신청</div>
+        <div class="buy-box-desc">신청 후 판매자의 오픈채팅 링크가 공개돼요</div>
+        <button class="buy-btn" onclick="requestTrade()">구매 신청하기 · ${formatPrice(l.price)}</button>
+      </div>`
   }
 
   async function requestTrade() {
@@ -469,9 +477,34 @@
 
   async function cancelTradeAsSeller() {
     if (!confirm('거래를 취소할까요? 구매자와 확인 후 취소해주세요.')) return
-    await db.from('Trade').update({ status: 'cancelled' }).eq('listingId', listingId).in('status', ['active', 'seller_confirmed'])
-    await db.from('Listing').update({ status: 'active' }).eq('id', listingId)
-    location.reload()
+    try {
+      // 진행중인 거래 ID 먼저 조회
+      const { data: trades, error: fetchErr } = await db
+        .from('Trade')
+        .select('id')
+        .eq('listingId', listingId)
+        .in('status', ['active', 'seller_confirmed'])
+      if (fetchErr) throw fetchErr
+
+      if (trades && trades.length > 0) {
+        const { error: tradeErr } = await db
+          .from('Trade')
+          .update({ status: 'cancelled' })
+          .in('id', trades.map(t => t.id))
+        if (tradeErr) throw tradeErr
+      }
+
+      const { error: listingErr } = await db
+        .from('Listing')
+        .update({ status: 'active' })
+        .eq('id', listingId)
+      if (listingErr) throw listingErr
+
+      location.reload()
+    } catch (e) {
+      console.error('거래 취소 오류:', e)
+      alert('거래 취소 중 오류가 발생했어요: ' + (e?.message ?? JSON.stringify(e)))
+    }
   }
 
   async function loadSellerReviews(sellerId) {
