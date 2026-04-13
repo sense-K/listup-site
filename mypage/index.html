@@ -431,6 +431,7 @@
     if (!confirm('이 판매계정을 삭제할까요?')) return
     await db.from('Trade').update({ status: 'cancelled' }).eq('listingId', id).not('status', 'eq', 'completed')
     await db.from('ListingCharacter').delete().eq('listingId', id)
+    await db.from('Trade').delete().eq('listingId', id)
     const { error } = await db.from('Listing').delete().eq('id', id)
     if (error) { alert('삭제 중 오류가 발생했어요: ' + error.message); return }
     init()
