@@ -53,8 +53,12 @@ function renderListingCard(listing) {
       <div class="card-body">
         <div class="card-price-row">
           <span class="card-price">${formatPrice(listing.price)}</span>
-          ${discountHtml}
+          <span class="card-game-badge">
+            ${gameImageUrl ? `<img src="${gameImageUrl}" alt="${listing.game?.nameKo ?? ''}" style="width:14px;height:14px;border-radius:3px;object-fit:cover;vertical-align:middle;">` : gameEmoji}
+            ${listing.game?.nameKo ?? ''}
+          </span>
         </div>
+        ${discountHtml ? `<div style="margin-top:-4px;">${discountHtml}</div>` : ''}
         <div class="card-chars">${charBadges}${extraBadge}</div>
         ${listing.description ? `<div class="card-desc">${listing.description}</div>` : ''}
         <div class="card-footer">
