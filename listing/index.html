@@ -304,22 +304,22 @@
       if (l.status === 'sold') {
         return `<div class="status-info-box">판매 완료된 계정이에요.</div>`
       }
-      // trading/seller_confirmed 상태이지만 실제 진행중인 거래가 없으면 → 취소 후 Listing 상태가 덜 반영된 것
-      if ((l.status === 'trading' || l.status === 'seller_confirmed') && !anyActiveTrade) {
-        // 백그라운드에서 Listing 상태 복구
+      // seller_confirmed: anyActiveTrade 여부 무관하게 항상 표시 (RLS로 anyActiveTrade가 null일 수 있음)
+      if (l.status === 'seller_confirmed') {
+        return `<div class="status-info-box" style="background:#e0f2fe;color:#0369a1;">구매자의 수령 확인을 기다리고 있어요.</div>`
+      }
+      // trading 상태이지만 실제 진행 거래 없으면 → 거래 취소 후 Listing 상태만 미반영된 케이스
+      if (l.status === 'trading' && !anyActiveTrade) {
         db.from('Listing').update({ status: 'active' }).eq('id', listingId)
         return `<div class="status-info-box">내가 등록한 판매글이에요.</div>`
       }
-      if (l.status === 'trading' && anyActiveTrade) {
+      if (l.status === 'trading') {
         return `
           <div class="status-info-box">
             거래 진행 중이에요. 구매자와 연락하세요.<br>
             <button class="cancel-trade-btn" style="margin-top:12px;" onclick="cancelTradeAsSeller()">거래 취소</button>
             <button class="cancel-trade-btn" style="margin-top:8px;border-color:#10b981;color:#10b981;" onclick="sellerConfirm()">계정 전달 완료</button>
           </div>`
-      }
-      if (l.status === 'seller_confirmed' && anyActiveTrade) {
-        return `<div class="status-info-box" style="background:#e0f2fe;color:#0369a1;">구매자의 수령 확인을 기다리고 있어요.</div>`
       }
       return `<div class="status-info-box">내가 등록한 판매글이에요.</div>`
     }
