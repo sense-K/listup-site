@@ -217,13 +217,16 @@
         }).join('')
       : '<span style="color:#aaa;font-size:13px;">선택된 캐릭터 없음</span>'
 
+    // trading 상태인데 실제 활성 Trade 없으면 active로 보정
+    const effectiveStatus = (l.status === 'trading' && !anyActiveTrade) ? 'active' : l.status
+
     const statusMap = {
       active: ['판매중', 'active'],
       trading: ['거래중', 'trading'],
       seller_confirmed: ['전달 완료 대기중', 'seller_confirmed'],
       sold: ['판매완료', 'sold']
     }
-    const [statusText, statusClass] = statusMap[l.status] ?? ['판매중', 'active']
+    const [statusText, statusClass] = statusMap[effectiveStatus] ?? ['판매중', 'active']
 
     // 신뢰 배지
     const trustBadge = trustBadgeHtml(tradeCount)

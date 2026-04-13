@@ -229,6 +229,7 @@
 
   let reviewedListingIds = new Set()
   let staleSellerConfirmedIds = new Set()
+  let staleTradingIds = new Set() // trading 상태인데 실제 활성 Trade 없는 경우
 
   async function init() {
     try {
@@ -260,20 +261,29 @@
         .eq('userId', authUser.id)
         .order('createdAt', { ascending: false })
 
-      // seller_confirmed 판매글 중 실제 완료된 것 확인 (구매자가 수령확인 후 RLS로 Listing 업데이트 못한 경우)
-      const sellerConfirmedIds = (listings ?? []).filter(l => l.status === 'seller_confirmed').map(l => l.id)
+      // trading/seller_confirmed인데 실제 활성 Trade 없는 경우 보정 (RLS로 Listing 업데이트 실패 대비)
+      const tradingOrConfirmedIds = (listings ?? [])
+        .filter(l => l.status === 'trading' || l.status === 'seller_confirmed')
+        .map(l => l.id)
       staleSellerConfirmedIds = new Set()
-      if (sellerConfirmedIds.length > 0) {
+      staleTradingIds = new Set()
+      if (tradingOrConfirmedIds.length > 0) {
         const { data: stillActiveTrades } = await db.from('Trade')
-          .select('listingId')
-          .in('listingId', sellerConfirmedIds)
+          .select('listingId, status')
+          .in('listingId', tradingOrConfirmedIds)
           .in('status', ['active', 'seller_confirmed'])
-        const activeListingIdSet = new Set((stillActiveTrades ?? []).map(t => t.listingId))
-        sellerConfirmedIds.forEach(id => {
-          if (!activeListingIdSet.has(id)) {
-            staleSellerConfirmedIds.add(id)
-            // 백그라운드로 Listing 상태 업데이트
-            db.from('Listing').update({ status: 'sold' }).eq('id', id)
+        const activeTradeMap = new Map()
+        ;(stillActiveTrades ?? []).forEach(t => activeTradeMap.set(t.listingId, t.status))
+        tradingOrConfirmedIds.forEach(id => {
+          const listing = (listings ?? []).find(l => l.id === id)
+          if (!activeTradeMap.has(id)) {
+            if (listing?.status === 'seller_confirmed') {
+              staleSellerConfirmedIds.add(id)
+              db.from('Listing').update({ status: 'sold' }).eq('id', id)
+            } else if (listing?.status === 'trading') {
+              staleTradingIds.add(id)
+              db.from('Listing').update({ status: 'active' }).eq('id', id)
+            }
           }
         })
       }
@@ -307,7 +317,7 @@
     const gameEmoji = l.game?.emoji ?? ''
     const gameImg = l.game?.artImageUrl ?? ''
     const chars = (l.characters ?? []).map(lc => lc.character?.nameKo).filter(Boolean)
-    const effectiveStatus = staleSellerConfirmedIds.has(l.id) ? 'sold' : l.status
+    const effectiveStatus = staleSellerConfirmedIds.has(l.id) ? 'sold' : staleTradingIds.has(l.id) ? 'active' : l.status
     const statusClass = effectiveStatus === 'active' ? 'status-active' : effectiveStatus === 'trading' ? 'status-trading' : effectiveStatus === 'seller_confirmed' ? 'status-seller-confirmed' : 'status-sold'
     const statusText = effectiveStatus === 'active' ? '판매중' : effectiveStatus === 'trading' ? '거래중' : effectiveStatus === 'seller_confirmed' ? '수령확인 대기중' : '판매완료'
     return `
