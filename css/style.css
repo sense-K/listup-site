@@ -202,49 +202,58 @@ a { text-decoration: none; color: inherit; }
   color: var(--white);
 }
 
-/* 히어로 캐러셀 (peek 스타일) */
+/* 히어로 대각선 3열 스크롤 */
 .hero-collage {
   position: relative;
-  width: 560px;
+  width: 600px;
+  height: 320px;
   flex-shrink: 0;
   overflow: hidden;
+  border-radius: 20px;
 }
-.hero-collage-track {
+.hero-diagonal-rows {
+  position: absolute;
+  top: -80px;
+  left: -100px;
+  right: -100px;
+  bottom: -80px;
   display: flex;
-  gap: 14px;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
+  flex-direction: column;
+  gap: 12px;
+  transform: rotate(-14deg);
+  padding: 20px 0;
 }
-.collage-item {
+.hero-drow {
+  overflow: hidden;
   flex-shrink: 0;
-  width: 420px;
-  height: 280px;
-  border-radius: 16px;
+}
+.hero-drow-track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+}
+.hero-drow--right .hero-drow-track {
+  animation: hero-scroll-right 24s linear infinite;
+}
+.hero-drow--left .hero-drow-track {
+  animation: hero-scroll-left 20s linear infinite;
+}
+.hero-dcard {
+  flex-shrink: 0;
+  width: 190px;
+  height: 120px;
+  border-radius: 12px;
   background-size: cover;
   background-position: center;
   background-color: #222;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
-  opacity: 0.45;
-  transform: scale(0.88);
 }
-.collage-item.active {
-  opacity: 1;
-  transform: scale(1);
+@keyframes hero-scroll-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
 }
-.collage-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 12px;
-}
-.collage-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.3);
-  transition: background 0.3s;
-}
-.collage-dot.active {
-  background: #fff;
+@keyframes hero-scroll-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
 /* 게임 선택 카드 섹션 */
@@ -318,19 +327,12 @@ a { text-decoration: none; color: inherit; }
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 .game-select-card-name {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 1px 4px rgba(0,0,0,0.5);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-.game-select-card-arrow {
-  margin-left: auto;
-  font-size: 18px;
-  color: rgba(255,255,255,0.7);
+  line-height: 1.3;
+  word-break: keep-all;
 }
 
 /* 최신 매물 헤더 */
@@ -1047,8 +1049,7 @@ a { text-decoration: none; color: inherit; }
     gap: 6px;
   }
   .game-select-card-icon { width: 48px; height: 48px; border-radius: 12px; }
-  .game-select-card-name { font-size: 12px; color: #111; text-shadow: none; text-align: center; }
-  .game-select-card-arrow { display: none; }
+  .game-select-card-name { font-size: 11px; color: #111; text-shadow: none; text-align: center; word-break: keep-all; }
   .tab-bar-inner { padding: 0 20px; }
   .layout-with-sidebar { flex-direction: column; }
   .sidebar { width: 100%; position: static; }

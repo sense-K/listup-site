@@ -228,52 +228,34 @@ async function loadAndRenderGameUI(activeSlug) {
     `
   }
 
-  // 히어로 캐러셀 (peek 스타일)
+  // 히어로 대각선 3열 무한 스크롤
   const heroCollage = document.getElementById('hero-collage')
   if (heroCollage) {
     const validGames = games.filter(g => g.artImageUrl)
     if (validGames.length === 0) return
 
-    const CARD_W = 420
-    const GAP = 14
-    // 트랙 앞뒤로 복제 없이 peek 효과: 카드 중앙 정렬 오프셋
-    const PEEK = 70 // 양옆에 보이는 너비
+    // 각 열에 충분한 카드 수 확보 (최소 10장, 무한 루프용으로 2배 복제)
+    const MIN = 10
+    const pool = []
+    while (pool.length < MIN) pool.push(...validGames)
+    const row1 = pool.slice(0, MIN)
+    const row2 = pool.slice(0, MIN).reverse()
+    const row3 = pool.slice(0, MIN)
 
-    const track = document.createElement('div')
-    track.className = 'hero-collage-track'
-    track.innerHTML = validGames.map((g, i) =>
-      `<div class="collage-item${i === 0 ? ' active' : ''}" style="background-image:url('${g.artImageUrl}')"></div>`
-    ).join('')
-
-    const dotsEl = document.createElement('div')
-    dotsEl.className = 'collage-dots'
-    dotsEl.innerHTML = validGames.map((_, i) =>
-      `<div class="collage-dot${i === 0 ? ' active' : ''}"></div>`
-    ).join('')
-
-    heroCollage.appendChild(track)
-    heroCollage.appendChild(dotsEl)
-
-    let idx = 0
-    const items = track.querySelectorAll('.collage-item')
-    const dots = dotsEl.querySelectorAll('.collage-dot')
-
-    function goTo(newIdx) {
-      items[idx].classList.remove('active')
-      dots[idx].classList.remove('active')
-      idx = newIdx
-      items[idx].classList.add('active')
-      dots[idx].classList.add('active')
-      // 중앙 카드가 560px 컨테이너 정중앙에 오도록 이동
-      const offset = idx * (CARD_W + GAP) - PEEK
-      track.style.transform = `translateX(${-offset}px)`
+    function makeRow(items, dir) {
+      const cards = items.map(g =>
+        `<div class="hero-dcard" style="background-image:url('${g.artImageUrl}')"></div>`
+      ).join('')
+      return `<div class="hero-drow hero-drow--${dir}"><div class="hero-drow-track">${cards}${cards}</div></div>`
     }
 
-    goTo(0)
-
-    if (validGames.length > 1) {
-      setInterval(() => goTo((idx + 1) % items.length), 2000)
-    }
+    heroCollage.innerHTML = `
+      <div class="hero-diagonal-rows">
+        ${makeRow(row1, 'right')}
+        ${makeRow(row2, 'left')}
+        ${makeRow(row3, 'right')}
+      </div>
+    `
   }
 
   // 게임 선택 카드
@@ -289,7 +271,6 @@ async function loadAndRenderGameUI(activeSlug) {
         <div class="game-select-card-info">
           ${g.imageUrl ? `<img class="game-select-card-icon" src="${g.imageUrl}" alt="${g.nameKo}">` : `<span style="font-size:28px;">${g.emoji}</span>`}
           <span class="game-select-card-name">${g.nameKo}</span>
-          <span class="game-select-card-arrow">↗</span>
         </div>
       </a>
     `).join('')
