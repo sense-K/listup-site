@@ -118,7 +118,23 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       return
     }
 
-    el.innerHTML = `<div class="listings-grid">${listings.map(renderListingCard).join('')}</div>`
+    // Listing.status가 'trading'인데 실제 활성 Trade가 없으면 active로 보정
+    // (RLS로 인해 취소 시 Listing 상태 업데이트가 실패한 경우 대비)
+    const tradingIds = listings.filter(l => l.status === 'trading').map(l => l.id)
+    let activeTradeIds = new Set()
+    if (tradingIds.length > 0) {
+      const { data: activeTrades } = await db
+        .from('Trade')
+        .select('listingId')
+        .in('listingId', tradingIds)
+        .in('status', ['active', 'seller_confirmed'])
+      activeTradeIds = new Set((activeTrades ?? []).map(t => t.listingId))
+    }
+    const corrected = listings.map(l =>
+      l.status === 'trading' && !activeTradeIds.has(l.id) ? { ...l, status: 'active' } : l
+    )
+
+    el.innerHTML = `<div class="listings-grid">${corrected.map(renderListingCard).join('')}</div>`
   } catch (e) {
     console.error(e)
     el.innerHTML = '<div class="empty"><p>계정을 불러오지 못했어요</p></div>'
