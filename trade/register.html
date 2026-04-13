@@ -58,35 +58,38 @@
 
     /* 게임 선택 카드 */
     .game-select-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
       margin-bottom: 20px;
     }
     .game-select-card {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 12px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 16px;
+      gap: 7px;
+      padding: 12px 6px 10px;
+      border: 2px solid transparent;
+      border-radius: 16px;
       cursor: pointer;
       transition: all 0.15s;
-      background: #fff;
+      background: #f5f5f5;
+      text-align: center;
     }
-    .game-select-card:hover { border-color: #aaa; }
-    .game-select-card.selected { border-color: #111; background: #f8f8f8; }
+    .game-select-card:hover { background: #ebebeb; }
+    .game-select-card.selected { border-color: #111; background: #fff; box-shadow: 0 0 0 1px #111; }
     .game-select-card .game-icon-wrap {
-      width: 36px; height: 36px; flex-shrink: 0;
+      width: 52px; height: 52px; flex-shrink: 0;
     }
     .game-select-card .game-icon-wrap img {
-      width: 36px; height: 36px; border-radius: 9px; object-fit: cover;
+      width: 52px; height: 52px; border-radius: 14px; object-fit: cover;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     }
     .game-select-card .game-emoji {
-      font-size: 24px; width: 36px; height: 36px;
+      font-size: 32px; width: 52px; height: 52px;
       display: flex; align-items: center; justify-content: center;
     }
-    .game-select-card .game-name { font-size: 14px; font-weight: 700; }
+    .game-select-card .game-name { font-size: 11px; font-weight: 700; color: #333; word-break: keep-all; line-height: 1.3; }
 
     .char-item {
       position: relative;
@@ -236,8 +239,8 @@
         <option value="">서버 선택</option>
       </select>
     </div>
-    <button class="btn btn-primary btn-full" onclick="goStep(2)">다음 →</button>
-    <a href="/trade/bulk.html" class="btn btn-outline btn-full" style="margin-top:8px;text-align:center;display:block;">여러 계정 한번에 올리기 →</a>
+    <button class="btn btn-primary btn-full" onclick="goStep(2)" style="margin-top:4px;">다음 →</button>
+    <a href="/trade/bulk.html" style="display:block;text-align:center;margin-top:12px;font-size:13px;color:#bbb;text-decoration:none;">여러 계정 한번에 올리기 →</a>
   </div>
 
   <!-- STEP 2: 캐릭터 선택 -->
