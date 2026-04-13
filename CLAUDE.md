@@ -97,25 +97,58 @@ const GRADE_ORDER_MAP = {
   - 쿠키런킹덤: 어둠마녀, 미스틱플라워, 버닝스파이스, 사일런트솔트, 쉐도우밀크, 이터널슈가
 
 ## 공유 기능 (listing/index.html + functions/listing/index.js)
-- 판매계정 상세 우측 상단에 `🔗 공유하기` 버튼
-- 모바일: Web Share API (네이티브 공유), PC: 클립보드 복사 + 토스트
+- 판매계정 상세 우측 상단에 `🔗 공유하기` 버튼 → 클립보드 복사 + 토스트 방식
 - Cloudflare Pages Function이 `/listing/?id=xxx` 요청 시 Supabase에서 데이터 조회 후 OG 태그 동적 주입
 - 카카오톡·디스코드 붙여넣기 시: 게임명·서버·가격·캐릭터 목록 미리보기 표시
 
 ## 구매 신청 / 거래 중 처리 (listing/index.html)
 - 구매 신청 시 Trade 테이블 insert + Listing status → `trading` 업데이트
 - Listing 업데이트가 RLS로 막힐 수 있음 → Trade 테이블 직접 조회로 거래 중 여부 판단
-- **Supabase에서 실행 필요한 SQL** (미완료 시 Listing 상태 배지가 안 바뀜):
-  ```sql
-  CREATE POLICY "buyer can set listing to trading"
-  ON "Listing" FOR UPDATE TO authenticated
-  USING (status = 'active') WITH CHECK (status = 'trading');
-  ```
+- RLS 정책 "buyer can set listing to trading" 이미 적용 완료 ✅
+- 판매글 삭제 시: ListingCharacter → Trade → Listing 순으로 삭제 (FK 제약 때문)
+- Supabase CASCADE FK 설정하면 더 안정적 (선택사항, 아래 남은 작업 참고)
 
-## 현재 상태 (2026-04-12)
-- 핵심 기능 전부 구현 완료
+## 보안 (2026-04-13 완료)
+- register.html, bulk.html: onclick 인라인 JSON 제거 → gameStore/charStore 객체로 교체 (XSS 수정) ✅
+- RLS 정책 확인 완료 ✅
+
+## 검색·더보기·가격포맷팅 (2026-04-13 완료)
+- loadListings()에 `search`, `append`, `moreBtn` 파라미터 추가 (listings.js)
+- 홈·게임 페이지 상단에 검색창 추가 (캐릭터명 + 설명 통합 검색, 350ms 디바운스)
+- 홈·게임 페이지 더보기 버튼 추가 (12개씩 append 로드)
+- 판매 등록 가격 입력 실시간 쉼표 포맷팅 (register.html, bulk.html)
+
+## 마이페이지 (mypage/index.html)
+- 탭 기반 UI: 판매 탭 / 구매 탭
+- 판매 탭: 판매 중 + 판매 완료 (아코디언)
+- 구매 탭: 거래 진행중 + 거래 완료 + 취소된 거래 (있을 때만)
+- 섹션 바디 흰색 배경, 구매 탭 빈 화면 푸터 위치 수정
+
+## 현재 상태 (2026-04-13)
+- 핵심 기능 + 보안 + UX 개선 완료
 - resetlist.kr 도메인 연결 완료
 - SEO + Google Search Console 등록 완료
-- 공유 기능 + 동적 OG 썸네일 완료
 - 시세 조회 기능 미구현 (2차 개발 예정)
-- Supabase RLS 정책 추가 필요 (위 SQL 참고)
+
+## 남은 작업 목록
+### 중요도 높음
+- [ ] Cloudflare Web Analytics 연동 (방문자 분석 도구 없음)
+- [ ] 신규 게임(zzz, sevenknightsre, leehwan) SEO 키워드 보강 (게임 캐릭터 파악 후)
+- [ ] Supabase CASCADE FK 설정 (판매글 삭제 안정성):
+  ```sql
+  ALTER TABLE "Trade" DROP CONSTRAINT "Trade_listingId_fkey";
+  ALTER TABLE "Trade" ADD CONSTRAINT "Trade_listingId_fkey"
+    FOREIGN KEY ("listingId") REFERENCES "Listing"(id) ON DELETE CASCADE;
+  ALTER TABLE "ListingCharacter" DROP CONSTRAINT "ListingCharacter_listingId_fkey";
+  ALTER TABLE "ListingCharacter" ADD CONSTRAINT "ListingCharacter_listingId_fkey"
+    FOREIGN KEY ("listingId") REFERENCES "Listing"(id) ON DELETE CASCADE;
+  ```
+
+### 중요도 중간
+- [ ] 찜하기 기능 (관심 목록)
+- [ ] 필터 강화 (가격 범위, 캐릭터 포함 여부)
+- [ ] 모바일 반응형 개선 (히어로 캐러셀 모바일 표시, 게임카드 2열)
+
+### 중요도 낮음
+- [ ] 시세 조회 기능 (게임-서버-캐릭터별 평균가)
+- [ ] 거래 분쟁 처리 메커니즘
