@@ -312,6 +312,8 @@
   let rowIdSeq = 0
   let modalTargetRowId = null
   let modalTempChars = []
+  const gameStore = {}  // id → game 객체
+  const charStore = {}  // id → character 객체
 
   const GRADE_ORDER_MAP = {
     'nikke':            ['SSS','SS','S','A','B','C'],
@@ -332,8 +334,9 @@
       .eq('isActive', true).order('sortOrder', { nullsFirst: false }).order('nameKo')
     const grid = document.getElementById('game-select-grid')
     if (!games?.length) { grid.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">게임이 없어요</div>'; return }
+    games.forEach(g => { gameStore[g.id] = g })
     grid.innerHTML = games.map(g => `
-      <div class="game-select-card" id="gcard-${g.id}" onclick="selectGame(${JSON.stringify(g).replace(/"/g, '&quot;')})">
+      <div class="game-select-card" id="gcard-${g.id}" onclick="selectGame('${g.id}')">
         <div class="game-icon-wrap">
           ${g.imageUrl ? `<img src="${g.imageUrl}" alt="${g.nameKo}">` : `<div class="game-emoji">${g.emoji ?? ''}</div>`}
         </div>
@@ -345,7 +348,9 @@
     addRow()
   }
 
-  async function selectGame(g) {
+  async function selectGame(gameId) {
+    const g = gameStore[gameId]
+    if (!g) return
     selectedGameId = g.id
     selectedGame = g
     allChars = []
@@ -412,9 +417,9 @@
         </button>
         <div class="row-inputs">
           <div class="price-input-wrap">
-            <input type="number" class="form-input" placeholder="판매가격" min="0"
-              value="${row.price}"
-              oninput="updateRowField(${row.id}, 'price', this.value)"
+            <input type="text" inputmode="numeric" class="form-input" placeholder="50,000"
+              value="${row.price ? Number(row.price).toLocaleString('ko-KR') : ''}"
+              oninput="handleBulkPriceInput(this, ${row.id})"
               style="font-size:14px;">
             <span class="price-unit">원</span>
           </div>
@@ -424,6 +429,12 @@
           style="font-size:13px;resize:none;">${row.desc}</textarea>
       </div>
     `
+  }
+
+  function handleBulkPriceInput(input, rowId) {
+    const raw = input.value.replace(/[^0-9]/g, '')
+    input.value = raw ? Number(raw).toLocaleString('ko-KR') : ''
+    updateRowField(rowId, 'price', raw)
   }
 
   function updateRowField(id, field, value) {
@@ -470,6 +481,7 @@
     const GRADE_ORDER = GRADE_ORDER_MAP[selectedGame?.slug] || []
     const orderedGrades = [...GRADE_ORDER.filter(g => groups[g]), ...Object.keys(groups).filter(g => !GRADE_ORDER.includes(g))]
 
+    allChars.forEach(c => { charStore[c.id] = c })
     container.innerHTML = orderedGrades.map(grade => {
       const chars = groups[grade]
       const dot = GRADE_DOT_COLOR[grade] || '#9ca3af'
@@ -477,7 +489,7 @@
         const isSelected = modalTempChars.some(x => x.id === c.id)
         return `
           <div class="char-item${isSelected ? ' selected' : ''}" id="mchar-${c.id}"
-            onclick="toggleModalChar(${JSON.stringify(c).replace(/"/g, '&quot;')})">
+            onclick="toggleModalChar('${c.id}')">
             ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy">` : `<div class="char-no-img">?</div>`}
             <div class="char-name-label">${c.nameKo}</div>
             <div class="check-overlay">
@@ -497,7 +509,9 @@
     }).join('')
   }
 
-  function toggleModalChar(c) {
+  function toggleModalChar(charId) {
+    const c = charStore[charId]
+    if (!c) return
     const idx = modalTempChars.findIndex(x => x.id === c.id)
     if (idx >= 0) modalTempChars.splice(idx, 1)
     else modalTempChars.push(c)

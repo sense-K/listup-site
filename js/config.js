@@ -326,6 +326,7 @@ function renderFooter() {
         </div>
         <div class="footer-bottom">
           <span>© 2025 리세 리스트. All rights reserved.</span>
+          <a href="mailto:zzabhm@gmail.com" style="color:inherit;opacity:0.6;font-size:12px;text-decoration:none;">zzabhm@gmail.com</a>
         </div>
       </div>
     </footer>

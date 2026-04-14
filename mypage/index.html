@@ -7,210 +7,184 @@
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .mypage-wrap {
-      max-width: 720px;
+      max-width: 640px;
       margin: 0 auto;
-      padding: 32px 20px 60px;
+      padding: 28px 20px 80px;
+      min-height: calc(100vh - 60px - 160px);
     }
 
     /* 프로필 카드 */
     .profile-card {
       background: #111;
       border-radius: 16px;
-      padding: 28px;
+      padding: 24px 28px;
       display: flex;
       align-items: center;
-      gap: 20px;
-      margin-bottom: 32px;
+      gap: 16px;
+      margin-bottom: 28px;
       color: #fff;
     }
     .profile-avatar {
-      width: 60px; height: 60px;
+      width: 52px; height: 52px;
       border-radius: 50%;
       background: #333;
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
+      font-size: 24px;
       flex-shrink: 0;
     }
     .profile-info { flex: 1; }
-    .profile-nickname {
-      font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-    .profile-email {
-      font-size: 13px;
-      color: rgba(255,255,255,0.5);
-    }
+    .profile-nickname { font-size: 18px; font-weight: 800; margin-bottom: 3px; }
+    .profile-email { font-size: 12px; color: rgba(255,255,255,0.45); }
     .profile-edit-btn {
       background: rgba(255,255,255,0.12);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-      white-space: nowrap;
+      color: #fff; border: none; border-radius: 8px;
+      padding: 7px 14px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s; white-space: nowrap;
     }
     .profile-edit-btn:hover { background: rgba(255,255,255,0.22); }
 
     /* 닉네임 수정 폼 */
     .nickname-edit-form {
-      display: none;
-      background: #f8f8f8;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 24px;
+      display: none; background: #f8f8f8; border-radius: 12px;
+      padding: 14px; margin-bottom: 20px;
     }
     .nickname-edit-form.show { display: flex; gap: 8px; }
     .nickname-edit-form input { flex: 1; }
 
-    /* 그룹 카드 */
-    .mypage-group {
-      border-radius: 16px;
-      padding: 4px 16px 8px;
-      margin-bottom: 16px;
+    /* 탭 */
+    .mypage-tabs {
+      display: flex;
+      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 20px;
+      gap: 0;
     }
-    .mypage-group.group-sell {
-      background: #fdf8f0;
-      border: 1.5px solid #f0e4cc;
-    }
-    .mypage-group.group-buy {
-      background: #f0f5ff;
-      border: 1.5px solid #ccdaf5;
-    }
-    .mypage-group-label {
-      font-size: 11px;
+    .mypage-tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      font-size: 14px;
       font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      padding: 12px 0 4px;
+      color: #aaa;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
     }
-    .group-sell .mypage-group-label { color: #c47c2a; }
-    .group-buy  .mypage-group-label { color: #3a6ec4; }
+    .mypage-tab.active { color: #111; border-bottom-color: #111; }
+
+    /* 탭 패널 */
+    .mypage-tab-panel { display: none; }
+    .mypage-tab-panel.active { display: block; }
 
     /* 섹션 */
-    .mypage-section-title {
-      font-size: 15px;
-      font-weight: 800;
-      padding: 12px 0;
+    .mypage-section {
+      margin-bottom: 8px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .mypage-section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 14px 18px;
       cursor: pointer;
       user-select: none;
-      border-top: 1px solid #e5e7eb;
+      background: #fff;
+      transition: background 0.1s;
     }
-    .mypage-group > .mypage-section-title:first-of-type { border-top: none; }
-    .mypage-section-title span { color: #bbb; font-size: 12px; font-weight: 400; }
-    .mypage-section-title .toggle-arrow {
-      font-size: 11px;
-      color: #bbb;
+    .mypage-section-header:hover { background: #fafafa; }
+    .mypage-section-header-left {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .mypage-section-name {
+      font-size: 14px; font-weight: 700; color: #111;
+    }
+    .mypage-section-count {
+      font-size: 12px; font-weight: 600;
+      background: #f3f4f6; color: #888;
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .mypage-section-count.has-items {
+      background: #111; color: #fff;
+    }
+    .mypage-section-arrow {
+      font-size: 11px; color: #bbb;
       transition: transform 0.2s;
     }
-    .mypage-section-title.collapsed .toggle-arrow { transform: rotate(-90deg); }
-    .mypage-collapsible { overflow: hidden; }
-    .mypage-collapsible.collapsed { display: none; }
-    .mypage-collapsible .my-listing-item { background: #fff; border-radius: 12px; border: none; margin-bottom: 8px; padding: 12px 14px; }
-    .group-sell .mypage-section-title { border-top-color: #f0e4cc; }
-    .group-buy  .mypage-section-title { border-top-color: #ccdaf5; }
-    .mypage-collapsible .my-listing-item:last-child { margin-bottom: 4px; }
+    .mypage-section.collapsed .mypage-section-arrow { transform: rotate(-90deg); }
+    .mypage-section-body {
+      border-top: 1.5px solid #e5e7eb;
+      padding: 4px 14px 8px;
+      background: #fff;
+    }
+    .mypage-section.collapsed .mypage-section-body { display: none; }
 
-    /* 내 판매글 목록 */
+    /* 아이템 */
     .my-listing-item {
       display: flex;
       align-items: center;
       gap: 14px;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--border);
+      padding: 12px 4px;
+      border-bottom: 1px solid #f3f4f6;
       cursor: pointer;
       transition: opacity 0.15s;
     }
     .my-listing-item:hover { opacity: 0.7; }
     .my-listing-item:last-child { border-bottom: none; }
     .my-listing-thumb {
-      width: 56px; height: 56px;
-      border-radius: 10px;
-      object-fit: cover;
-      background: #e5e7eb;
-      flex-shrink: 0;
+      width: 52px; height: 52px;
+      border-radius: 10px; object-fit: cover;
+      background: #e5e7eb; flex-shrink: 0;
     }
     .my-listing-thumb-placeholder {
-      width: 56px; height: 56px;
-      border-radius: 10px;
+      width: 52px; height: 52px; border-radius: 10px;
       background: #e5e7eb;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
+      font-size: 20px; flex-shrink: 0;
     }
     .my-listing-info { flex: 1; min-width: 0; }
-    .my-listing-game {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 3px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .my-listing-price {
-      font-size: 16px;
-      font-weight: 800;
-    }
+    .my-listing-game { font-size: 11px; color: #aaa; margin-bottom: 2px; }
+    .my-listing-price { font-size: 15px; font-weight: 800; }
     .my-listing-chars {
-      font-size: 12px;
-      color: #888;
-      margin-top: 3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 11px; color: #888; margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .my-listing-meta {
-      text-align: right;
-      flex-shrink: 0;
-    }
+    .my-listing-meta { text-align: right; flex-shrink: 0; }
     .my-listing-status {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 999px;
-      margin-bottom: 4px;
-      display: inline-block;
+      font-size: 11px; font-weight: 700;
+      padding: 3px 8px; border-radius: 999px;
+      margin-bottom: 4px; display: inline-block;
     }
     .status-active { background: #dcfce7; color: #16a34a; }
     .status-trading { background: #fef3c7; color: #d97706; }
     .status-seller-confirmed { background: #e0f2fe; color: #0369a1; }
     .status-sold { background: #f3f4f6; color: #888; }
-    .my-listing-time { font-size: 11px; color: #aaa; }
+    .my-listing-time { font-size: 11px; color: #bbb; }
 
-    .my-listing-delete {
-      background: none;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      color: #aaa;
-      font-size: 11px;
-      padding: 4px 8px;
-      cursor: pointer;
-      margin-top: 4px;
+    .my-item-btn {
+      background: none; border: 1px solid #e5e7eb;
+      border-radius: 6px; color: #aaa;
+      font-size: 11px; padding: 3px 8px;
+      cursor: pointer; margin-top: 4px; margin-left: 3px;
       transition: all 0.15s;
     }
-    .my-listing-delete:hover { border-color: #ef4444; color: #ef4444; }
+    .my-item-btn:hover { border-color: #ef4444; color: #ef4444; }
+    .my-item-btn.review { border-color: #f97316; color: #f97316; }
+    .my-item-btn.review:hover { background: #f97316; color: #fff; }
+    .my-item-btn.edit:hover { border-color: #111; color: #111; }
 
-    .empty-my { text-align: center; padding: 40px 0; color: #aaa; font-size: 14px; }
-    .empty-my a { color: #111; font-weight: 700; text-decoration: underline; }
+    .empty-my {
+      text-align: center; padding: 32px 0;
+      color: #bbb; font-size: 13px; line-height: 1.8;
+    }
+    .empty-my a { color: #111; font-weight: 700; }
 
     .logout-btn {
-      width: 100%;
-      margin-top: 32px;
-      padding: 14px;
-      background: none;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      color: #aaa;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
+      width: 100%; margin-top: 24px; padding: 13px;
+      background: none; border: 1.5px solid #e5e7eb;
+      border-radius: 10px; color: #bbb; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
     }
     .logout-btn:hover { border-color: #ef4444; color: #ef4444; }
   </style>
@@ -229,18 +203,14 @@
 
   let reviewedListingIds = new Set()
   let staleSellerConfirmedIds = new Set()
+  let staleTradingIds = new Set()
 
   async function init() {
     try {
-      // 로그인 상태 확인
       const { data: { session } } = await db.auth.getSession()
-      if (!session) {
-        window.location.href = '/auth/?next=/mypage/'
-        return
-      }
+      if (!session) { window.location.href = '/auth/?next=/mypage/'; return }
       const authUser = session.user
 
-      // User 프로필 조회 또는 생성
       let { data: user } = await db.from('User').select('id, nickname').eq('id', authUser.id).single()
       if (!user) {
         const now = new Date().toISOString()
@@ -249,49 +219,48 @@
         user = { id: authUser.id, nickname }
       }
 
-      // 내 판매글 조회
       const { data: listings } = await db
         .from('Listing')
-        .select(`
-          id, price, status, createdAt,
+        .select(`id, price, status, createdAt,
           game:Game(nameKo, emoji, imageUrl, artImageUrl),
-          characters:ListingCharacter(character:Character(nameKo))
-        `)
+          characters:ListingCharacter(character:Character(nameKo))`)
         .eq('userId', authUser.id)
         .order('createdAt', { ascending: false })
 
-      // seller_confirmed 판매글 중 실제 완료된 것 확인 (구매자가 수령확인 후 RLS로 Listing 업데이트 못한 경우)
-      const sellerConfirmedIds = (listings ?? []).filter(l => l.status === 'seller_confirmed').map(l => l.id)
+      // trading/seller_confirmed인데 실제 활성 Trade 없는 경우 보정
+      const tradingOrConfirmedIds = (listings ?? [])
+        .filter(l => l.status === 'trading' || l.status === 'seller_confirmed').map(l => l.id)
       staleSellerConfirmedIds = new Set()
-      if (sellerConfirmedIds.length > 0) {
+      staleTradingIds = new Set()
+      if (tradingOrConfirmedIds.length > 0) {
         const { data: stillActiveTrades } = await db.from('Trade')
-          .select('listingId')
-          .in('listingId', sellerConfirmedIds)
+          .select('listingId, status').in('listingId', tradingOrConfirmedIds)
           .in('status', ['active', 'seller_confirmed'])
-        const activeListingIdSet = new Set((stillActiveTrades ?? []).map(t => t.listingId))
-        sellerConfirmedIds.forEach(id => {
-          if (!activeListingIdSet.has(id)) {
-            staleSellerConfirmedIds.add(id)
-            // 백그라운드로 Listing 상태 업데이트
-            db.from('Listing').update({ status: 'sold' }).eq('id', id)
+        const activeTradeMap = new Map()
+        ;(stillActiveTrades ?? []).forEach(t => activeTradeMap.set(t.listingId, t.status))
+        tradingOrConfirmedIds.forEach(id => {
+          const listing = (listings ?? []).find(l => l.id === id)
+          if (!activeTradeMap.has(id)) {
+            if (listing?.status === 'seller_confirmed') {
+              staleSellerConfirmedIds.add(id)
+              db.from('Listing').update({ status: 'sold' }).eq('id', id)
+            } else if (listing?.status === 'trading') {
+              staleTradingIds.add(id)
+              db.from('Listing').update({ status: 'active' }).eq('id', id)
+            }
           }
         })
       }
 
-      // 내 구매 거래 조회
       const { data: myTrades } = await db
         .from('Trade')
-        .select(`
-          id, type, status, createdAt,
+        .select(`id, type, status, createdAt,
           listing:Listing(id, price, status,
             game:Game(nameKo, emoji, imageUrl, artImageUrl),
-            characters:ListingCharacter(character:Character(nameKo))
-          )
-        `)
+            characters:ListingCharacter(character:Character(nameKo)))`)
         .eq('buyerId', authUser.id)
         .order('createdAt', { ascending: false })
 
-      // 내가 작성한 리뷰의 listingId 목록
       const { data: myReviews } = await db.from('Review').select('listingId').eq('reviewerId', authUser.id)
       reviewedListingIds = new Set((myReviews ?? []).map(r => r.listingId))
 
@@ -302,14 +271,25 @@
     }
   }
 
+  function getEffectiveStatus(l) {
+    if (staleSellerConfirmedIds.has(l.id)) return 'sold'
+    if (staleTradingIds.has(l.id)) return 'active'
+    return l.status
+  }
+
   function renderListingItem(l) {
     const gameName = l.game?.nameKo ?? ''
-    const gameEmoji = l.game?.emoji ?? ''
     const gameImg = l.game?.artImageUrl ?? ''
+    const gameEmoji = l.game?.emoji ?? ''
     const chars = (l.characters ?? []).map(lc => lc.character?.nameKo).filter(Boolean)
-    const effectiveStatus = staleSellerConfirmedIds.has(l.id) ? 'sold' : l.status
-    const statusClass = effectiveStatus === 'active' ? 'status-active' : effectiveStatus === 'trading' ? 'status-trading' : effectiveStatus === 'seller_confirmed' ? 'status-seller-confirmed' : 'status-sold'
-    const statusText = effectiveStatus === 'active' ? '판매중' : effectiveStatus === 'trading' ? '거래중' : effectiveStatus === 'seller_confirmed' ? '수령확인 대기중' : '판매완료'
+    const st = getEffectiveStatus(l)
+    const stClass = { active: 'status-active', trading: 'status-trading', seller_confirmed: 'status-seller-confirmed', sold: 'status-sold' }[st] ?? 'status-active'
+    const stText = { active: '판매중', trading: '거래중', seller_confirmed: '수령확인 대기', sold: '판매완료' }[st] ?? '판매중'
+    const btns = st !== 'sold' ? `
+      <div>
+        <button class="my-item-btn edit" onclick="event.stopPropagation();location.href='/trade/register.html?edit=${l.id}'">수정</button>
+        <button class="my-item-btn" onclick="event.stopPropagation();deleteListing('${l.id}')">삭제</button>
+      </div>` : ''
     return `
       <div class="my-listing-item" onclick="location.href='/listing/?id=${l.id}'">
         ${gameImg ? `<img class="my-listing-thumb" src="${gameImg}" alt="${gameName}">` : `<div class="my-listing-thumb-placeholder">${gameEmoji}</div>`}
@@ -319,12 +299,9 @@
           <div class="my-listing-chars">${chars.length > 0 ? chars.join(', ') : '캐릭터 없음'}</div>
         </div>
         <div class="my-listing-meta">
-          <div class="my-listing-status ${statusClass}">${statusText}</div>
+          <div class="my-listing-status ${stClass}">${stText}</div>
           <div class="my-listing-time">${timeAgo(l.createdAt)}</div>
-          ${effectiveStatus === 'sold' ? '' : `
-            <button class="my-listing-delete" onclick="event.stopPropagation();location.href='/trade/register.html?edit=${l.id}'" style="margin-bottom:4px;">수정</button>
-            <button class="my-listing-delete" onclick="event.stopPropagation();deleteListing('${l.id}')">삭제</button>
-          `}
+          ${btns}
         </div>
       </div>`
   }
@@ -333,46 +310,52 @@
     const l = t.listing
     if (!l) return ''
     const gameName = l.game?.nameKo ?? ''
-    const gameEmoji = l.game?.emoji ?? ''
     const gameImg = l.game?.artImageUrl ?? ''
+    const gameEmoji = l.game?.emoji ?? ''
     const chars = (l.characters ?? []).map(lc => lc.character?.nameKo).filter(Boolean)
-    const tradeStatusClass = t.status === 'active' ? 'status-trading' : t.status === 'seller_confirmed' ? 'status-seller-confirmed' : 'status-sold'
-    const tradeStatusText = t.status === 'active' ? '거래중' : t.status === 'seller_confirmed' ? '수령확인 대기중' : t.status === 'completed' ? '거래완료' : '취소됨'
-    const typeLabel = ''
-    const alreadyReviewed = reviewedListingIds.has(l.id)
-    const reviewBtn = t.status === 'completed' && !alreadyReviewed
-      ? `<button class="my-listing-delete" style="border-color:#f97316;color:#f97316;" onclick="event.stopPropagation();location.href='/review/?tradeId=${t.id}'">후기작성</button>`
-      : ''
+    const stClass = { active: 'status-trading', seller_confirmed: 'status-seller-confirmed', completed: 'status-sold', cancelled: 'status-sold' }[t.status] ?? 'status-sold'
+    const stText = { active: '거래중', seller_confirmed: '수령확인 대기', completed: '거래완료', cancelled: '취소됨' }[t.status] ?? ''
+    const reviewBtn = t.status === 'completed' && !reviewedListingIds.has(l.id)
+      ? `<div><button class="my-item-btn review" onclick="event.stopPropagation();location.href='/review/?tradeId=${t.id}'">후기작성</button></div>` : ''
     return `
       <div class="my-listing-item" onclick="location.href='/listing/?id=${l.id}'">
         ${gameImg ? `<img class="my-listing-thumb" src="${gameImg}" alt="${gameName}">` : `<div class="my-listing-thumb-placeholder">${gameEmoji}</div>`}
         <div class="my-listing-info">
-          <div class="my-listing-game">${gameName}${typeLabel}</div>
+          <div class="my-listing-game">${gameName}</div>
           <div class="my-listing-price">${formatPrice(l.price)}</div>
           <div class="my-listing-chars">${chars.length > 0 ? chars.join(', ') : '캐릭터 없음'}</div>
         </div>
         <div class="my-listing-meta">
-          <div class="my-listing-status ${tradeStatusClass}">${tradeStatusText}</div>
+          <div class="my-listing-status ${stClass}">${stText}</div>
           <div class="my-listing-time">${timeAgo(t.createdAt)}</div>
           ${reviewBtn}
         </div>
       </div>`
   }
 
-  function sectionHtml(id, title, count, items, collapsed = false) {
+  function sectionHtml(id, name, items, collapsed = false) {
+    const count = items.length
     return `
-      <div class="mypage-section-title ${collapsed ? 'collapsed' : ''}" onclick="toggleSection('${id}')">
-        <span style="font-size:15px;font-weight:800;color:#111;">${title} <span>${count}개</span></span>
-        <span class="toggle-arrow">▼</span>
-      </div>
-      <div id="${id}" class="mypage-collapsible ${collapsed ? 'collapsed' : ''}">
-        ${items || `<div class="empty-my">없어요</div>`}
+      <div class="mypage-section ${collapsed ? 'collapsed' : ''}" id="sec-wrap-${id}">
+        <div class="mypage-section-header" onclick="toggleSection('${id}')">
+          <div class="mypage-section-header-left">
+            <span class="mypage-section-name">${name}</span>
+            <span class="mypage-section-count ${count > 0 ? 'has-items' : ''}">${count}</span>
+          </div>
+          <span class="mypage-section-arrow">▼</span>
+        </div>
+        <div class="mypage-section-body" id="sec-${id}">
+          ${items.length ? items.join('') : `<div class="empty-my">없어요</div>`}
+        </div>
       </div>`
   }
 
   function render(authUser, user, listings, myTrades) {
-    const activeListings = listings.filter(l => l.status !== 'sold' && !staleSellerConfirmedIds.has(l.id))
-    const soldListings = listings.filter(l => l.status === 'sold' || staleSellerConfirmedIds.has(l.id))
+    const ongoingListings = listings.filter(l => {
+      const st = getEffectiveStatus(l)
+      return st !== 'sold'
+    })
+    const soldListings = listings.filter(l => getEffectiveStatus(l) === 'sold')
     const activeTrades = myTrades.filter(t => t.status === 'active' || t.status === 'seller_confirmed')
     const doneTrades = myTrades.filter(t => t.status === 'completed')
     const cancelledTrades = myTrades.filter(t => t.status === 'cancelled')
@@ -393,42 +376,45 @@
         <button class="btn btn-outline" onclick="toggleNicknameEdit()">취소</button>
       </div>
 
-      <div class="mypage-group group-sell">
-        <div class="mypage-group-label">판매</div>
-        ${sectionHtml('sec-sale-active', '내 판매글', activeListings.length,
-          activeListings.length ? activeListings.map(renderListingItem).join('') : '<div class="empty-my">판매 중인 계정이 없어요<br><br><a href="/trade/register.html">판매글 올리기 →</a></div>'
-        )}
-        ${sectionHtml('sec-sale-done', '판매 완료', soldListings.length,
-          soldListings.length ? soldListings.map(renderListingItem).join('') : '<div class="empty-my">판매 완료된 계정이 없어요</div>',
-          soldListings.length === 0
-        )}
+      <div class="mypage-tabs">
+        <div class="mypage-tab active" onclick="switchTab('sell')">판매</div>
+        <div class="mypage-tab" onclick="switchTab('buy')">구매</div>
       </div>
 
-      <div class="mypage-group group-buy">
-        <div class="mypage-group-label">구매</div>
-        ${sectionHtml('sec-buy-active', '구매 진행중', activeTrades.length,
-          activeTrades.length ? activeTrades.map(renderTradeItem).join('') : '<div class="empty-my">진행중인 구매가 없어요</div>'
-        )}
-        ${sectionHtml('sec-buy-done', '구매 완료', doneTrades.length,
-          doneTrades.length ? doneTrades.map(renderTradeItem).join('') : '<div class="empty-my">완료된 구매가 없어요</div>',
-          doneTrades.length === 0
-        )}
-        ${sectionHtml('sec-buy-cancelled', '취소된 거래', cancelledTrades.length,
-          cancelledTrades.length ? cancelledTrades.map(renderTradeItem).join('') : '<div class="empty-my">취소된 거래가 없어요</div>',
-          true
-        )}
+      <div class="mypage-tab-panel active" id="panel-sell">
+        ${sectionHtml('sale-ongoing', '판매 중', ongoingListings.map(renderListingItem),
+          ongoingListings.length === 0)}
+        ${sectionHtml('sale-done', '판매 완료', soldListings.map(renderListingItem),
+          soldListings.length === 0)}
+        ${ongoingListings.length === 0 && soldListings.length === 0
+          ? `<div class="empty-my" style="padding:60px 0;">아직 등록한 판매계정이 없어요<br><br><a href="/trade/register.html">판매계정 올리기 →</a></div>` : ''}
       </div>
 
-      ${authUser.email === 'zzabhm@gmail.com' ? `<a href="/admin/" class="btn btn-primary" style="display:block;text-align:center;margin-bottom:10px;">관리자 페이지 →</a>` : ''}
+      <div class="mypage-tab-panel" id="panel-buy">
+        ${sectionHtml('buy-ongoing', '거래 진행중', activeTrades.map(renderTradeItem),
+          activeTrades.length === 0)}
+        ${sectionHtml('buy-done', '거래 완료', doneTrades.map(renderTradeItem),
+          doneTrades.length === 0)}
+        ${cancelledTrades.length > 0
+          ? sectionHtml('buy-cancelled', '취소된 거래', cancelledTrades.map(renderTradeItem), true) : ''}
+      </div>
+
+      ${authUser.email === 'zzabhm@gmail.com' ? `<a href="/admin/" class="btn btn-primary" style="display:block;text-align:center;margin-top:16px;margin-bottom:8px;">관리자 페이지 →</a>` : ''}
       <button class="logout-btn" onclick="logout()">로그아웃</button>
     `
   }
 
+  function switchTab(tab) {
+    document.querySelectorAll('.mypage-tab').forEach((el, i) => {
+      el.classList.toggle('active', (i === 0 && tab === 'sell') || (i === 1 && tab === 'buy'))
+    })
+    document.getElementById('panel-sell').classList.toggle('active', tab === 'sell')
+    document.getElementById('panel-buy').classList.toggle('active', tab === 'buy')
+  }
+
   function toggleSection(id) {
-    const el = document.getElementById(id)
-    const title = el?.previousElementSibling
-    el?.classList.toggle('collapsed')
-    title?.classList.toggle('collapsed')
+    const wrap = document.getElementById('sec-wrap-' + id)
+    wrap?.classList.toggle('collapsed')
   }
 
   function toggleNicknameEdit() {
@@ -439,17 +425,14 @@
     const val = document.getElementById('nickname-input').value.trim()
     if (!val) return
     const { error } = await db.from('User').update({ nickname: val }).eq('id', userId)
-    if (!error) {
-      document.getElementById('display-nickname').textContent = val
-      toggleNicknameEdit()
-    }
+    if (!error) { document.getElementById('display-nickname').textContent = val; toggleNicknameEdit() }
   }
 
   async function deleteListing(id) {
-    if (!confirm('이 판매글을 삭제할까요?')) return
-    // 완료되지 않은 거래 먼저 취소 처리 (FK 제약 해소)
+    if (!confirm('이 판매계정을 삭제할까요?')) return
     await db.from('Trade').update({ status: 'cancelled' }).eq('listingId', id).not('status', 'eq', 'completed')
     await db.from('ListingCharacter').delete().eq('listingId', id)
+    await db.from('Trade').delete().eq('listingId', id)
     const { error } = await db.from('Listing').delete().eq('id', id)
     if (error) { alert('삭제 중 오류가 발생했어요: ' + error.message); return }
     init()

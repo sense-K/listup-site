@@ -53,8 +53,12 @@ function renderListingCard(listing) {
       <div class="card-body">
         <div class="card-price-row">
           <span class="card-price">${formatPrice(listing.price)}</span>
-          ${discountHtml}
+          <span class="card-game-badge">
+            ${gameImageUrl ? `<img src="${gameImageUrl}" alt="${listing.game?.nameKo ?? ''}" style="width:14px;height:14px;border-radius:3px;object-fit:cover;vertical-align:middle;">` : gameEmoji}
+            ${listing.game?.nameKo ?? ''}
+          </span>
         </div>
+        ${discountHtml ? `<div style="margin-top:-4px;">${discountHtml}</div>` : ''}
         <div class="card-chars">${charBadges}${extraBadge}</div>
         ${listing.description ? `<div class="card-desc">${listing.description}</div>` : ''}
         <div class="card-footer">
@@ -69,11 +73,14 @@ function renderListingCard(listing) {
 }
 
 // ===== 매물 목록 로드 =====
-async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest' }) {
+async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest', append = false, moreBtn = null, search = '' }) {
   const el = document.getElementById(container)
   if (!el) return
 
-  el.innerHTML = '<div class="loading">불러오는 중...</div>'
+  const moreBtnEl = moreBtn ? document.getElementById(moreBtn) : null
+
+  if (!append) el.innerHTML = '<div class="loading">불러오는 중...</div>'
+  if (moreBtnEl) moreBtnEl.style.display = 'none'
 
   try {
     let gameId = null
@@ -86,6 +93,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       }
     }
 
+    // limit+1 개 조회해서 다음 페이지 존재 여부 확인
     let query = db
       .from('Listing')
       .select(`
@@ -99,28 +107,82 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       `)
       .in('status', ['active', 'trading'])
       .order(sort === 'price' ? 'price' : 'createdAt', { ascending: sort === 'price' })
-      .range((page - 1) * limit, page * limit - 1)
+      .range((page - 1) * limit, page * limit)  // limit+1
 
     if (gameId) query = query.eq('gameId', gameId)
     if (serverId) query = query.eq('serverId', serverId)
+
+    // 검색어가 있으면 캐릭터명 + 설명 기준으로 필터링
+    if (search) {
+      const term = search.trim()
+      const [{ data: chars }, { data: descMatches }] = await Promise.all([
+        db.from('Character').select('id').ilike('nameKo', `%${term}%`),
+        db.from('Listing').select('id').ilike('description', `%${term}%`).in('status', ['active', 'trading'])
+      ])
+      const charIds = (chars ?? []).map(c => c.id)
+      let charListingIds = []
+      if (charIds.length > 0) {
+        const { data: lcs } = await db.from('ListingCharacter').select('listingId').in('characterId', charIds)
+        charListingIds = (lcs ?? []).map(lc => lc.listingId)
+      }
+      const descIds = (descMatches ?? []).map(l => l.id)
+      const matchIds = [...new Set([...charListingIds, ...descIds])]
+      if (matchIds.length === 0) {
+        if (!append) el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><p>"${term}" 검색 결과가 없어요</p></div>`
+        if (moreBtnEl) moreBtnEl.style.display = 'none'
+        return
+      }
+      query = query.in('id', matchIds)
+    }
 
     const { data: listings, error } = await query
 
     if (error) throw error
 
     if (!listings || listings.length === 0) {
-      el.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">📭</div>
-          <p>아직 등록된 계정이 없어요</p>
-        </div>
-      `
+      if (!append) {
+        el.innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">📭</div>
+            <p>아직 등록된 계정이 없어요</p>
+          </div>
+        `
+      }
       return
     }
 
-    el.innerHTML = `<div class="listings-grid">${listings.map(renderListingCard).join('')}</div>`
+    const hasMore = listings.length > limit
+    const pageListings = listings.slice(0, limit)
+
+    // Listing.status가 'trading'인데 실제 활성 Trade가 없으면 active로 보정
+    const tradingIds = pageListings.filter(l => l.status === 'trading').map(l => l.id)
+    let activeTradeIds = new Set()
+    if (tradingIds.length > 0) {
+      const { data: activeTrades } = await db
+        .from('Trade')
+        .select('listingId')
+        .in('listingId', tradingIds)
+        .in('status', ['active', 'seller_confirmed'])
+      activeTradeIds = new Set((activeTrades ?? []).map(t => t.listingId))
+    }
+    const corrected = pageListings.map(l =>
+      l.status === 'trading' && !activeTradeIds.has(l.id) ? { ...l, status: 'active' } : l
+    )
+
+    if (append) {
+      const existingGrid = el.querySelector('.listings-grid')
+      if (existingGrid) {
+        existingGrid.innerHTML += corrected.map(renderListingCard).join('')
+      } else {
+        el.innerHTML = `<div class="listings-grid">${corrected.map(renderListingCard).join('')}</div>`
+      }
+    } else {
+      el.innerHTML = `<div class="listings-grid">${corrected.map(renderListingCard).join('')}</div>`
+    }
+
+    if (moreBtnEl) moreBtnEl.style.display = hasMore ? 'block' : 'none'
   } catch (e) {
     console.error(e)
-    el.innerHTML = '<div class="empty"><p>계정을 불러오지 못했어요</p></div>'
+    if (!append) el.innerHTML = '<div class="empty"><p>계정을 불러오지 못했어요</p></div>'
   }
 }

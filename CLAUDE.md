@@ -21,9 +21,6 @@ listup-site/
 ├── bluearchive/            # 블루아카이브 리세계
 ├── nikke/                  # 니케 리세계
 ├── cookierunkingdom/       # 쿠키런킹덤 리세계
-├── zzz/                    # 젠레스 존 제로 리세계
-├── sevenknightsre/         # 세븐나이츠 리버스 리세계
-├── leehwan/                # 리환 리세계
 ├── listing/                # 판매계정 상세 (/listing/?id=xxx)
 ├── functions/
 │   └── listing/index.js    # Cloudflare Pages Function (동적 OG 태그)
@@ -70,10 +67,7 @@ listup-site/
   - GRADE_ORDER_MAP 키는 반드시 `'cookie-run'` 사용 (register.html, bulk.html)
 
 ## 거래 플로우
-`active` → (구매신청) → `trading` → (판매자 전달완료) → `seller_confirmed` → (구매자 후기작성 = 수령확인) → `completed` + Listing `sold`
-
-- 후기작성(`/review/`) = 수령확인. 후기 제출 시 Trade→completed, Listing→sold 처리
-- RLS로 buyer가 Trade/Listing 업데이트 못 막히는 경우 있음 → listing 상세 페이지 진입 시 auto-recovery (Review 존재 여부로 완료 판단)
+`active` → (구매신청) → `trading` → (판매자 전달완료) → `seller_confirmed` → (구매자 수령확인) → `sold` → 후기작성
 
 ## GRADE_ORDER_MAP (register.html, bulk.html 동일하게 유지)
 ```js
@@ -86,10 +80,10 @@ const GRADE_ORDER_MAP = {
 ```
 
 ## 히어로 캐러셀 (config.js)
-- 대각선 3행 무한스크롤: 1행·3행 우→좌, 2행 좌→우
-- CSS: `.hero-diagonal-rows` > `.hero-drow` > `.hero-drow-track` > `.hero-dcard`
-- 애니메이션: `hero-scroll-right` 48s, `hero-scroll-left` 40s (linear infinite)
-- 카드 배경: `artImageUrl` 이미지
+- peek 스타일: 카드 너비 420px, GAP 14px, PEEK 70px
+- 자동 슬라이드: 2초 간격 (`setInterval 2000`)
+- CSS: `.hero-collage` (560px, overflow hidden) + `.hero-collage-track` (flex, transform)
+- 활성 카드: `scale(1) opacity 1`, 비활성: `scale(0.88) opacity 0.45`
 
 ## SEO 현황 (2026-04-12 완료)
 - 전 페이지 title / description / keywords / canonical / og / twitter card 적용
@@ -130,12 +124,10 @@ const GRADE_ORDER_MAP = {
 - 구매 탭: 거래 진행중 + 거래 완료 + 취소된 거래 (있을 때만)
 - 섹션 바디 흰색 배경, 구매 탭 빈 화면 푸터 위치 수정
 
-## 현재 상태 (2026-04-14)
+## 현재 상태 (2026-04-13)
 - 핵심 기능 + 보안 + UX 개선 완료
 - resetlist.kr 도메인 연결 완료
-- SEO + Google Search Console 등록 완료 (zzz, sevenknightsre, leehwan 포함)
-- 거래 전 플로우 (구매신청→전달완료→후기/수령확인→판매완료) 완성
-- 마이페이지: 판매완료 글에서 수정·삭제 버튼 제거, seller_confirmed 상태 auto-recovery
+- SEO + Google Search Console 등록 완료
 - 시세 조회 기능 미구현 (2차 개발 예정)
 
 ## 남은 작업 목록

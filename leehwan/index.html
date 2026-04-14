@@ -53,7 +53,12 @@
         <div class="content-title" id="game-page-title">이환 계정</div>
         <span class="content-count" id="listing-count"></span>
       </div>
+      <div class="search-bar-wrap" style="margin-bottom:12px;">
+        <input type="text" id="search-input" class="search-bar-input" placeholder="캐릭터명, 설명으로 검색..." oninput="handleSearch(this.value)">
+        <span class="search-bar-icon">🔍</span>
+      </div>
       <div id="listings-container"><div class="loading">불러오는 중...</div></div>
+  <button class="btn-more" id="more-btn" style="display:none;" onclick="loadMore()">계정 더보기</button>
     </div>
   </div>
 </div>
@@ -84,8 +89,25 @@
     document.getElementById('listing-count').textContent = count + '개'
   }
 
+  let currentPage = 1
+  let currentSearch = ''
+  let searchTimer = null
+
+  function handleSearch(value) {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+      currentSearch = value.trim()
+      loadPage(1)
+    }, 350)
+  }
+
   function loadPage(p = 1) {
-    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: p })
+    currentPage = p
+    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: p, moreBtn: 'more-btn', search: currentSearch })
+  }
+  function loadMore() {
+    currentPage++
+    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: currentPage, append: true, moreBtn: 'more-btn', search: currentSearch })
   }
 
   loadAndRenderGameUI(GAME_SLUG); loadServers(); updateCount(); loadPage(1)
