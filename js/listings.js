@@ -73,7 +73,7 @@ function renderListingCard(listing) {
 }
 
 // ===== 매물 목록 로드 =====
-async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest', append = false, moreBtn = null, search = '' }) {
+async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest', append = false, moreBtn = null, characterIds = null }) {
   const el = document.getElementById(container)
   if (!el) return
 
@@ -89,6 +89,23 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       gameId = game?.id ?? null
       if (!gameId) {
         el.innerHTML = '<div class="empty"><div class="empty-icon">🎮</div><p>게임 정보를 찾을 수 없어요</p></div>'
+        return
+      }
+    }
+
+    // 캐릭터 필터: 선택한 캐릭터를 모두 보유한 계정만 (교집합)
+    let filteredListingIds = null
+    if (characterIds && characterIds.length > 0) {
+      let matchSet = null
+      for (const charId of characterIds) {
+        const { data: lcs } = await db.from('ListingCharacter').select('listingId').eq('characterId', charId)
+        const ids = new Set((lcs ?? []).map(lc => lc.listingId))
+        matchSet = matchSet === null ? ids : new Set([...matchSet].filter(id => ids.has(id)))
+      }
+      filteredListingIds = matchSet ? [...matchSet] : []
+      if (filteredListingIds.length === 0) {
+        if (!append) el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><p>조건에 맞는 계정이 없어요</p></div>`
+        if (moreBtnEl) moreBtnEl.style.display = 'none'
         return
       }
     }
@@ -111,29 +128,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
 
     if (gameId) query = query.eq('gameId', gameId)
     if (serverId) query = query.eq('serverId', serverId)
-
-    // 검색어가 있으면 캐릭터명 + 설명 기준으로 필터링
-    if (search) {
-      const term = search.trim()
-      const [{ data: chars }, { data: descMatches }] = await Promise.all([
-        db.from('Character').select('id').ilike('nameKo', `%${term}%`),
-        db.from('Listing').select('id').ilike('description', `%${term}%`).in('status', ['active', 'trading'])
-      ])
-      const charIds = (chars ?? []).map(c => c.id)
-      let charListingIds = []
-      if (charIds.length > 0) {
-        const { data: lcs } = await db.from('ListingCharacter').select('listingId').in('characterId', charIds)
-        charListingIds = (lcs ?? []).map(lc => lc.listingId)
-      }
-      const descIds = (descMatches ?? []).map(l => l.id)
-      const matchIds = [...new Set([...charListingIds, ...descIds])]
-      if (matchIds.length === 0) {
-        if (!append) el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><p>"${term}" 검색 결과가 없어요</p></div>`
-        if (moreBtnEl) moreBtnEl.style.display = 'none'
-        return
-      }
-      query = query.in('id', matchIds)
-    }
+    if (filteredListingIds) query = query.in('id', filteredListingIds)
 
     const { data: listings, error } = await query
 

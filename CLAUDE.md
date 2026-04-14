@@ -45,7 +45,6 @@ listup-site/
 - 수정 후 항상 git push (자동 배포됨)
 - git config: user.email=zzabhm@gmail.com, user.name=sense-K
 - git 커밋 시 `git config windows.appendAtomically false` 필요 (Windows 이슈)
-- git push 전 `git pull origin main` 필요할 수 있음 (원격 충돌 방지)
 
 ## 용어 통일
 - 사이트명: **리세리스트** (로고/네비바), **리세 리스트** (본문/SEO)
@@ -59,7 +58,7 @@ listup-site/
 - `Character` — 캐릭터 (gameId, nameKo, tier, imageUrl)
 - `Listing` — 판매계정 (userId, gameId, serverId, price, status, kakaoOpenChatUrl)
 - `ListingCharacter` — 판매계정-캐릭터 연결
-- `Trade` — 거래 (listingId, buyerId, sellerId, status, completedAt)
+- `Trade` — 거래 (listingId, buyerId, sellerId, status)
 - `Review` — 후기 (listingId, reviewerId, sellerId, rating, content)
 - `User` — 사용자 (nickname, tradeCount, avgRating)
 
@@ -71,12 +70,10 @@ listup-site/
   - GRADE_ORDER_MAP 키는 반드시 `'cookie-run'` 사용 (register.html, bulk.html)
 
 ## 거래 플로우
-`active` → (구매신청) → `trading` → (판매자 전달완료) → `seller_confirmed` → (구매자 후기작성 = 수령확인) → Trade `completed` + Listing `sold`
+`active` → (구매신청) → `trading` → (판매자 전달완료) → `seller_confirmed` → (구매자 후기작성 = 수령확인) → `completed` + Listing `sold`
 
 - 후기작성(`/review/`) = 수령확인. 후기 제출 시 Trade→completed, Listing→sold 처리
-- RLS로 buyer가 Trade/Listing 업데이트 못 막히는 경우 있음
-  → listing 상세 페이지 진입 시 auto-recovery: Review 존재 여부로 완료 판단
-  → mypage: seller_confirmed 판매글에 활성 Trade 없으면 sold로 간주
+- RLS로 buyer가 Trade/Listing 업데이트 못 막히는 경우 있음 → listing 상세 페이지 진입 시 auto-recovery (Review 존재 여부로 완료 판단)
 
 ## GRADE_ORDER_MAP (register.html, bulk.html 동일하게 유지)
 ```js
@@ -97,7 +94,7 @@ const GRADE_ORDER_MAP = {
 ## SEO 현황 (2026-04-12 완료)
 - 전 페이지 title / description / keywords / canonical / og / twitter card 적용
 - JSON-LD: 메인(WebSite+SearchAction), 게임 페이지(CollectionPage+BreadcrumbList)
-- Google Search Console 등록 완료, 색인 생성 요청 완료 (zzz, sevenknightsre, leehwan 포함)
+- Google Search Console 등록 완료, 색인 생성 요청 완료
 - sitemap.xml, robots.txt 배포 완료
 - 게임별 주요 키워드:
   - 원신: 자백, 콜롬비나, 스커크, 푸리나, 린네아
@@ -114,8 +111,8 @@ const GRADE_ORDER_MAP = {
 - 구매 신청 시 Trade 테이블 insert + Listing status → `trading` 업데이트
 - Listing 업데이트가 RLS로 막힐 수 있음 → Trade 테이블 직접 조회로 거래 중 여부 판단
 - RLS 정책 "buyer can set listing to trading" 이미 적용 완료 ✅
-- 판매완료(sold) 글은 수정·삭제 버튼 없음 (mypage에서)
-- 판매글 삭제 시: Trade 취소 → ListingCharacter → Listing 순으로 삭제 (FK 제약)
+- 판매글 삭제 시: ListingCharacter → Trade → Listing 순으로 삭제 (FK 제약 때문)
+- Supabase CASCADE FK 설정하면 더 안정적 (선택사항, 아래 남은 작업 참고)
 
 ## 보안 (2026-04-13 완료)
 - register.html, bulk.html: onclick 인라인 JSON 제거 → gameStore/charStore 객체로 교체 (XSS 수정) ✅
@@ -131,14 +128,14 @@ const GRADE_ORDER_MAP = {
 - 탭 기반 UI: 판매 탭 / 구매 탭
 - 판매 탭: 판매 중 + 판매 완료 (아코디언)
 - 구매 탭: 거래 진행중 + 거래 완료 + 취소된 거래 (있을 때만)
-- seller_confirmed 판매글 중 활성 Trade 없으면 sold로 간주 (auto-recovery)
-- sold/seller_confirmed(완료) 판매글: 수정·삭제 버튼 없음
+- 섹션 바디 흰색 배경, 구매 탭 빈 화면 푸터 위치 수정
 
 ## 현재 상태 (2026-04-14)
 - 핵심 기능 + 보안 + UX 개선 완료
 - resetlist.kr 도메인 연결 완료
 - SEO + Google Search Console 등록 완료 (zzz, sevenknightsre, leehwan 포함)
 - 거래 전 플로우 (구매신청→전달완료→후기/수령확인→판매완료) 완성
+- 마이페이지: 판매완료 글에서 수정·삭제 버튼 제거, seller_confirmed 상태 auto-recovery
 - 시세 조회 기능 미구현 (2차 개발 예정)
 
 ## 남은 작업 목록
@@ -152,9 +149,6 @@ const GRADE_ORDER_MAP = {
     FOREIGN KEY ("listingId") REFERENCES "Listing"(id) ON DELETE CASCADE;
   ALTER TABLE "ListingCharacter" DROP CONSTRAINT "ListingCharacter_listingId_fkey";
   ALTER TABLE "ListingCharacter" ADD CONSTRAINT "ListingCharacter_listingId_fkey"
-    FOREIGN KEY ("listingId") REFERENCES "Listing"(id) ON DELETE CASCADE;
-  ALTER TABLE "Review" DROP CONSTRAINT "Review_listingId_fkey";
-  ALTER TABLE "Review" ADD CONSTRAINT "Review_listingId_fkey"
     FOREIGN KEY ("listingId") REFERENCES "Listing"(id) ON DELETE CASCADE;
   ```
 

@@ -838,7 +838,138 @@ a { text-decoration: none; color: inherit; }
 }
 .section-more:hover { color: var(--black); }
 
-/* ===== 검색창 ===== */
+/* ===== 캐릭터 필터 ===== */
+.char-filter-btn {
+  width: 100%;
+  padding: 9px 14px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.char-filter-btn:hover { background: #333; }
+.char-filter-btn.has-filter { background: #4f46e5; }
+
+.filter-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 3px 8px 3px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+.filter-tag img {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.filter-tag button {
+  background: none; border: none;
+  color: #999; font-size: 13px;
+  cursor: pointer; padding: 0; line-height: 1;
+}
+.filter-clear-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+}
+.filter-clear-btn:hover { background: #f9fafb; }
+
+/* ===== 캐릭터 필터 모달 ===== */
+.cf-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: flex-end;
+  justify-content: center;
+}
+.cf-modal-overlay.open { display: flex; }
+.cf-modal-sheet {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+.cf-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+.cf-modal-title { font-size: 16px; font-weight: 700; }
+.cf-modal-close {
+  background: none; border: none;
+  font-size: 20px; color: #888; cursor: pointer;
+}
+.cf-modal-selected-bar {
+  min-height: 44px;
+  padding: 8px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+.cf-modal-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 12px 16px;
+}
+.cf-modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.cf-modal-reset {
+  flex: 1;
+  padding: 12px;
+  background: #f3f4f6;
+  border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+}
+.cf-modal-apply {
+  flex: 2;
+  padding: 12px;
+  background: #111;
+  color: #fff;
+  border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer;
+}
+.cf-modal-apply:hover { background: #333; }
+
+/* ===== 검색창 (미사용, 호환성 유지) ===== */
 .search-bar-wrap {
   position: relative;
   margin-bottom: 20px;

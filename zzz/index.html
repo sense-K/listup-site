@@ -47,17 +47,19 @@
           <option value="">전체 서버</option>
         </select>
       </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">캐릭터 필터</div>
+        <button class="char-filter-btn" id="char-filter-btn" onclick="openCharFilter()">캐릭터 선택 →</button>
+        <div class="filter-tag-list" id="filter-tag-list"></div>
+        <button class="filter-clear-btn" id="filter-clear-btn" style="display:none;" onclick="clearAllFilter()">필터 초기화</button>
+      </div>
     </aside>
     <div class="content-area">
       <div class="content-header">
         <div class="content-title" id="game-page-title">젠레스 존 제로 계정</div>
         <span class="content-count" id="listing-count"></span>
       </div>
-      <div class="search-bar-wrap" style="margin-bottom:12px;">
-        <input type="text" id="search-input" class="search-bar-input" placeholder="캐릭터명, 설명으로 검색..." oninput="handleSearch(this.value)">
-        <span class="search-bar-icon">🔍</span>
-      </div>
-      <div id="listings-container"><div class="loading">불러오는 중...</div></div>
+<div id="listings-container"><div class="loading">불러오는 중...</div></div>
   <button class="btn-more" id="more-btn" style="display:none;" onclick="loadMore()">계정 더보기</button>
     </div>
   </div>
@@ -72,6 +74,25 @@
   const GAME_SLUG = 'zzz'
   document.getElementById('navbar').innerHTML = renderNavbar()
   document.getElementById('sidebar-games').innerHTML = renderSidebarGames(GAME_SLUG)
+
+  const GRADE_ORDER_MAP = {
+    'nikke':       ['SSS','SS','S','A','B','C'],
+    'genshin':     ['SS','S','A','B','C','D','E','F'],
+    'bluearchive': ['아비도스','게헨나','밀레니엄 사이언스','트리니티','백귀야행','산해경','붉은겨울','발키리','SRT','아리우스','하이랜더','와일드헌트','사쿠가와','토키와다이','기타'],
+    'cookie-run':  ['위치','비스트','에인션트 각성','에인션트','레전더리','드래곤','슈퍼에픽','에픽','레어','커먼'],
+  }
+  const GRADE_DOT_COLOR = {
+    'SSS':'#c026d3','SS':'#ea580c','S':'#d97706','A':'#7c3aed','B':'#3b82f6','C':'#9ca3af',
+    '위치':'#7c3aed','비스트':'#334155','에인션트 각성':'#d97706',
+    '에인션트':'#b45309','레전더리':'#ea580c','드래곤':'#059669',
+    '슈퍼에픽':'#7c3aed','에픽':'#3b82f6','레어':'#22c55e','커먼':'#9ca3af',
+    '5성':'#ea580c','4성':'#7c3aed','UE':'#c026d3','E':'#ea580c','SR':'#7c3aed','R':'#3b82f6',
+  }
+
+  let filterChars = []
+  let allFilterChars = []
+  let filterCharStore = {}
+  let currentPage = 1
 
   async function loadServers() {
     const { data: game } = await db.from('Game').select('id').eq('slug', GAME_SLUG).single()
@@ -89,29 +110,162 @@
     document.getElementById('listing-count').textContent = count + '개'
   }
 
-  let currentPage = 1
-  let currentSearch = ''
-  let searchTimer = null
+  async function loadFilterChars() {
+    const { data: game } = await db.from('Game').select('id').eq('slug', GAME_SLUG).single()
+    if (!game) return
+    const { data: chars } = await db.from('Character').select('id, nameKo, tier, imageUrl')
+      .eq('gameId', game.id).eq('isActive', true).order('sortOrder')
+    allFilterChars = chars ?? []
+    allFilterChars.forEach(c => { filterCharStore[c.id] = c })
+  }
 
-  function handleSearch(value) {
-    clearTimeout(searchTimer)
-    searchTimer = setTimeout(() => {
-      currentSearch = value.trim()
-      loadPage(1)
-    }, 350)
+  function openCharFilter() {
+    renderCharFilterGrid()
+    document.getElementById('cf-modal').classList.add('open')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function closeCharFilter() {
+    document.getElementById('cf-modal').classList.remove('open')
+    document.body.style.overflow = ''
+  }
+
+  function handleCfModalOverlay(e) {
+    if (e.target === document.getElementById('cf-modal')) closeCharFilter()
+  }
+
+  function renderCharFilterGrid() {
+    const container = document.getElementById('cf-char-list')
+    if (!allFilterChars.length) {
+      container.innerHTML = '<div style="text-align:center;padding:24px;color:#aaa;">캐릭터 정보를 불러오는 중...</div>'
+      return
+    }
+    const groups = {}
+    allFilterChars.forEach(c => { const g = c.tier || '기타'; if (!groups[g]) groups[g] = []; groups[g].push(c) })
+    const ORDER = GRADE_ORDER_MAP[GAME_SLUG] || []
+    const grades = [...ORDER.filter(g => groups[g]), ...Object.keys(groups).filter(g => !ORDER.includes(g))]
+
+    container.innerHTML = grades.map(grade => {
+      const dot = GRADE_DOT_COLOR[grade] || '#9ca3af'
+      const cards = groups[grade].map(c => {
+        const sel = filterChars.some(x => x.id === c.id)
+        return `<div class="char-item${sel ? ' selected' : ''}" id="cfc-${c.id}" onclick="toggleFilterChar('${c.id}')">
+          ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy">` : '<div class="char-no-img">?</div>'}
+          <div class="char-name-label">${c.nameKo}</div>
+          <div class="check-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>`
+      }).join('')
+      return `<div class="char-grade-section">
+        <div class="char-grade-header">
+          <span class="grade-dot" style="background:${dot};"></span>
+          <span>${grade}</span>
+          <span style="color:#aaa;font-weight:400;">${groups[grade].length}개</span>
+        </div>
+        <div class="char-grid">${cards}</div>
+      </div>`
+    }).join('')
+
+    renderCfSelectedBar()
+  }
+
+  function toggleFilterChar(charId) {
+    const c = filterCharStore[charId]
+    if (!c) return
+    const idx = filterChars.findIndex(x => x.id === c.id)
+    if (idx >= 0) filterChars.splice(idx, 1)
+    else filterChars.push(c)
+    const el = document.getElementById('cfc-' + c.id)
+    if (el) el.classList.toggle('selected', filterChars.some(x => x.id === c.id))
+    renderCfSelectedBar()
+  }
+
+  function renderCfSelectedBar() {
+    const bar = document.getElementById('cf-selected-bar')
+    if (filterChars.length === 0) {
+      bar.innerHTML = '<span style="color:#aaa;font-size:13px;">캐릭터를 선택하면 여기 표시돼요</span>'
+    } else {
+      bar.innerHTML = filterChars.map(c =>
+        `<span class="filter-tag">${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}${c.nameKo}</span>`
+      ).join('')
+    }
+  }
+
+  function applyCharFilter() {
+    closeCharFilter()
+    renderFilterTags()
+    currentPage = 1
+    loadPage(1)
+  }
+
+  function resetCharFilter() {
+    filterChars = []
+    renderCharFilterGrid()
+  }
+
+  function renderFilterTags() {
+    const btn = document.getElementById('char-filter-btn')
+    const tagList = document.getElementById('filter-tag-list')
+    const clearBtn = document.getElementById('filter-clear-btn')
+    if (filterChars.length === 0) {
+      btn.textContent = '캐릭터 선택 →'
+      btn.classList.remove('has-filter')
+      tagList.innerHTML = ''
+      clearBtn.style.display = 'none'
+    } else {
+      btn.textContent = filterChars.length + '개 선택됨'
+      btn.classList.add('has-filter')
+      tagList.innerHTML = filterChars.map(c =>
+        `<span class="filter-tag">${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}${c.nameKo}<button onclick="removeFilterChar('${c.id}')">×</button></span>`
+      ).join('')
+      clearBtn.style.display = 'block'
+    }
+  }
+
+  function removeFilterChar(charId) {
+    filterChars = filterChars.filter(c => c.id !== charId)
+    renderFilterTags()
+    loadPage(1)
+  }
+
+  function clearAllFilter() {
+    filterChars = []
+    renderFilterTags()
+    loadPage(1)
   }
 
   function loadPage(p = 1) {
     currentPage = p
-    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: p, moreBtn: 'more-btn', search: currentSearch })
+    const charIds = filterChars.length > 0 ? filterChars.map(c => c.id) : null
+    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: p, moreBtn: 'more-btn', characterIds: charIds })
   }
   function loadMore() {
     currentPage++
-    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: currentPage, append: true, moreBtn: 'more-btn', search: currentSearch })
+    const charIds = filterChars.length > 0 ? filterChars.map(c => c.id) : null
+    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: currentPage, append: true, moreBtn: 'more-btn', characterIds: charIds })
   }
 
-  loadAndRenderGameUI(GAME_SLUG); loadServers(); updateCount(); loadPage(1)
+  loadAndRenderGameUI(GAME_SLUG); loadServers(); updateCount(); loadFilterChars(); loadPage(1)
 </script>
+
+<div class="cf-modal-overlay" id="cf-modal" onclick="handleCfModalOverlay(event)">
+  <div class="cf-modal-sheet">
+    <div class="cf-modal-header">
+      <span class="cf-modal-title">캐릭터 선택</span>
+      <button class="cf-modal-close" onclick="closeCharFilter()">×</button>
+    </div>
+    <div class="cf-modal-selected-bar" id="cf-selected-bar">
+      <span style="color:#aaa;font-size:13px;">캐릭터를 선택하면 여기 표시돼요</span>
+    </div>
+    <div class="cf-modal-body">
+      <div class="char-grade-list" id="cf-char-list"></div>
+    </div>
+    <div class="cf-modal-footer">
+      <button class="cf-modal-reset" onclick="resetCharFilter()">초기화</button>
+      <button class="cf-modal-apply" onclick="applyCharFilter()">적용하기</button>
+    </div>
+  </div>
+</div>
+
 <div id="footer"></div>
 </body>
 </html>

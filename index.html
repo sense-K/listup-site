@@ -61,13 +61,9 @@
 
 <!-- 최신 판매글 -->
 <div class="page-wrapper">
-  <div class="search-bar-wrap">
-    <input type="text" id="search-input" class="search-bar-input" placeholder="캐릭터명, 설명으로 검색..." oninput="handleSearch(this.value)">
-    <span class="search-bar-icon">🔍</span>
-  </div>
   <div class="listings-section-header">
-    <span class="listings-section-title" id="section-title">최신 판매글</span>
-    <div class="tab-sort" id="sort-tabs">
+    <span class="listings-section-title">최신 판매글</span>
+    <div class="tab-sort">
       <button class="sort-btn active" id="sort-latest" onclick="setSort('latest')">최신순</button>
       <span class="sort-divider">|</span>
       <button class="sort-btn" id="sort-price" onclick="setSort('price')">가격순</button>
@@ -87,39 +83,19 @@
 
   let currentSort = 'latest'
   let currentPage = 1
-  let currentSearch = ''
-  let searchTimer = null
 
   function setSort(sort) {
     currentSort = sort
     currentPage = 1
     document.getElementById('sort-latest').classList.toggle('active', sort === 'latest')
     document.getElementById('sort-price').classList.toggle('active', sort === 'price')
-    loadListings({ container: 'listings-container', limit: 12, sort, moreBtn: 'more-btn', search: currentSearch })
-  }
-
-  function handleSearch(value) {
-    clearTimeout(searchTimer)
-    searchTimer = setTimeout(() => {
-      currentSearch = value.trim()
-      currentPage = 1
-      const title = document.getElementById('section-title')
-      const sortTabs = document.getElementById('sort-tabs')
-      if (currentSearch) {
-        title.textContent = `"${currentSearch}" 검색 결과`
-        sortTabs.style.display = 'none'
-      } else {
-        title.textContent = '최신 판매글'
-        sortTabs.style.display = ''
-      }
-      loadListings({ container: 'listings-container', limit: 12, sort: currentSort, moreBtn: 'more-btn', search: currentSearch })
-    }, 350)
+    loadListings({ container: 'listings-container', limit: 12, sort, moreBtn: 'more-btn' })
   }
 
   document.getElementById('more-btn').addEventListener('click', e => {
     e.preventDefault()
     currentPage++
-    loadListings({ container: 'listings-container', limit: 12, sort: currentSort, page: currentPage, append: true, moreBtn: 'more-btn', search: currentSearch })
+    loadListings({ container: 'listings-container', limit: 12, sort: currentSort, page: currentPage, append: true, moreBtn: 'more-btn' })
   })
 
   loadListings({ container: 'listings-container', limit: 12, moreBtn: 'more-btn' })
