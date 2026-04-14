@@ -21,6 +21,9 @@ listup-site/
 ├── bluearchive/            # 블루아카이브 리세계
 ├── nikke/                  # 니케 리세계
 ├── cookierunkingdom/       # 쿠키런킹덤 리세계
+├── zzz/                    # 젠레스 존 제로 리세계
+├── sevenknightsre/         # 세븐나이츠 리버스 리세계
+├── leehwan/                # 리환 리세계
 ├── listing/                # 판매계정 상세 (/listing/?id=xxx)
 ├── functions/
 │   └── listing/index.js    # Cloudflare Pages Function (동적 OG 태그)
@@ -42,6 +45,7 @@ listup-site/
 - 수정 후 항상 git push (자동 배포됨)
 - git config: user.email=zzabhm@gmail.com, user.name=sense-K
 - git 커밋 시 `git config windows.appendAtomically false` 필요 (Windows 이슈)
+- git push 전 `git pull origin main` 필요할 수 있음 (원격 충돌 방지)
 
 ## 용어 통일
 - 사이트명: **리세리스트** (로고/네비바), **리세 리스트** (본문/SEO)
@@ -55,7 +59,7 @@ listup-site/
 - `Character` — 캐릭터 (gameId, nameKo, tier, imageUrl)
 - `Listing` — 판매계정 (userId, gameId, serverId, price, status, kakaoOpenChatUrl)
 - `ListingCharacter` — 판매계정-캐릭터 연결
-- `Trade` — 거래 (listingId, buyerId, sellerId, status)
+- `Trade` — 거래 (listingId, buyerId, sellerId, status, completedAt)
 - `Review` — 후기 (listingId, reviewerId, sellerId, rating, content)
 - `User` — 사용자 (nickname, tradeCount, avgRating)
 
@@ -67,7 +71,12 @@ listup-site/
   - GRADE_ORDER_MAP 키는 반드시 `'cookie-run'` 사용 (register.html, bulk.html)
 
 ## 거래 플로우
-`active` → (구매신청) → `trading` → (판매자 전달완료) → `seller_confirmed` → (구매자 수령확인) → `sold` → 후기작성
+`active` → (구매신청) → `trading` → (판매자 전달완료) → `seller_confirmed` → (구매자 후기작성 = 수령확인) → Trade `completed` + Listing `sold`
+
+- 후기작성(`/review/`) = 수령확인. 후기 제출 시 Trade→completed, Listing→sold 처리
+- RLS로 buyer가 Trade/Listing 업데이트 못 막히는 경우 있음
+  → listing 상세 페이지 진입 시 auto-recovery: Review 존재 여부로 완료 판단
+  → mypage: seller_confirmed 판매글에 활성 Trade 없으면 sold로 간주
 
 ## GRADE_ORDER_MAP (register.html, bulk.html 동일하게 유지)
 ```js
@@ -80,15 +89,15 @@ const GRADE_ORDER_MAP = {
 ```
 
 ## 히어로 캐러셀 (config.js)
-- peek 스타일: 카드 너비 420px, GAP 14px, PEEK 70px
-- 자동 슬라이드: 2초 간격 (`setInterval 2000`)
-- CSS: `.hero-collage` (560px, overflow hidden) + `.hero-collage-track` (flex, transform)
-- 활성 카드: `scale(1) opacity 1`, 비활성: `scale(0.88) opacity 0.45`
+- 대각선 3행 무한스크롤: 1행·3행 우→좌, 2행 좌→우
+- CSS: `.hero-diagonal-rows` > `.hero-drow` > `.hero-drow-track` > `.hero-dcard`
+- 애니메이션: `hero-scroll-right` 48s, `hero-scroll-left` 40s (linear infinite)
+- 카드 배경: `artImageUrl` 이미지
 
 ## SEO 현황 (2026-04-12 완료)
 - 전 페이지 title / description / keywords / canonical / og / twitter card 적용
 - JSON-LD: 메인(WebSite+SearchAction), 게임 페이지(CollectionPage+BreadcrumbList)
-- Google Search Console 등록 완료, 색인 생성 요청 완료
+- Google Search Console 등록 완료, 색인 생성 요청 완료 (zzz, sevenknightsre, leehwan 포함)
 - sitemap.xml, robots.txt 배포 완료
 - 게임별 주요 키워드:
   - 원신: 자백, 콜롬비나, 스커크, 푸리나, 린네아
@@ -105,8 +114,8 @@ const GRADE_ORDER_MAP = {
 - 구매 신청 시 Trade 테이블 insert + Listing status → `trading` 업데이트
 - Listing 업데이트가 RLS로 막힐 수 있음 → Trade 테이블 직접 조회로 거래 중 여부 판단
 - RLS 정책 "buyer can set listing to trading" 이미 적용 완료 ✅
-- 판매글 삭제 시: ListingCharacter → Trade → Listing 순으로 삭제 (FK 제약 때문)
-- Supabase CASCADE FK 설정하면 더 안정적 (선택사항, 아래 남은 작업 참고)
+- 판매완료(sold) 글은 수정·삭제 버튼 없음 (mypage에서)
+- 판매글 삭제 시: Trade 취소 → ListingCharacter → Listing 순으로 삭제 (FK 제약)
 
 ## 보안 (2026-04-13 완료)
 - register.html, bulk.html: onclick 인라인 JSON 제거 → gameStore/charStore 객체로 교체 (XSS 수정) ✅
@@ -122,12 +131,14 @@ const GRADE_ORDER_MAP = {
 - 탭 기반 UI: 판매 탭 / 구매 탭
 - 판매 탭: 판매 중 + 판매 완료 (아코디언)
 - 구매 탭: 거래 진행중 + 거래 완료 + 취소된 거래 (있을 때만)
-- 섹션 바디 흰색 배경, 구매 탭 빈 화면 푸터 위치 수정
+- seller_confirmed 판매글 중 활성 Trade 없으면 sold로 간주 (auto-recovery)
+- sold/seller_confirmed(완료) 판매글: 수정·삭제 버튼 없음
 
-## 현재 상태 (2026-04-13)
+## 현재 상태 (2026-04-14)
 - 핵심 기능 + 보안 + UX 개선 완료
 - resetlist.kr 도메인 연결 완료
-- SEO + Google Search Console 등록 완료
+- SEO + Google Search Console 등록 완료 (zzz, sevenknightsre, leehwan 포함)
+- 거래 전 플로우 (구매신청→전달완료→후기/수령확인→판매완료) 완성
 - 시세 조회 기능 미구현 (2차 개발 예정)
 
 ## 남은 작업 목록
@@ -141,6 +152,9 @@ const GRADE_ORDER_MAP = {
     FOREIGN KEY ("listingId") REFERENCES "Listing"(id) ON DELETE CASCADE;
   ALTER TABLE "ListingCharacter" DROP CONSTRAINT "ListingCharacter_listingId_fkey";
   ALTER TABLE "ListingCharacter" ADD CONSTRAINT "ListingCharacter_listingId_fkey"
+    FOREIGN KEY ("listingId") REFERENCES "Listing"(id) ON DELETE CASCADE;
+  ALTER TABLE "Review" DROP CONSTRAINT "Review_listingId_fkey";
+  ALTER TABLE "Review" ADD CONSTRAINT "Review_listingId_fkey"
     FOREIGN KEY ("listingId") REFERENCES "Listing"(id) ON DELETE CASCADE;
   ```
 
