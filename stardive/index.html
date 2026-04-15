@@ -93,7 +93,7 @@
     '엘렌도르':'#059669','바레인':'#dc2626','세레니아':'#7c3aed','수라':'#2563eb','남령':'#d97706',
   }
 
-  let filterChars = []
+  let filterChars = {}  // { charId: { char, count } }
   let allFilterChars = []
   let filterCharStore = {}
   let currentPage = 1
@@ -164,11 +164,14 @@
     container.innerHTML = grades.map(grade => {
       const dot = GRADE_DOT_COLOR[grade] || '#9ca3af'
       const cards = groups[grade].map(c => {
-        const sel = filterChars.some(x => x.id === c.id)
-        return `<div class="char-item${sel ? ' selected' : ''}" id="cfc-${c.id}" onclick="toggleFilterChar('${c.id}')">
+        const entry = filterChars[c.id]
+        const cfCount = entry?.count ?? 0
+        const sel = !!entry
+        return `<div class="char-item${sel ? ' selected' : ''}" id="cfc-${c.id}" onclick="clickFilterChar('${c.id}')">
           ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy">` : '<div class="char-no-img">?</div>'}
           <div class="char-name-label">${c.nameKo}</div>
-          <div class="check-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="check-overlay" style="${sel && cfCount === 1 ? 'display:flex;' : 'display:none;'}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="char-count-badge" style="${cfCount > 1 ? '' : 'display:none;'}">${cfCount > 1 ? cfCount : ''}</div>
         </div>`
       }).join('')
       return `<div class="char-grade-section">
@@ -184,24 +187,48 @@
     renderCfSelectedBar()
   }
 
-  function toggleFilterChar(charId) {
+  function clickFilterChar(charId) {
     const c = filterCharStore[charId]
     if (!c) return
-    const idx = filterChars.findIndex(x => x.id === c.id)
-    if (idx >= 0) filterChars.splice(idx, 1)
-    else filterChars.push(c)
-    const el = document.getElementById('cfc-' + c.id)
-    if (el) el.classList.toggle('selected', filterChars.some(x => x.id === c.id))
+    if (!filterChars[charId]) {
+      filterChars[charId] = { char: c, count: 1 }
+    } else {
+      filterChars[charId].count++
+    }
+    updateFilterCharItem(charId)
     renderCfSelectedBar()
+  }
+
+  function updateFilterCharItem(charId) {
+    const el = document.getElementById('cfc-' + charId)
+    if (!el) return
+    const entry = filterChars[charId]
+    const overlay = el.querySelector('.check-overlay')
+    const badge = el.querySelector('.char-count-badge')
+    if (!entry) {
+      el.classList.remove('selected')
+      if (overlay) overlay.style.display = 'none'
+      if (badge) badge.style.display = 'none'
+    } else {
+      el.classList.add('selected')
+      if (entry.count === 1) {
+        if (overlay) overlay.style.display = 'flex'
+        if (badge) badge.style.display = 'none'
+      } else {
+        if (overlay) overlay.style.display = 'none'
+        if (badge) { badge.style.display = 'flex'; badge.textContent = entry.count }
+      }
+    }
   }
 
   function renderCfSelectedBar() {
     const bar = document.getElementById('cf-selected-bar')
-    if (filterChars.length === 0) {
+    const entries = Object.values(filterChars)
+    if (entries.length === 0) {
       bar.innerHTML = '<span style="color:#aaa;font-size:13px;">캐릭터를 선택하면 여기 표시돼요</span>'
     } else {
-      bar.innerHTML = filterChars.map(c =>
-        `<span class="filter-tag">${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}${c.nameKo}</span>`
+      bar.innerHTML = entries.map(({ char: c, count }) =>
+        `<span class="filter-tag">${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}${c.nameKo}${count > 1 ? ` ×${count}` : ''}</span>`
       ).join('')
     }
   }
@@ -214,7 +241,7 @@
   }
 
   function resetCharFilter() {
-    filterChars = []
+    filterChars = {}
     renderCharFilterGrid()
   }
 
@@ -222,42 +249,43 @@
     const btn = document.getElementById('char-filter-btn')
     const tagList = document.getElementById('filter-tag-list')
     const clearBtn = document.getElementById('filter-clear-btn')
-    if (filterChars.length === 0) {
+    const entries = Object.values(filterChars)
+    if (entries.length === 0) {
       btn.textContent = '캐릭터 선택 →'
       btn.classList.remove('has-filter')
       tagList.innerHTML = ''
       clearBtn.style.display = 'none'
     } else {
-      btn.textContent = filterChars.length + '개 선택됨'
+      btn.textContent = entries.length + '개 선택됨'
       btn.classList.add('has-filter')
-      tagList.innerHTML = filterChars.map(c =>
-        `<span class="filter-tag">${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}${c.nameKo}<button onclick="removeFilterChar('${c.id}')">×</button></span>`
+      tagList.innerHTML = entries.map(({ char: c, count }) =>
+        `<span class="filter-tag">${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}${c.nameKo}${count > 1 ? ` ×${count}` : ''}<button onclick="removeFilterChar('${c.id}')">×</button></span>`
       ).join('')
       clearBtn.style.display = 'block'
     }
   }
 
   function removeFilterChar(charId) {
-    filterChars = filterChars.filter(c => c.id !== charId)
+    delete filterChars[charId]
     renderFilterTags()
     loadPage(1)
   }
 
   function clearAllFilter() {
-    filterChars = []
+    filterChars = {}
     renderFilterTags()
     loadPage(1)
   }
 
   function loadPage(p = 1) {
     currentPage = p
-    const charIds = filterChars.length > 0 ? filterChars.map(c => c.id) : null
-    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: p, moreBtn: 'more-btn', characterIds: charIds })
+    const charFilter = Object.keys(filterChars).length > 0 ? filterChars : null
+    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: p, moreBtn: 'more-btn', characterFilter: charFilter })
   }
   function loadMore() {
     currentPage++
-    const charIds = filterChars.length > 0 ? filterChars.map(c => c.id) : null
-    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: currentPage, append: true, moreBtn: 'more-btn', characterIds: charIds })
+    const charFilter = Object.keys(filterChars).length > 0 ? filterChars : null
+    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: currentPage, append: true, moreBtn: 'more-btn', characterFilter: charFilter })
   }
 
   loadAndRenderGameUI(GAME_SLUG); loadServers(); updateCount(); loadFilterChars(); loadPage(1)

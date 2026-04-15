@@ -78,7 +78,7 @@ function renderListingCard(listing) {
 }
 
 // ===== 매물 목록 로드 =====
-async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest', append = false, moreBtn = null, characterIds = null }) {
+async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest', append = false, moreBtn = null, characterIds = null, characterFilter = null }) {
   const el = document.getElementById(container)
   if (!el) return
 
@@ -98,12 +98,20 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       }
     }
 
-    // 캐릭터 필터: 선택한 캐릭터를 모두 보유한 계정만 (교집합)
+    // 캐릭터 필터: 선택한 캐릭터를 모두 보유한 계정만 (교집합, count 포함)
+    // characterFilter: { charId: { count } } 형태 (게임 페이지 필터)
+    // characterIds: string[] 형태 (하위 호환)
+    const filterMap = characterFilter
+      ? Object.fromEntries(Object.entries(characterFilter).map(([id, v]) => [id, v.count ?? 1]))
+      : characterIds?.length > 0
+        ? Object.fromEntries(characterIds.map(id => [id, 1]))
+        : null
+
     let filteredListingIds = null
-    if (characterIds && characterIds.length > 0) {
+    if (filterMap && Object.keys(filterMap).length > 0) {
       let matchSet = null
-      for (const charId of characterIds) {
-        const { data: lcs } = await db.from('ListingCharacter').select('listingId').eq('characterId', charId)
+      for (const [charId, requiredCount] of Object.entries(filterMap)) {
+        const { data: lcs } = await db.from('ListingCharacter').select('listingId, count').eq('characterId', charId).gte('count', requiredCount)
         const ids = new Set((lcs ?? []).map(lc => lc.listingId))
         matchSet = matchSet === null ? ids : new Set([...matchSet].filter(id => ids.has(id)))
       }
