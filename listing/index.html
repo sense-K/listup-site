@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>판매계정 상세 | 리세 리스트</title>
   <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     .detail-wrap {
       max-width: 720px;
@@ -113,6 +114,19 @@
       z-index: 9999; white-space: nowrap;
     }
     .share-toast.show { opacity: 1; }
+
+    /* 이미지 복사 버튼 */
+    .img-copy-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 700; color: #111;
+      background: #f3f4f6; border: 1.5px solid #e5e7eb; border-radius: 999px;
+      padding: 8px 16px; cursor: pointer; transition: all 0.15s;
+    }
+    .img-copy-btn:hover { background: #e5e7eb; }
+    .img-copy-btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* 공유 버튼 묶음 */
+    .share-btn-group { display: flex; gap: 8px; align-items: center; }
 
     @media (max-width: 600px) {
       .detail-chars-grid { grid-template-columns: repeat(5, 1fr); }
@@ -248,7 +262,10 @@
       <div class="detail-wrap">
         <div class="share-row">
           <span class="status-badge ${statusClass}" style="margin-bottom:0;">${statusText}</span>
-          <button class="share-btn" onclick="shareListing()">🔗 공유하기</button>
+          <div class="share-btn-group">
+            <button class="share-btn" onclick="shareListing()">🔗 공유하기</button>
+            <button class="img-copy-btn" id="img-copy-btn" onclick="copyAsImage()">🖼️ 이미지 복사</button>
+          </div>
         </div>
 
         <div class="detail-price-block">
@@ -567,6 +584,85 @@
       </div>`
   }
 
+  async function copyAsImage() {
+    if (!currentListing) return
+    const btn = document.getElementById('img-copy-btn')
+    btn.disabled = true
+    btn.textContent = '생성 중...'
+
+    const l = currentListing
+    const chars = (l.characters ?? []).map(lc => lc.character).filter(Boolean)
+    const gameName = l.game?.nameKo ?? ''
+    const serverName = l.server?.nameKo ?? ''
+    const price = formatPrice(l.price)
+    const pageUrl = window.location.origin + '/listing/?id=' + l.id
+
+    const charsHtml = chars.slice(0, 12).map(c =>
+      c.imageUrl
+        ? `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <img src="${c.imageUrl}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1.5px solid #e5e7eb;" crossorigin="anonymous">
+            <span style="font-size:9px;color:#555;text-align:center;line-height:1.2;max-width:52px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${c.nameKo}</span>
+           </div>`
+        : `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div style="width:48px;height:48px;border-radius:8px;background:#f3f4f6;border:1.5px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-size:10px;color:#aaa;">${c.nameKo.slice(0,3)}</div>
+            <span style="font-size:9px;color:#555;">${c.nameKo}</span>
+           </div>`
+    ).join('')
+
+    const card = document.getElementById('listing-share-card')
+    card.innerHTML = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;border-radius:16px;overflow:hidden;width:480px;box-shadow:0 4px 24px rgba(0,0,0,0.12);">
+        <div style="background:#111;padding:20px 24px 16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            ${l.game?.imageUrl ? `<img src="${l.game.imageUrl}" style="width:32px;height:32px;border-radius:7px;object-fit:cover;" crossorigin="anonymous">` : `<span style="font-size:24px;">${l.game?.emoji ?? ''}</span>`}
+            <span style="color:#fff;font-size:15px;font-weight:700;">${gameName}</span>
+            ${serverName ? `<span style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;">${serverName}</span>` : ''}
+          </div>
+          <div style="color:#fff;font-size:28px;font-weight:900;">${price}</div>
+        </div>
+        ${chars.length > 0 ? `
+        <div style="padding:16px 20px;">
+          <div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">보유 캐릭터 ${chars.length}개</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">${charsHtml}</div>
+        </div>` : ''}
+        ${l.description ? `
+        <div style="padding:0 20px 16px;">
+          <div style="font-size:13px;color:#444;background:#f8f8f8;border-radius:10px;padding:12px;white-space:pre-wrap;line-height:1.6;">${l.description.slice(0,200)}${l.description.length > 200 ? '...' : ''}</div>
+        </div>` : ''}
+        <div style="background:#f8f8f8;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:11px;color:#aaa;">리세리스트 · resetlist.kr</span>
+          <span style="font-size:10px;color:#bbb;">${pageUrl}</span>
+        </div>
+      </div>`
+    card.style.display = 'block'
+
+    try {
+      const canvas = await html2canvas(card, { useCORS: true, scale: 2, backgroundColor: null, logging: false })
+      card.style.display = 'none'
+      canvas.toBlob(async (blob) => {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          showToast('이미지가 클립보드에 복사됐어요!')
+        } catch {
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `리세리스트_${gameName}_${l.id.slice(0, 8)}.png`
+          a.click()
+          URL.revokeObjectURL(url)
+          showToast('이미지를 저장했어요!')
+        }
+        btn.disabled = false
+        btn.textContent = '🖼️ 이미지 복사'
+      }, 'image/png')
+    } catch (e) {
+      card.style.display = 'none'
+      btn.disabled = false
+      btn.textContent = '🖼️ 이미지 복사'
+      showToast('이미지 생성에 실패했어요')
+    }
+  }
+
   async function shareListing() {
     const url = window.location.href
     try {
@@ -598,5 +694,6 @@
   }
 </script>
 <div id="footer"></div>
+<div id="listing-share-card" style="display:none;position:fixed;left:-9999px;top:0;z-index:-1;"></div>
 </body>
 </html>
