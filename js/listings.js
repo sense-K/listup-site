@@ -20,19 +20,20 @@ function renderListingCard(listing) {
   let charBadges, extraBadge
   if (chars.length <= TOTAL_SLOTS) {
     // 8개 이하: 전부 표시, +X 없음
-    charBadges = chars.map(lc => renderCharIcon(lc.character)).join('')
+    charBadges = chars.map(lc => renderCharIcon(lc.character, lc.count)).join('')
     extraBadge = ''
   } else {
     // 8개 초과: 앞 7개 + 마지막 슬롯에 +X
-    charBadges = chars.slice(0, TOTAL_SLOTS - 1).map(lc => renderCharIcon(lc.character)).join('')
+    charBadges = chars.slice(0, TOTAL_SLOTS - 1).map(lc => renderCharIcon(lc.character, lc.count)).join('')
     extraBadge = `<span class="char-img-more">+${chars.length - (TOTAL_SLOTS - 1)}</span>`
   }
 
-  function renderCharIcon(c) {
+  function renderCharIcon(c, count) {
     if (!c) return ''
     const gc = typeof gradeClass === 'function' ? gradeClass(c.tier) : ''
-    if (c.imageUrl) return `<img class="char-img-badge${gc ? ' grade-' + gc : ''}" src="${c.imageUrl}" alt="${c.nameKo}" title="${c.nameKo}">`
-    return `<span class="char-badge${gc ? ' grade-' + gc : ''}">${c.nameKo}</span>`
+    const countBadge = (count > 1) ? `<span style="position:absolute;top:-4px;right:-4px;background:#111;color:#fff;border-radius:999px;font-size:9px;font-weight:700;min-width:14px;height:14px;display:flex;align-items:center;justify-content:center;padding:0 2px;line-height:1;">×${count}</span>` : ''
+    if (c.imageUrl) return `<span style="position:relative;display:inline-block;"><img class="char-img-badge${gc ? ' grade-' + gc : ''}" src="${c.imageUrl}" alt="${c.nameKo}" title="${c.nameKo + (count > 1 ? ' ×' + count : '')}">${countBadge}</span>`
+    return `<span class="char-badge${gc ? ' grade-' + gc : ''}">${c.nameKo}${count > 1 ? ` ×${count}` : ''}</span>`
   }
 
   const discountHtml = listing.discountAmount
@@ -123,6 +124,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
         server:Server(nameKo),
         user:User(nickname),
         characters:ListingCharacter(
+          count,
           character:Character(nameKo, tier, imageUrl)
         )
       `)

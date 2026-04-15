@@ -134,10 +134,20 @@
       background: rgba(0,0,0,0.5);
       align-items: center; justify-content: center;
     }
-    .char-item.selected .check-overlay { display: flex; }
     .check-overlay svg {
       width: 22px; height: 22px;
       filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+    }
+    .char-count-badge {
+      position: absolute;
+      top: 3px; right: 3px;
+      background: #111;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      min-width: 16px; height: 16px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 3px; z-index: 2;
     }
 
     /* 선택된 캐릭터 표시 */
@@ -302,7 +312,7 @@
   let selectedGameId = null
   let selectedGame = null
   let selectedServerId = null
-  let selectedChars = []
+  let selectedChars = {}  // { charId: { char, count } }
   let allChars = []
   let editListingId = null
   const gameStore = {}  // id → game 객체
@@ -342,7 +352,7 @@
         .select(`id, price, description, kakaoOpenChatUrl, gameId, serverId,
           game:Game(id, nameKo, slug, emoji, imageUrl),
           server:Server(id, nameKo),
-          characters:ListingCharacter(character:Character(id, nameKo, tier, imageUrl))`)
+          characters:ListingCharacter(count, character:Character(id, nameKo, tier, imageUrl))`)
         .eq('id', editListingId).single()
       if (!listing) { alert('판매글을 찾을 수 없어요'); return }
 
@@ -357,13 +367,14 @@
         }
       }
 
-      // 캐릭터 선택
-      await loadChars()
-      selectedChars = (listing.characters ?? []).map(lc => lc.character).filter(Boolean)
-      selectedChars.forEach(c => {
-        const el = document.getElementById('char-' + c.id)
-        if (el) el.classList.add('selected')
+      // 캐릭터 선택 (selectedChars를 먼저 세팅 후 loadChars 호출)
+      selectedChars = {}
+      ;(listing.characters ?? []).forEach(lc => {
+        if (lc.character) {
+          selectedChars[lc.character.id] = { char: lc.character, count: lc.count ?? 1 }
+        }
       })
+      await loadChars()
       renderSelectedChars()
 
       // 가격/설명/연락처
@@ -380,7 +391,7 @@
     if (!g) return
     selectedGameId = g.id
     selectedGame = g
-    selectedChars = []
+    selectedChars = {}
     allChars = []
 
     // 카드 선택 표시
@@ -465,14 +476,17 @@
       const gc = gradeClass(grade)
       const dot = GRADE_DOT_COLOR[grade] || '#9ca3af'
       const cards = chars.map(c => {
-        const isSelected = selectedChars.some(x => x.id === c.id)
+        const entry = selectedChars[c.id]
+        const count = entry?.count ?? 0
+        const isSelected = !!entry
         return `
-          <div class="char-item${isSelected ? ' selected' : ''}${gc ? ' grade-border-' + gc : ''}" id="char-${c.id}" onclick="toggleChar('${c.id}')">
+          <div class="char-item${isSelected ? ' selected' : ''}${gc ? ' grade-border-' + gc : ''}" id="char-${c.id}" onclick="clickChar('${c.id}')">
             ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy">` : `<div class="char-no-img">?</div>`}
             <div class="char-name-label">${c.nameKo}</div>
-            <div class="check-overlay">
+            <div class="check-overlay" style="${isSelected && count === 1 ? 'display:flex;' : 'display:none;'}">
               <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
+            <div class="char-count-badge" style="${count > 1 ? '' : 'display:none;'}">${count > 1 ? count : ''}</div>
           </div>`
       }).join('')
 
@@ -488,35 +502,60 @@
     }).join('')
   }
 
-  function toggleChar(charId) {
+  function clickChar(charId) {
     const c = charStore[charId]
     if (!c) return
-    const idx = selectedChars.findIndex(x => x.id === c.id)
-    if (idx >= 0) {
-      selectedChars.splice(idx, 1)
+    if (!selectedChars[charId]) {
+      selectedChars[charId] = { char: c, count: 1 }
     } else {
-      selectedChars.push(c)
+      selectedChars[charId].count++
     }
-    // DOM 업데이트 (그리드 전체 재렌더 없이)
-    const el = document.getElementById('char-' + c.id)
-    if (el) el.classList.toggle('selected', selectedChars.some(x => x.id === c.id))
+    updateCharItem(charId)
     renderSelectedChars()
+  }
+
+  function removeChar(charId) {
+    delete selectedChars[charId]
+    updateCharItem(charId)
+    renderSelectedChars()
+  }
+
+  function updateCharItem(charId) {
+    const el = document.getElementById('char-' + charId)
+    if (!el) return
+    const entry = selectedChars[charId]
+    const overlay = el.querySelector('.check-overlay')
+    const badge = el.querySelector('.char-count-badge')
+    if (!entry) {
+      el.classList.remove('selected')
+      if (overlay) overlay.style.display = 'none'
+      if (badge) badge.style.display = 'none'
+    } else {
+      el.classList.add('selected')
+      if (entry.count === 1) {
+        if (overlay) overlay.style.display = 'flex'
+        if (badge) badge.style.display = 'none'
+      } else {
+        if (overlay) overlay.style.display = 'none'
+        if (badge) { badge.style.display = 'flex'; badge.textContent = entry.count }
+      }
+    }
   }
 
   function renderSelectedChars() {
     const el = document.getElementById('selected-chars')
-    const placeholder = document.getElementById('selected-placeholder')
+    const entries = Object.values(selectedChars)
 
-    if (selectedChars.length === 0) {
+    if (entries.length === 0) {
       el.innerHTML = '<span style="color:var(--text-muted);font-size:13px;" id="selected-placeholder">캐릭터를 선택하면 여기 표시돼요</span>'
       return
     }
 
-    el.innerHTML = selectedChars.map(c => `
+    el.innerHTML = entries.map(({ char: c, count }) => `
       <span class="selected-char-tag">
         ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}
-        ${c.nameKo}
-        <button onclick="event.stopPropagation();toggleChar('${c.id}')">×</button>
+        ${c.nameKo}${count > 1 ? ` ×${count}` : ''}
+        <button onclick="event.stopPropagation();removeChar('${c.id}')">×</button>
       </span>
     `).join('')
   }
@@ -548,11 +587,11 @@
     const serverSel = document.getElementById('server-select')
     const serverText = serverSel.options[serverSel.selectedIndex]?.text ?? ''
 
-    const charsHtml = selectedChars.length > 0
-      ? `<div class="summary-chars">${selectedChars.map(c => `
+    const charsHtml = Object.keys(selectedChars).length > 0
+      ? `<div class="summary-chars">${Object.values(selectedChars).map(({ char: c, count }) => `
             <div class="summary-char-card">
               ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : ''}
-              <span>${c.nameKo}</span>
+              <span>${c.nameKo}${count > 1 ? ` ×${count}` : ''}</span>
             </div>
           `).join('')}</div>`
       : '<strong style="color:var(--text-muted);">선택 안 함</strong>'
@@ -600,9 +639,9 @@
 
         // 캐릭터 재등록
         await db.from('ListingCharacter').delete().eq('listingId', editListingId)
-        if (selectedChars.length > 0) {
+        if (Object.keys(selectedChars).length > 0) {
           await db.from('ListingCharacter').insert(
-            selectedChars.map(c => ({ listingId: editListingId, characterId: c.id }))
+            Object.values(selectedChars).map(({ char: c, count }) => ({ listingId: editListingId, characterId: c.id, count }))
           )
         }
         alert('판매글이 수정됐어요!')
@@ -625,9 +664,9 @@
         }).select().single()
         if (error) throw error
 
-        if (selectedChars.length > 0) {
+        if (Object.keys(selectedChars).length > 0) {
           await db.from('ListingCharacter').insert(
-            selectedChars.map(c => ({ listingId: listing.id, characterId: c.id }))
+            Object.values(selectedChars).map(({ char: c, count }) => ({ listingId: listing.id, characterId: c.id, count }))
           )
         }
         alert('판매글이 등록됐어요!')

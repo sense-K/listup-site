@@ -170,7 +170,7 @@
         game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
         server:Server(nameKo),
         user:User(nickname, tradeCount, avgRating),
-        characters:ListingCharacter(character:Character(nameKo, tier, imageUrl))
+        characters:ListingCharacter(count, character:Character(nameKo, tier, imageUrl))
       `)
       .eq('id', listingId)
       .single()
@@ -217,19 +217,22 @@
     const nickname = l.user?.nickname ?? '익명'
     const tradeCount = l.user?.tradeCount ?? 0
     const avgRating = l.user?.avgRating ? Number(l.user.avgRating).toFixed(1) : null
-    const chars = (l.characters ?? []).map(lc => lc.character).filter(Boolean)
+    const chars = (l.characters ?? []).filter(lc => lc.character)
     const isMine = currentUser && currentUser.id === l.userId
 
     document.title = `${gameName} 리세계 판매계정 | 리세 리스트`
 
     const charsHtml = chars.length > 0
-      ? chars.map(c => {
+      ? chars.map(lc => {
+          const c = lc.character
+          const count = lc.count ?? 1
           const gc = gradeClass(c.tier)
           return `
-            <div class="detail-char-card${gc ? ' grade-border-' + gc : ''}">
+            <div class="detail-char-card${gc ? ' grade-border-' + gc : ''}" style="position:relative;">
               ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy">` : '<div class="detail-char-no-img">?</div>'}
               ${gc ? `<span class="grade-tag grade-${gc}" style="font-size:8px;padding:1px 4px;">${gradeShort(c.tier)}</span>` : ''}
               <div class="char-name-label">${c.nameKo}</div>
+              ${count > 1 ? `<span style="position:absolute;top:3px;right:3px;background:#111;color:#fff;border-radius:999px;font-size:9px;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;z-index:2;">×${count}</span>` : ''}
             </div>`
         }).join('')
       : '<span style="color:#aaa;font-size:13px;">선택된 캐릭터 없음</span>'
@@ -594,7 +597,7 @@
     btn.textContent = '생성 중...'
 
     const l = currentListing
-    const chars = (l.characters ?? []).map(lc => lc.character).filter(Boolean)
+    const chars = (l.characters ?? []).filter(lc => lc.character)
     const gameName = l.game?.nameKo ?? ''
     const serverName = l.server?.nameKo ?? ''
     const price = formatPrice(l.price)
@@ -616,20 +619,23 @@
     const [artDataUrl, gameIconDataUrl, ...charDataUrls] = await Promise.all([
       l.game?.artImageUrl ? toDataUrl(l.game.artImageUrl) : Promise.resolve(null),
       l.game?.imageUrl    ? toDataUrl(l.game.imageUrl)    : Promise.resolve(null),
-      ...chars.slice(0, 12).map(c => c.imageUrl ? toDataUrl(c.imageUrl) : Promise.resolve(null))
+      ...chars.slice(0, 12).map(lc => lc.character.imageUrl ? toDataUrl(lc.character.imageUrl) : Promise.resolve(null))
     ])
 
-    const charsHtml = chars.slice(0, 12).map((c, i) =>
-      charDataUrls[i]
+    const charsHtml = chars.slice(0, 12).map((lc, i) => {
+      const c = lc.character
+      const count = lc.count ?? 1
+      const countLabel = count > 1 ? ` ×${count}` : ''
+      return charDataUrls[i]
         ? `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
             <img src="${charDataUrls[i]}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1.5px solid #e5e7eb;">
-            <span style="font-size:9px;color:#555;text-align:center;line-height:1.2;max-width:52px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${c.nameKo}</span>
+            <span style="font-size:9px;color:#555;text-align:center;line-height:1.2;max-width:52px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${c.nameKo}${countLabel}</span>
            </div>`
         : `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
             <div style="width:48px;height:48px;border-radius:8px;background:#f3f4f6;border:1.5px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-size:10px;color:#aaa;">${c.nameKo.slice(0,3)}</div>
-            <span style="font-size:9px;color:#555;">${c.nameKo}</span>
+            <span style="font-size:9px;color:#555;">${c.nameKo}${countLabel}</span>
            </div>`
-    ).join('')
+    }).join('')
 
     const card = document.getElementById('listing-share-card')
     card.innerHTML = `
