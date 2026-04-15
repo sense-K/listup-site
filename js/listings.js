@@ -1,7 +1,7 @@
 // ===== 매물 카드 렌더링 =====
 
 function getArtClass(gameSlug) {
-  const map = { genshin: 'genshin', bluearchive: 'bluearchive', nikke: 'nikke', cookierunkingdom: 'cookierunkingdom' }
+  const map = { genshin: 'genshin', bluearchive: 'bluearchive', nikke: 'nikke', cookierunkingdom: 'cookierunkingdom', stardive: 'stardive' }
   return map[gameSlug] || 'genshin'
 }
 

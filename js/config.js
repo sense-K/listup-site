@@ -167,6 +167,7 @@ const SLUG_TO_PATH = {
   'zzz':            '/zzz/',
   'sevenknightsre': '/sevenknightsre/',
   'leehwan':        '/leehwan/',
+  'stardive':       '/stardive/',
 }
 function gameSlugToPath(slug) {
   return SLUG_TO_PATH[slug] ?? `/${slug}/`

@@ -588,6 +588,7 @@ a { text-decoration: none; color: inherit; }
 .card-art.bluearchive { background: linear-gradient(160deg, #1a0a2e 0%, #2d1b69 100%); }
 .card-art.nikke { background: linear-gradient(160deg, #0a1a2e 0%, #0c2a4a 100%); }
 .card-art.cookierunkingdom { background: linear-gradient(160deg, #2e1a0a 0%, #4a2c0a 100%); }
+.card-art.stardive { background: linear-gradient(160deg, #0a1f2e 0%, #0c3040 100%); }
 
 /* HOT 배지 */
 .badge-hot {
