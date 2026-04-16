@@ -1,0 +1,177 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const RESEND_KEY = Deno.env.get('RESEND_API_KEY')!
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const SITE_URL = 'https://resetlist.kr'
+const FROM = '리세리스트 <onboarding@resend.dev>'
+
+serve(async (req) => {
+  try {
+    const body = await req.json()
+
+    // 판매자가 구매자에게 연락 요청 보내기
+    if (body.action === 'nudge') {
+      const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '')
+      const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
+
+      const { data: { user: caller } } = await supabase.auth.getUser(token)
+      if (!caller) return new Response('unauthorized', { status: 401 })
+
+      const { data: trade } = await supabase
+        .from('Trade')
+        .select('id, buyerId, sellerId, listingId')
+        .eq('id', body.tradeId)
+        .eq('status', 'active')
+        .single()
+
+      if (!trade || trade.sellerId !== caller.id) return new Response('forbidden', { status: 403 })
+
+      const { data: listing } = await supabase
+        .from('Listing')
+        .select('id, price, game:Game(nameKo)')
+        .eq('id', trade.listingId)
+        .single()
+
+      const gameName = listing?.game?.nameKo ?? '게임'
+      const listingUrl = `${SITE_URL}/listing/?id=${trade.listingId}`
+
+      const { data: { user: buyer } } = await supabase.auth.admin.getUserById(trade.buyerId)
+      if (!buyer?.email) return ok()
+
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: FROM,
+          to: [buyer.email],
+          subject: '[리세리스트] 판매자가 연락을 기다리고 있어요',
+          html: makeEmail(
+            '판매자가 연락을 기다리고 있어요',
+            `<strong>${gameName}</strong> 계정 거래 관련하여 판매자가 연락을 기다리고 있어요.<br><br>빠르게 판매자에게 연락해주세요.`,
+            '판매글 확인하기',
+            listingUrl
+          )
+        }),
+      })
+      const data = await res.json()
+      return new Response(JSON.stringify(data), { status: 200 })
+    }
+
+    const { type, record, old_record } = body
+    if (!record) return ok()
+
+    const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
+
+    // 판매글 + 게임 정보 조회
+    const { data: listing } = await supabase
+      .from('Listing')
+      .select('id, price, game:Game(nameKo)')
+      .eq('id', record.listingId)
+      .single()
+
+    const gameName = listing?.game?.nameKo ?? '게임'
+    const price = listing?.price ? Number(listing.price).toLocaleString() + '원' : ''
+    const listingUrl = `${SITE_URL}/listing/?id=${record.listingId}`
+
+    let toUserId: string | null = null
+    let subject = ''
+    let bodyHtml = ''
+
+    if (type === 'INSERT' && record.status === 'active') {
+      // 구매 신청 → 판매자 알림
+      toUserId = record.sellerId
+      subject = '[리세리스트] 새 구매 신청이 들어왔어요'
+      bodyHtml = makeEmail(
+        '새 구매 신청이 들어왔어요!',
+        `<strong>${gameName}</strong> 판매계정에 구매 신청이 왔어요.<br>가격: <strong>${price}</strong><br><br>빠르게 확인하고 구매자와 연락해보세요.`,
+        '판매글 확인하기',
+        listingUrl
+      )
+    } else if (type === 'UPDATE') {
+      const newStatus = record.status
+      const oldStatus = old_record?.status
+
+      if (oldStatus === 'active' && newStatus === 'seller_confirmed') {
+        // 전달완료 → 구매자 알림
+        toUserId = record.buyerId
+        subject = '[리세리스트] 판매자가 계정을 전달했어요'
+        bodyHtml = makeEmail(
+          '판매자가 계정을 전달했어요',
+          `<strong>${gameName}</strong> 계정을 판매자가 전달했어요.<br><br>계정을 확인하고 수령 확인을 해주세요.`,
+          '수령 확인하기',
+          `${SITE_URL}/review/?tradeId=${record.id}`
+        )
+      } else if (oldStatus === 'seller_confirmed' && newStatus === 'completed') {
+        // 수령확인 완료 → 판매자 알림
+        toUserId = record.sellerId
+        subject = '[리세리스트] 거래가 완료됐어요 🎉'
+        bodyHtml = makeEmail(
+          '거래가 완료됐어요!',
+          `<strong>${gameName}</strong> 계정 거래가 완료됐어요.<br>구매자가 수령을 확인했습니다.`,
+          '마이페이지 보기',
+          `${SITE_URL}/mypage/`
+        )
+      } else if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
+        // 거래 취소 → 판매자 알림
+        toUserId = record.sellerId
+        subject = '[리세리스트] 거래가 취소됐어요'
+        bodyHtml = makeEmail(
+          '거래가 취소됐어요',
+          `<strong>${gameName}</strong> 계정의 거래가 취소됐어요.<br>판매글은 다시 판매 중 상태로 돌아가요.`,
+          '판매글 확인하기',
+          listingUrl
+        )
+      }
+    }
+
+    if (!toUserId) return ok()
+
+    // 유저 이메일 조회
+    const { data: { user } } = await supabase.auth.admin.getUserById(toUserId)
+    if (!user?.email) return ok()
+
+    // Resend로 발송
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from: FROM, to: [user.email], subject, html: bodyHtml }),
+    })
+
+    const data = await res.json()
+    console.log('Resend:', JSON.stringify(data))
+    return new Response(JSON.stringify(data), { status: 200 })
+
+  } catch (e) {
+    console.error(e)
+    return new Response('error: ' + e.message, { status: 500 })
+  }
+})
+
+function ok() {
+  return new Response('ok', { status: 200 })
+}
+
+function makeEmail(title: string, content: string, btnText: string, btnUrl: string) {
+  return `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,sans-serif;background:#f8f8f8;padding:40px 20px;margin:0;">
+  <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #eee;">
+    <div style="font-size:22px;font-weight:900;margin-bottom:24px;">리세리스트</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:12px;">${title}</div>
+    <div style="font-size:15px;color:#444;line-height:1.7;margin-bottom:24px;">${content}</div>
+    <a href="${btnUrl}"
+       style="display:inline-block;padding:13px 28px;background:#111;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">
+      ${btnText}
+    </a>
+    <div style="margin-top:32px;padding-top:20px;border-top:1px solid #f0f0f0;font-size:12px;color:#bbb;">
+      리세리스트 · resetlist.kr<br>이 메일은 자동 발송된 알림이에요.
+    </div>
+  </div>
+</body>
+</html>`
+}
