@@ -41,6 +41,7 @@ function renderNavbar(activePage = '') {
               <div class="nav-dropdown-loading">불러오는 중...</div>
             </div>
           </div>
+          <a href="/price/" class="muted">계정 시세</a>
           <a href="/contact/" class="muted">문의하기</a>
         </div>
         <div class="navbar-actions" id="navbar-actions">
@@ -55,15 +56,16 @@ function renderNavbar(activePage = '') {
     </nav>
     <div class="mobile-menu" id="mobile-menu">
       <div class="mobile-menu-inner">
-        <div class="mobile-menu-links">
-          <div class="mobile-menu-section-label">거래소</div>
-          <div id="mobile-game-links"></div>
-          <a href="/contact/">문의하기</a>
-</div>
+        <div class="mobile-menu-section-label">거래소</div>
+        <div id="mobile-game-links" class="mobile-game-grid"></div>
+        <div class="mobile-menu-divider"></div>
+        <a href="/price/" class="mobile-menu-link">계정 시세</a>
+        <div class="mobile-menu-divider"></div>
+        <a href="/contact/" class="mobile-menu-link">문의하기</a>
+        <div class="mobile-menu-divider"></div>
         <div class="mobile-menu-actions" id="mobile-menu-actions">
-          <a href="/auth/" class="btn btn-outline" style="text-align:center;">로그인</a>
-          <a href="/trade/register.html" class="btn btn-primary" style="text-align:center;">판매하기 ↗</a>
-          <a href="/trade/bulk.html" class="btn btn-outline" style="text-align:center;">일괄 등록</a>
+          <a href="/auth/" class="btn btn-primary" style="text-align:center;">로그인</a>
+          <a href="/trade/register.html" class="btn btn-outline" style="text-align:center;">판매하기 ↗</a>
         </div>
       </div>
     </div>
@@ -113,9 +115,9 @@ async function initNavbarAuth() {
     `
     if (mobileEl) {
       mobileEl.innerHTML = `
-        <a href="/mypage/" class="btn btn-outline" style="text-align:center;">마이페이지 (${nickname})</a>
-        <button class="btn btn-outline" onclick="authSignOut()" style="color:#ef4444;border-color:#ef4444;">로그아웃</button>
-        <a href="/trade/register.html" class="btn btn-primary" style="text-align:center;">판매하기 ↗</a>
+        <a href="/mypage/" class="btn btn-primary" style="text-align:center;">마이페이지 (${nickname})</a>
+        <a href="/trade/register.html" class="btn btn-outline" style="text-align:center;">판매하기 ↗</a>
+        <button class="mobile-logout-btn" onclick="authSignOut()">로그아웃</button>
       `
     }
   }
@@ -199,8 +201,8 @@ async function loadAndRenderGameUI(activeSlug) {
   const mobileGameLinks = document.getElementById('mobile-game-links')
   if (mobileGameLinks) {
     mobileGameLinks.innerHTML = games.map(g => `
-      <a href="${gameSlugToPath(g.slug)}" style="padding-left:16px;font-size:14px;color:#555;">
-        ${gameIcon(g, 18)} ${g.nameKo}
+      <a href="${gameSlugToPath(g.slug)}" class="mobile-game-item">
+        ${gameIcon(g, 22)} <span>${g.nameKo}</span>
       </a>
     `).join('')
   }
