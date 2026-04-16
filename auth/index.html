@@ -219,21 +219,31 @@
   document.getElementById('navbar').innerHTML = renderNavbar()
   loadAndRenderGameUI(null)
 
-  // URL 해시에 재설정 토큰이 있으면 즉시 reset 패널로 (getSession보다 먼저)
+  // 재설정 링크 감지: hash(implicit) 또는 query code(PKCE) 방식 모두 대응
   const hashParams = new URLSearchParams(location.hash.slice(1))
-  if (hashParams.get('type') === 'recovery') {
-    switchTab('reset')
-  } else {
-    // 일반 로그인 상태면 홈으로
+  const urlParams = new URLSearchParams(location.search)
+  const hasRecoveryHash = hashParams.get('type') === 'recovery'
+  const hasCode = urlParams.has('code')  // PKCE 방식: code 파라미터로 옴
+
+  let recoveryMode = hasRecoveryHash
+  if (hasRecoveryHash) switchTab('reset')
+
+  // onAuthStateChange: PKCE 코드 교환 후 PASSWORD_RECOVERY 이벤트로 감지
+  db.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      recoveryMode = true
+      switchTab('reset')
+    }
+  })
+
+  // code 파라미터가 있으면 PKCE 교환 중이므로 자동 리디렉션 건너뜀
+  if (!hasCode && !hasRecoveryHash) {
     db.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.href = (new URLSearchParams(location.search).get('next') || '/')
+      if (session && !recoveryMode) {
+        window.location.href = (new URLSearchParams(location.search).get('next') || '/')
+      }
     })
   }
-
-  // 혹시 onAuthStateChange로 늦게 감지되는 경우도 대비
-  db.auth.onAuthStateChange((event) => {
-    if (event === 'PASSWORD_RECOVERY') switchTab('reset')
-  })
 
   function switchTab(tab) {
     const isForgotOrReset = tab === 'forgot' || tab === 'reset'
