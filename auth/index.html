@@ -219,21 +219,20 @@
   document.getElementById('navbar').innerHTML = renderNavbar()
   loadAndRenderGameUI(null)
 
-  // 비밀번호 재설정 링크로 돌아온 경우 감지
-  db.auth.onAuthStateChange((event) => {
-    if (event === 'PASSWORD_RECOVERY') {
-      switchTab('reset')
-    }
-  })
+  // URL 해시에 재설정 토큰이 있으면 즉시 reset 패널로 (getSession보다 먼저)
+  const hashParams = new URLSearchParams(location.hash.slice(1))
+  if (hashParams.get('type') === 'recovery') {
+    switchTab('reset')
+  } else {
+    // 일반 로그인 상태면 홈으로
+    db.auth.getSession().then(({ data: { session } }) => {
+      if (session) window.location.href = (new URLSearchParams(location.search).get('next') || '/')
+    })
+  }
 
-  // 이미 로그인된 경우 홈으로 (재설정 모드 제외)
-  db.auth.getSession().then(({ data: { session } }) => {
-    if (session && event !== 'PASSWORD_RECOVERY') {
-      const hash = location.hash
-      if (!hash.includes('type=recovery')) {
-        window.location.href = (new URLSearchParams(location.search).get('next') || '/')
-      }
-    }
+  // 혹시 onAuthStateChange로 늦게 감지되는 경우도 대비
+  db.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') switchTab('reset')
   })
 
   function switchTab(tab) {
