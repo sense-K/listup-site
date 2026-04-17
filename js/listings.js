@@ -63,9 +63,8 @@ function renderListingCard(listing) {
         ${soldOverlay}
       </div>
       <div class="card-body">
-        ${currencies.length > 0 || serverName ? `
+        ${currencies.length > 0 ? `
         <div class="card-currencies">
-          ${serverName ? `<span class="card-server-chip">${serverName}</span>` : ''}
           ${currencies.map(lc => {
             const c = lc.currency
             return `<span class="card-currency-chip">
@@ -80,9 +79,7 @@ function renderListingCard(listing) {
             <span class="card-price">${formatPrice(listing.price)}</span>
             ${discountHtml}
           </div>
-          <div class="card-seller">
-            <span>👤 ${nickname}</span>
-          </div>
+          ${serverName ? `<span class="card-server-chip">${serverName}</span>` : ''}
         </div>
       </div>
     </a>
