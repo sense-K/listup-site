@@ -74,7 +74,7 @@ function renderListingCard(listing) {
             const c = lc.currency
             return `<span class="card-currency-chip">
               ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : '💎'}
-              ${lc.amount.toLocaleString()}
+              <span class="card-currency-num">${lc.amount.toLocaleString()}</span>
             </span>`
           }).join('')}
         </div>` : ''}

@@ -750,7 +750,7 @@ a { text-decoration: none; color: inherit; }
 /* 재화 칩 (카드) */
 .card-currencies {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 5px;
   margin-bottom: 8px;
 }
@@ -764,6 +764,7 @@ a { text-decoration: none; color: inherit; }
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .card-currency-chip {
@@ -776,7 +777,9 @@ a { text-decoration: none; color: inherit; }
   font-size: 11px;
   font-weight: 600;
   color: #444;
-  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 .card-currency-chip img {
   width: 16px;
@@ -784,6 +787,12 @@ a { text-decoration: none; color: inherit; }
   border-radius: 4px;
   object-fit: cover;
   flex-shrink: 0;
+}
+.card-currency-num {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .char-badge {
