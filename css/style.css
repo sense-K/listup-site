@@ -564,7 +564,7 @@ a { text-decoration: none; color: inherit; }
 .listings-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
 /* ===== 카드 ===== */
@@ -572,6 +572,7 @@ a { text-decoration: none; color: inherit; }
   display: flex;
   flex-direction: row;
   background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-card);
   overflow: hidden;
   box-shadow: var(--shadow-card);
