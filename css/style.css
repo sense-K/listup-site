@@ -1466,10 +1466,20 @@ a { text-decoration: none; color: inherit; }
   .sidebar-game-item { padding: 6px 14px; border: 1px solid var(--border); border-radius: 999px; }
   .sidebar-game-item.active { background: var(--black); border-color: var(--black); }
   .main-game-grid { grid-template-columns: 1fr 1fr; }
-  .card-art { width: 120px; min-height: 120px; }
+  /* 모바일 카드 세로 레이아웃 */
+  .card { flex-direction: column; }
+  .card-art {
+    width: 100%;
+    height: 160px;
+    min-height: unset;
+    border-radius: 16px 16px 0 0;
+  }
+  .card-art-blur { border-radius: 16px 16px 0 0; }
+  .card-art-overlay { border-radius: 16px 16px 0 0; }
   .card-body { padding: 10px 12px; }
-  .char-img-badge { width: 36px; height: 36px; border-radius: 7px; }
-  .char-img-more { width: 36px; height: 36px; border-radius: 7px; font-size: 10px; }
+  .char-img-badge { width: 40px; height: 40px; border-radius: 8px; }
+  .char-img-more { width: 40px; height: 40px; border-radius: 8px; font-size: 11px; }
+  .card-chars { max-height: 86px; } /* 40px × 2줄 + 6px 간격 */
   .fab { bottom: 16px; right: 16px; padding: 12px 18px; font-size: 13px; }
 }
 
