@@ -649,14 +649,11 @@
 
     const currencies = (l.currencies ?? []).filter(lc => lc.currency && lc.amount > 0)
 
-    const [artDataUrl, gameIconDataUrl, ...restDataUrls] = await Promise.all([
+    const [artDataUrl, gameIconDataUrl, ...charDataUrls] = await Promise.all([
       l.game?.artImageUrl ? toDataUrl(l.game.artImageUrl) : Promise.resolve(null),
       l.game?.imageUrl    ? toDataUrl(l.game.imageUrl)    : Promise.resolve(null),
-      ...chars.slice(0, 12).map(lc => lc.character.imageUrl ? toDataUrl(lc.character.imageUrl) : Promise.resolve(null)),
-      ...currencies.map(lc => lc.currency.imageUrl ? toDataUrl(lc.currency.imageUrl) : Promise.resolve(null))
+      ...chars.slice(0, 12).map(lc => lc.character.imageUrl ? toDataUrl(lc.character.imageUrl) : Promise.resolve(null))
     ])
-    const charDataUrls = restDataUrls.slice(0, chars.slice(0, 12).length)
-    const currDataUrls = restDataUrls.slice(chars.slice(0, 12).length)
 
     const charsHtml = chars.slice(0, 12).map((lc, i) => {
       const c = lc.character
@@ -679,10 +676,10 @@
     }).join('')
 
     const currenciesHtml = currencies.length > 0
-      ? currencies.map((lc, i) => {
+      ? currencies.map(lc => {
           const c = lc.currency
-          const iconHtml = currDataUrls[i]
-            ? `<img src="${currDataUrls[i]}" style="width:18px;height:18px;object-fit:contain;">`
+          const iconHtml = c.imageUrl
+            ? `<img src="${c.imageUrl}" crossorigin="anonymous" style="width:18px;height:18px;object-fit:contain;">`
             : `<span style="font-size:14px;">💎</span>`
           return `<span style="display:inline-flex;align-items:center;gap:4px;background:#f3f4f6;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;color:#222;">
             ${iconHtml}
