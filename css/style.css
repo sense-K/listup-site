@@ -1474,6 +1474,13 @@ a { text-decoration: none; color: inherit; }
     min-height: unset;
     border-radius: 16px 16px 0 0;
   }
+  .card-art-img {
+    width: 100%;
+    height: 100%;
+    left: 0;
+    transform: none;
+    object-fit: cover;
+  }
   .card-art-blur { border-radius: 16px 16px 0 0; }
   .card-art-overlay { border-radius: 16px 16px 0 0; }
   .card-body { padding: 10px 12px; }
