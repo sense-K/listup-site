@@ -62,10 +62,6 @@ function renderListingCard(listing) {
         ${serverName ? `<span class="card-art-server">${serverName}</span>` : ''}
       </div>
       <div class="card-body">
-        <div class="card-price-row">
-          <span class="card-price">${formatPrice(listing.price)}</span>
-        </div>
-        ${discountHtml ? `<div style="margin-top:-4px;">${discountHtml}</div>` : ''}
         <div class="card-chars">${charBadges}${extraBadge}</div>
         ${currencies.length > 0 ? `
         <div class="card-currencies">${currencies.map(lc => {
@@ -77,6 +73,10 @@ function renderListingCard(listing) {
         }).join('')}</div>` : ''}
         ${listing.description ? `<div class="card-desc">${listing.description}</div>` : ''}
         <div class="card-footer">
+          <div>
+            <span class="card-price">${formatPrice(listing.price)}</span>
+            ${discountHtml}
+          </div>
           <div class="card-seller">
             <span>👤 ${nickname}</span>
           </div>
