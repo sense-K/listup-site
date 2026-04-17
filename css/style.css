@@ -587,18 +587,15 @@ a { text-decoration: none; color: inherit; }
 /* 카드 좌측 게임 아트 영역 */
 .card-art {
   width: 160px;
-  min-height: 160px;
+  min-height: 120px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   position: relative;
   overflow: hidden;
   border-radius: 16px 0 0 16px;
-  background-size: cover;
-  background-position: center;
 }
 .card-art .game-emoji { font-size: 32px; }
 .card-art .game-server {
@@ -606,14 +603,12 @@ a { text-decoration: none; color: inherit; }
   color: rgba(255,255,255,0.5);
 }
 
-/* 카드 아트 - 게임 이미지 (꽉 채움) */
+/* 카드 아트 - 게임 이미지 (가로 100% 고정, 세로 비율 유지) */
 .card-art-img {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+  height: auto;
+  display: block;
+  flex-shrink: 0;
 }
 
 /* 카드 아트 - 그라디언트 오버레이 */
