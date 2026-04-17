@@ -75,7 +75,6 @@ function renderListingCard(listing) {
           }).join('')}
         </div>` : ''}
         <div class="card-chars">${charBadges}${extraBadge}</div>
-        ${listing.description ? `<div class="card-desc">${listing.description}</div>` : ''}
         <div class="card-footer">
           <div>
             <span class="card-price">${formatPrice(listing.price)}</span>
