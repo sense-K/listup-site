@@ -21,7 +21,7 @@ function renderListingCard(listing) {
 
   const chars = listing.characters ?? []
   const currencies = (listing.currencies ?? []).filter(lc => lc.currency && lc.amount > 0)
-  const TOTAL_SLOTS = window.innerWidth < 768 ? 9 : 16
+  const TOTAL_SLOTS = 9
 
   let charBadges, extraBadge
   if (chars.length <= TOTAL_SLOTS) {
@@ -54,7 +54,8 @@ function renderListingCard(listing) {
 
   return `
     <a href="/listing/?id=${listing.id}" class="card${isSold ? ' card-sold' : ''}">
-      <div class="card-art ${artClass}" ${gameArtUrl ? `style="background-image:url('${gameArtUrl}')"` : ''}>
+      <div class="card-art ${artClass}">
+        ${gameImageUrl ? `<img class="card-art-img" src="${gameImageUrl}" alt="${gameName}">` : `<span style="font-size:36px;position:relative;z-index:1;">${gameEmoji}</span>`}
         <div class="card-art-overlay"></div>
         ${isSold ? `<div class="card-art-blur"></div>` : ''}
         ${hotBadge}

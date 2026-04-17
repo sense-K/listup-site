@@ -606,6 +606,16 @@ a { text-decoration: none; color: inherit; }
   color: rgba(255,255,255,0.5);
 }
 
+/* 카드 아트 - 게임 이미지 (꽉 채움) */
+.card-art-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
 /* 카드 아트 - 그라디언트 오버레이 */
 .card-art-overlay {
   position: absolute;
