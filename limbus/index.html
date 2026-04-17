@@ -59,7 +59,7 @@
     <div class="content-area">
       <div class="content-header">
         <div class="content-title" id="game-page-title">림버스 컴퍼니 계정</div>
-        <span class="content-count" id="listing-count"></span>
+        
       </div>
 <div id="listings-container"><div class="loading">불러오는 중...</div></div>
   <button class="btn-more" id="more-btn" style="display:none;" onclick="loadMore()">계정 더보기</button>
@@ -104,7 +104,6 @@
     const { data: game } = await db.from('Game').select('id').eq('slug', GAME_SLUG).single()
     if (!game) return
     const { count } = await db.from('Listing').select('*', { count: 'exact', head: true }).eq('status', 'active').eq('gameId', game.id)
-    document.getElementById('listing-count').textContent = count + '개'
   }
 
   async function loadFilterChars() {
