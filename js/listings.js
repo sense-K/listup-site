@@ -54,8 +54,7 @@ function renderListingCard(listing) {
 
   return `
     <a href="/listing/?id=${listing.id}" class="card${isSold ? ' card-sold' : ''}">
-      <div class="card-art ${artClass}">
-        ${gameImageUrl ? `<img class="card-art-img" src="${gameImageUrl}" alt="${gameName}">` : `<span style="font-size:36px;position:relative;z-index:1;">${gameEmoji}</span>`}
+      <div class="card-art ${artClass}" ${gameArtUrl ? `style="background-image:url('${gameArtUrl}')"` : ''}>
         <div class="card-art-overlay"></div>
         ${isSold ? `<div class="card-art-blur"></div>` : ''}
         ${hotBadge}
