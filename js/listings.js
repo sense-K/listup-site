@@ -15,7 +15,8 @@ function renderListingCard(listing) {
   const artClass = getArtClass(gameSlug)
 
   const chars = listing.characters ?? []
-  const TOTAL_SLOTS = 8
+  const currencies = (listing.currencies ?? []).filter(lc => lc.currency && lc.amount > 0)
+  const TOTAL_SLOTS = 12
 
   let charBadges, extraBadge
   if (chars.length <= TOTAL_SLOTS) {
@@ -58,19 +59,26 @@ function renderListingCard(listing) {
       <div class="card-body">
         <div class="card-price-row">
           <span class="card-price">${formatPrice(listing.price)}</span>
-          <span class="card-game-badge">
-            ${gameImageUrl ? `<img src="${gameImageUrl}" alt="${listing.game?.nameKo ?? ''}" style="width:14px;height:14px;border-radius:3px;object-fit:cover;vertical-align:middle;">` : gameEmoji}
-            ${listing.game?.nameKo ?? ''}
-          </span>
         </div>
         ${discountHtml ? `<div style="margin-top:-4px;">${discountHtml}</div>` : ''}
         <div class="card-chars">${charBadges}${extraBadge}</div>
+        ${currencies.length > 0 ? `
+        <div class="card-currencies">${currencies.map(lc => {
+          const c = lc.currency
+          return `<span class="card-currency-chip">
+            ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}">` : '💎'}
+            ${c.nameKo} ${lc.amount.toLocaleString()}
+          </span>`
+        }).join('')}</div>` : ''}
         ${listing.description ? `<div class="card-desc">${listing.description}</div>` : ''}
         <div class="card-footer">
           <div class="card-seller">
             <span>👤 ${nickname}</span>
           </div>
-          <span>${timeAgo(listing.createdAt)}</span>
+          <span class="card-game-badge">
+            ${gameImageUrl ? `<img src="${gameImageUrl}" alt="${listing.game?.nameKo ?? ''}" style="width:13px;height:13px;border-radius:3px;object-fit:cover;vertical-align:middle;">` : gameEmoji}
+            ${listing.game?.nameKo ?? ''}
+          </span>
         </div>
       </div>
     </a>
@@ -134,7 +142,8 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
         characters:ListingCharacter(
           count,
           character:Character(nameKo, tier, imageUrl)
-        )
+        ),
+        currencies:ListingCurrency(amount, currency:Currency(nameKo, imageUrl, sortOrder))
       `)
       .in('status', ['active', 'trading', 'sold'])
       .order(sort === 'price' ? 'price' : 'createdAt', { ascending: sort === 'price' })
