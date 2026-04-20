@@ -312,7 +312,8 @@
           code: h.code, name: h.name,
           element: ATTR_MAP[h.attribute_cd] || 'fire',
           heroClass: JOB_MAP[h.job_cd] || 'warrior',
-        }));
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 
       selectedCodes = new Set((myHeroRes.data || []).map(r => r.hero_code));
 
