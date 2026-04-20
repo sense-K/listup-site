@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>에픽세븐 아티팩트 도감 | 리세리스트</title>
+  <meta name="description" content="에픽세븐 전체 아티팩트 목록. 직업별 필터, 등급별 분류로 원하는 아티팩트를 빠르게 찾아보세요." />
+  <link rel="canonical" href="https://resetlist.kr/epic7/artifacts/" />
+  <meta property="og:title" content="에픽세븐 아티팩트 도감 | 리세리스트" />
+  <meta property="og:url" content="https://resetlist.kr/epic7/artifacts/" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+  <style>
+    .af-wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px; }
+
+    .af-filter {
+      background: #fff; border: 1px solid var(--border,#e5e7eb);
+      border-radius: 16px; padding: 16px; margin-bottom: 20px;
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    }
+    .af-search {
+      flex: 1; min-width: 180px; padding: 9px 14px;
+      border: 1px solid var(--border,#e5e7eb); border-radius: 10px;
+      font-size: 13px; outline: none;
+    }
+    .af-search:focus { border-color: #3b82f6; }
+    .af-filter-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .af-btn {
+      font-size: 12px; font-weight: 600; padding: 6px 12px;
+      border-radius: 999px; border: 1px solid var(--border,#e5e7eb);
+      background: #fff; color: var(--text-sub,#64748b); cursor: pointer;
+      transition: all 0.15s;
+    }
+    .af-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+    .af-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .af-card {
+      background: #fff; border: 1px solid var(--border,#e5e7eb);
+      border-radius: 14px; padding: 14px;
+      display: flex; gap: 12px; align-items: flex-start;
+      text-decoration: none; transition: transform 0.15s, box-shadow 0.15s;
+      cursor: pointer;
+    }
+    .af-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .af-card-icon {
+      width: 52px; height: 52px; flex-shrink: 0;
+      border-radius: 12px; overflow: hidden; background: #f1f5f9;
+    }
+    .af-card-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .af-card-body { flex: 1; min-width: 0; }
+    .af-card-top { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .af-card-name { font-size: 13px; font-weight: 700; color: #1e293b; }
+    .af-card-grade {
+      font-size: 10px; font-weight: 700; padding: 2px 6px;
+      border-radius: 999px; flex-shrink: 0;
+    }
+    .grade-5 { background: rgba(234,179,8,0.15); color: #b45309; }
+    .grade-4 { background: rgba(168,85,247,0.12); color: #7c3aed; }
+    .grade-3 { background: rgba(148,163,184,0.15); color: #475569; }
+    .af-card-job {
+      font-size: 10px; font-weight: 600; padding: 2px 6px;
+      border-radius: 999px; background: rgba(59,130,246,0.1); color: #3b82f6;
+      flex-shrink: 0;
+    }
+    .af-card-desc { font-size: 11px; color: var(--text-sub,#64748b); line-height: 1.5; }
+
+    .af-empty { text-align: center; padding: 60px 0; color: var(--text-sub,#64748b); font-size: 14px; }
+
+    /* 모달 */
+    .af-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4); z-index: 1000;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .af-modal-overlay.open { display: flex; }
+    .af-modal {
+      background: #fff; border-radius: 20px; padding: 24px;
+      max-width: 480px; width: 100%; max-height: 80vh; overflow-y: auto;
+    }
+    .af-modal-top { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
+    .af-modal-icon { width: 72px; height: 72px; border-radius: 14px; overflow: hidden; background: #f1f5f9; flex-shrink: 0; }
+    .af-modal-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .af-modal-name { font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
+    .af-modal-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    .af-modal-desc {
+      font-size: 13px; color: #475569; line-height: 1.7;
+      background: #f8fafc; border-radius: 10px; padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    .af-modal-heroes h3 { font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 10px; }
+    .af-modal-hero-list { display: flex; flex-direction: column; gap: 8px; }
+    .af-modal-hero-row {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; padding: 6px 8px; border-radius: 8px; transition: background 0.15s;
+    }
+    .af-modal-hero-row:hover { background: #f1f5f9; }
+    .af-modal-hero-img { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #f1f5f9; flex-shrink: 0; }
+    .af-modal-hero-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .af-modal-hero-name { font-size: 13px; font-weight: 600; color: #1e293b; flex: 1; }
+    .af-modal-hero-rate { font-size: 12px; font-weight: 700; color: #3b82f6; }
+    .af-modal-close {
+      width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e5e7eb;
+      background: #fff; font-size: 14px; font-weight: 600; color: #64748b;
+      cursor: pointer; margin-top: 16px;
+    }
+    .af-modal-close:hover { background: #f8fafc; }
+
+    @media (max-width: 600px) {
+      .af-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <main class="af-wrap">
+    <div style="margin-bottom:20px;">
+      <a href="/epic7/" style="font-size:13px;color:var(--text-sub,#64748b);text-decoration:none;">← 에픽세븐</a>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <h1 style="font-size:22px;font-weight:800;color:#1e293b;margin-bottom:4px;">아티팩트 도감</h1>
+      <p style="font-size:13px;color:#64748b;">에픽세븐 전체 아티팩트 목록</p>
+    </div>
+
+    <div class="af-filter">
+      <input class="af-search" type="text" placeholder="아티팩트 이름 검색..." id="afSearch" />
+      <div class="af-filter-btns" id="afJobFilter">
+        <button class="af-btn active" data-job="all">전체</button>
+        <button class="af-btn" data-job="NN">공용</button>
+        <button class="af-btn" data-job="warrior">전사</button>
+        <button class="af-btn" data-job="knight">기사</button>
+        <button class="af-btn" data-job="mage">마도사</button>
+        <button class="af-btn" data-job="thief">도적</button>
+        <button class="af-btn" data-job="ranger">사수</button>
+        <button class="af-btn" data-job="manauser">정령사</button>
+      </div>
+      <div class="af-filter-btns" id="afGradeFilter">
+        <button class="af-btn active" data-grade="all">등급 전체</button>
+        <button class="af-btn" data-grade="5">★★★★★</button>
+        <button class="af-btn" data-grade="4">★★★★</button>
+        <button class="af-btn" data-grade="3">★★★</button>
+      </div>
+    </div>
+
+    <div class="af-grid" id="afGrid"></div>
+    <div class="af-empty" id="afEmpty" style="display:none;">검색 결과가 없어요.</div>
+  </main>
+
+  <!-- 모달 -->
+  <div class="af-modal-overlay" id="afModal">
+    <div class="af-modal" id="afModalContent"></div>
+  </div>
+
+  <div id="footer-container"></div>
+
+  <script>
+    document.getElementById('navbar-container').innerHTML = renderNavbar('epic7');
+    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : '';
+
+    const PROXY = 'https://epicsense-e7proxy.zzabhm.workers.dev';
+    const ARTIFACT_IMG = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/wearingStatus/images/artifacts/${code}.png`;
+    const HERO_IMG = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png`;
+
+    const JOB_LABEL = { NN:'공용', warrior:'전사', knight:'기사', mage:'마도사', thief:'도적', ranger:'사수', manauser:'정령사', assassin:'도적' };
+    const GRADE_LABEL = { 5:'★★★★★', 4:'★★★★', 3:'★★★' };
+
+    let allArtifacts = [];
+    let heroNameMap = new Map();
+    let activeJob = 'all';
+    let activeGrade = 'all';
+    let searchQuery = '';
+
+    async function init() {
+      const [artifactRes, heroRes] = await Promise.all([
+        fetch('/epic7/epic7_artifacts.json').then(r => r.json()),
+        fetch(`${PROXY}/api/hero-json`).then(r => r.json()),
+      ]);
+      allArtifacts = artifactRes;
+      (heroRes['ko'] || []).forEach(h => heroNameMap.set(h.code, h.name));
+
+      // URL 파라미터로 특정 아티팩트 바로 열기
+      const params = new URLSearchParams(location.search);
+      const code = params.get('code');
+
+      render();
+
+      if (code) {
+        const artifact = allArtifacts.find(a => a.code === code);
+        if (artifact) openModal(artifact);
+      }
+    }
+
+    function filtered() {
+      return allArtifacts.filter(a => {
+        if (activeJob !== 'all' && a.job_code !== activeJob) return false;
+        if (activeGrade !== 'all' && String(a.grade) !== activeGrade) return false;
+        if (searchQuery && !a.name.includes(searchQuery)) return false;
+        return true;
+      });
+    }
+
+    function render() {
+      const list = filtered();
+      const grid = document.getElementById('afGrid');
+      const empty = document.getElementById('afEmpty');
+
+      if (list.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      grid.innerHTML = list.map(a => `
+        <div class="af-card" onclick="openModal(allArtifacts.find(x=>x.code==='${a.code}'))">
+          <div class="af-card-icon">
+            <img src="${ARTIFACT_IMG(a.code)}" alt="${a.name}" onerror="this.style.display='none'" />
+          </div>
+          <div class="af-card-body">
+            <div class="af-card-top">
+              <span class="af-card-name">${a.name}</span>
+              <span class="af-card-grade grade-${a.grade}">${GRADE_LABEL[a.grade] || ''}</span>
+              ${a.job_code !== 'NN' ? `<span class="af-card-job">${JOB_LABEL[a.job_code] || a.job_code}</span>` : ''}
+            </div>
+            <div class="af-card-desc">${a.info_text}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function openModal(artifact) {
+      if (!artifact) return;
+      const overlay = document.getElementById('afModal');
+      const content = document.getElementById('afModalContent');
+      overlay.classList.add('open');
+
+      content.innerHTML = `
+        <div class="af-modal-top">
+          <div class="af-modal-icon">
+            <img src="${ARTIFACT_IMG(artifact.code)}" alt="${artifact.name}" onerror="this.style.display='none'" />
+          </div>
+          <div>
+            <div class="af-modal-name">${artifact.name}</div>
+            <div class="af-modal-badges">
+              <span class="af-card-grade grade-${artifact.grade}">${GRADE_LABEL[artifact.grade] || ''}</span>
+              ${artifact.job_code !== 'NN' ? `<span class="af-card-job">${JOB_LABEL[artifact.job_code] || artifact.job_code}</span>` : '<span class="af-card-job">공용</span>'}
+            </div>
+          </div>
+        </div>
+        <div class="af-modal-desc">${artifact.info_text.replace(/\\n/g, '<br>')}</div>
+        <div class="af-modal-heroes">
+          <h3>주로 사용하는 영웅 <span id="heroLoadingTxt">불러오는 중...</span></h3>
+          <div class="af-modal-hero-list" id="modalHeroList"></div>
+        </div>
+        <button class="af-modal-close" onclick="closeModal()">닫기</button>
+      `;
+
+      // 영웅 목록 fetch
+      try {
+        const res = await fetch(`${PROXY}/api/e7/rankingArtifactPickHero?world_code=world_kor&lang_code=ko&artifact_code=${artifact.code}&current_page=1`);
+        const data = await res.json();
+        const heroes = (data.value?.guide_list || []).slice(0, 8);
+        document.getElementById('heroLoadingTxt').textContent = '';
+        document.getElementById('modalHeroList').innerHTML = heroes.map(h => `
+          <a href="/epic7/heroes/detail/?code=${h.hero_code}" class="af-modal-hero-row">
+            <div class="af-modal-hero-img">
+              <img src="${HERO_IMG(h.hero_code)}" alt="${h.hero_name}" onerror="this.style.display='none'" />
+            </div>
+            <span class="af-modal-hero-name">${h.hero_name}</span>
+            <span class="af-modal-hero-rate">${h.specific_gravity.toFixed(1)}%</span>
+          </a>
+        `).join('');
+      } catch(e) {
+        document.getElementById('heroLoadingTxt').textContent = '불러오지 못했어요.';
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('afModal').classList.remove('open');
+    }
+    document.getElementById('afModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('afModal')) closeModal();
+    });
+
+    // 필터 이벤트
+    document.getElementById('afJobFilter').addEventListener('click', e => {
+      const btn = e.target.closest('[data-job]');
+      if (!btn) return;
+      activeJob = btn.dataset.job;
+      document.querySelectorAll('#afJobFilter .af-btn').forEach(b => b.classList.toggle('active', b === btn));
+      render();
+    });
+    document.getElementById('afGradeFilter').addEventListener('click', e => {
+      const btn = e.target.closest('[data-grade]');
+      if (!btn) return;
+      activeGrade = btn.dataset.grade;
+      document.querySelectorAll('#afGradeFilter .af-btn').forEach(b => b.classList.toggle('active', b === btn));
+      render();
+    });
+    document.getElementById('afSearch').addEventListener('input', e => {
+      searchQuery = e.target.value.trim();
+      render();
+    });
+
+    init();
+  </script>
+</body>
+</html>

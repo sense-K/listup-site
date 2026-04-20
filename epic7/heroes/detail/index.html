@@ -115,6 +115,17 @@
     .hd-gear-meta .rate-fill { height: 100%; border-radius: 999px; background: #3b82f6; }
 
 
+    /* 아티팩트 */
+    .hd-artifact-list { display: flex; flex-direction: column; gap: 10px; }
+    .hd-artifact-row { display: flex; align-items: flex-start; gap: 10px; text-decoration: none; padding: 8px; border-radius: 10px; transition: background 0.15s; }
+    .hd-artifact-row:hover { background: #f8fafc; }
+    .hd-artifact-icon { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: #f1f5f9; }
+    .hd-artifact-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .hd-artifact-info { flex: 1; min-width: 0; }
+    .hd-artifact-name { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+    .hd-artifact-desc { font-size: 11px; color: var(--text-sub, #64748b); line-height: 1.5; }
+    .hd-artifact-rate { font-size: 12px; font-weight: 700; color: #3b82f6; white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
+
     /* 시너지 / 카운터 */
     .hd-hero-row {
       display: flex; align-items: center; gap: 8px;
@@ -165,6 +176,7 @@
     // ── 상수 ─────────────────────────────────────
     const PROXY        = 'https://epicsense-e7proxy.zzabhm.workers.dev';
     const HERO_IMG     = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png`;
+    const ARTIFACT_IMG = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/wearingStatus/images/artifacts/${code}.png`;
 
     const ATTR_MAP = { fire:'fire', ice:'ice', wind:'earth', light:'light', dark:'dark' };
     const JOB_MAP  = { warrior:'warrior', knight:'knight', mage:'mage', ranger:'ranger', assassin:'thief', manauser:'soul' };
@@ -336,23 +348,27 @@
         // 영웅명 맵 전체 heroJson에서 구성
         heroJson.forEach(h => heroNameMap.set(h.code, h.name));
 
-        // 분석 데이터
-        let analysis = null;
+        // 분석 데이터 + 아티팩트 병렬 fetch
+        let analysis = null, artifacts = [];
         try {
-          analysis = await e7fetch('getHeroAnalysis', { hero_code: heroCode, season_code: seasonCode, grade_code: 'champion', lang: 'ko' });
+          [analysis, artifacts] = await Promise.all([
+            e7fetch('getHeroAnalysis', { hero_code: heroCode, season_code: seasonCode, grade_code: 'champion', lang: 'ko' }).catch(() => null),
+            fetch(`${PROXY}/api/e7/rankingHeroPickArtifact?world_code=world_kor&lang_code=ko&hero_code=${heroCode}&current_page=1`)
+              .then(r => r.json()).then(d => (d.value?.guide_list || []).slice(0, 5)).catch(() => []),
+          ]);
         } catch(_) {}
 
         // 페이지 타이틀
         document.title = `${hero.name} 장비 세팅 & 스탯 - 에픽세븐 영웅 도감 | 리세리스트`;
 
-        renderHero(hero, analysis, heroNameMap);
+        renderHero(hero, analysis, artifacts, heroNameMap);
       } catch(e) {
         document.getElementById('hdApp').innerHTML = '<div class="hd-loading">데이터를 불러오지 못했어요. 잠시 후 새로고침 해주세요.</div>';
       }
     }
 
     // ── 렌더 ─────────────────────────────────────
-    function renderHero(hero, analysis, nameMap) {
+    function renderHero(hero, analysis, artifacts, nameMap) {
       const elColor  = ELEMENT_COLOR[hero.element];
       const elBg     = ELEMENT_BG[hero.element];
       const stars    = Array.from({length: hero.stars}, (_, i) =>
@@ -473,6 +489,28 @@
 
           </div>
         </div>
+
+        <!-- 추천 아티팩트 -->
+        ${artifacts.length > 0 ? `
+        <div class="hd-section">
+          <h2>추천 아티팩트</h2>
+          <div class="hd-artifact-list">
+            ${artifacts.map((a, i) => `
+              <a href="/epic7/artifacts/?code=${a.artifact_code}" class="hd-artifact-row">
+                <span class="hd-gear-rank">${i+1}</span>
+                <div class="hd-artifact-icon">
+                  <img src="${ARTIFACT_IMG(a.artifact_code)}" alt="${a.artifact_name}" onerror="this.style.display='none'" />
+                </div>
+                <div class="hd-artifact-info">
+                  <div class="hd-artifact-name">${a.artifact_name}</div>
+                  <div class="hd-artifact-desc">${a.info_text}</div>
+                </div>
+                <span class="hd-artifact-rate">${a.specific_gravity.toFixed(1)}%</span>
+              </a>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
 
         <!-- 하단: 시너지 + 카운터 2열 -->
         ${(synergy.length > 0 || counter.length > 0) ? `
