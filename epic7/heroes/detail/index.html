@@ -31,20 +31,7 @@
       background: #f1f5f9; border: 3px solid transparent;
     }
     .hd-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
-    .hd-icon-tl, .hd-icon-tr {
-      position: absolute; top: -3px;
-      width: 26px; height: 26px; border-radius: 50%; overflow: hidden;
-      background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.25);
-    }
-    .hd-icon-tl { left: -3px; }
-    .hd-icon-tr { right: -3px; }
-    .hd-icon-tl img, .hd-icon-tr img { width: 100%; height: 100%; object-fit: contain; }
-    .hd-stars {
-      position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
-      display: flex; align-items: center;
-    }
-    .hd-stars img { width: 18px; height: 18px; margin-right: -5px; }
-    .hd-stars img:last-child { margin-right: 0; }
+
 
     .hd-info { flex: 1; min-width: 0; }
     .hd-name { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
@@ -396,24 +383,17 @@
               <div class="hd-portrait" style="border-color:${elColor};background:${elBg};">
                 <img src="${HERO_IMG(hero.code)}" alt="${hero.name}" onerror="this.style.display='none'" />
               </div>
-              <div class="hd-icon-tl">
-                <img src="${CLASS_IMG[hero.heroClass]}" alt="${CLASS_LABEL[hero.heroClass]}" />
-              </div>
-              <div class="hd-icon-tr">
-                <img src="${ELEMENT_IMG[hero.element]}" alt="${ELEMENT_LABEL[hero.element]}" />
-              </div>
-              <div class="hd-stars">${stars}</div>
             </div>
             <div class="hd-info">
               <div class="hd-name">${hero.name}</div>
               <div class="hd-tags">
                 <span class="hd-tag" style="background:${elBg};color:${elColor};">
-                  <img src="${ELEMENT_IMG[hero.element]}" alt="" />${ELEMENT_LABEL[hero.element]}
+                  <img src="${ELEMENT_IMG[hero.element]}" alt="" />${ELEMENT_LABEL[hero.element]} 속성
                 </span>
                 <span class="hd-tag" style="background:rgba(0,0,0,0.06);color:var(--text-sub,#64748b);">
                   <img src="${CLASS_IMG[hero.heroClass]}" alt="" />${CLASS_LABEL[hero.heroClass]}
                 </span>
-                <span class="hd-tag" style="background:rgba(234,179,8,0.1);color:#b45309;">${'★'.repeat(hero.stars)}</span>
+                <span class="hd-tag" style="background:rgba(234,179,8,0.1);gap:1px;">${Array.from({length: hero.stars}, () => `<img src="${STAR_IMG}" alt="★" style="width:13px;height:13px;" />`).join('')}</span>
               </div>
               <div class="hd-stats">
                 ${hero.pickRate != null ? `<div class="hd-stat-item"><div class="hd-stat-label">픽률</div><div class="hd-stat-val" style="color:#3b82f6;">${hero.pickRate.toFixed(1)}%</div></div>` : ''}
