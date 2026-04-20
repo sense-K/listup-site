@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>게임 공략 - 리세리스트</title>
+  <meta name="description" content="모바일 게임 공략 도구 모음. 에픽세븐 RTA 드래프트 도우미, 장비 분석 등 다양한 툴을 제공합니다." />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+  <style>
+    .tools-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 16px;
+    }
+    .tools-header {
+      margin-bottom: 28px;
+    }
+    .tools-header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text, #1e293b);
+      margin-bottom: 6px;
+    }
+    .tools-header p {
+      font-size: 14px;
+      color: var(--text-sub, #64748b);
+    }
+    .tools-game-section {
+      margin-bottom: 32px;
+    }
+    .tools-game-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-sub, #64748b);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border, #e5e7eb);
+    }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .tool-card {
+      background: #fff;
+      border: 1px solid var(--border, #e5e7eb);
+      border-radius: 16px;
+      padding: 20px;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      cursor: pointer;
+    }
+    .tool-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+    .tool-card.coming-soon {
+      opacity: 0.5;
+      cursor: default;
+      pointer-events: none;
+    }
+    .tool-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tool-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .tool-card-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .badge-live {
+      background: rgba(59,130,246,0.1);
+      color: #3b82f6;
+    }
+    .badge-soon {
+      background: #f1f5f9;
+      color: #94a3b8;
+    }
+    .tool-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      line-height: 1.3;
+    }
+    .tool-card-desc {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <main class="tools-wrap">
+    <div class="tools-header">
+      <h1>🎮 게임 공략 도구</h1>
+      <p>모바일 게임을 더 잘 즐길 수 있도록 도와주는 툴 모음이에요.</p>
+    </div>
+
+    <!-- 에픽세븐 -->
+    <div class="tools-game-section">
+      <div class="tools-game-label">
+        <span>에픽세븐 (Epic Seven)</span>
+      </div>
+      <div class="tools-grid">
+        <a href="/epic7/rta/" class="tool-card">
+          <div class="tool-card-top">
+            <div class="tool-card-icon" style="background:rgba(59,130,246,0.1)">⚔️</div>
+            <span class="tool-card-badge badge-live">서비스 중</span>
+          </div>
+          <div class="tool-card-title">실시간 아레나 드래프트 도우미</div>
+          <div class="tool-card-desc">챔피언~레전드 등급 데이터 기반으로 밴픽 추천, 시너지·카운터 영웅을 실시간으로 알려드려요.</div>
+        </a>
+        <div class="tool-card coming-soon">
+          <div class="tool-card-top">
+            <div class="tool-card-icon" style="background:rgba(168,85,247,0.1)">🔍</div>
+            <span class="tool-card-badge badge-soon">준비 중</span>
+          </div>
+          <div class="tool-card-title">장비 주인 찾기</div>
+          <div class="tool-card-desc">보유한 장비 스탯을 입력하면 어떤 영웅에게 맞는 장비인지 추천해드려요.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 림버스 컴퍼니 -->
+    <div class="tools-game-section">
+      <div class="tools-game-label">
+        <span>림버스 컴퍼니 (Limbus Company)</span>
+      </div>
+      <div class="tools-grid">
+        <div class="tool-card coming-soon">
+          <div class="tool-card-top">
+            <div class="tool-card-icon" style="background:rgba(239,68,68,0.1)">🎭</div>
+            <span class="tool-card-badge badge-soon">준비 중</span>
+          </div>
+          <div class="tool-card-title">거던 시뮬레이터</div>
+          <div class="tool-card-desc">죄악 공명 조합을 미리 시뮬레이션하고 최적의 인격 조합을 찾아보세요.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script>
+    document.getElementById('navbar-container').innerHTML = renderNavbar('epic7');
+    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : '';
+  </script>
+</body>
+</html>
