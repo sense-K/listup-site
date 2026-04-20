@@ -301,7 +301,7 @@
     }
 
     async function loadHeroJson() {
-      const res = await fetch(HERO_JSON_URL);
+      const res = await fetch(`${PROXY}/api/hero-json`);
       const json = await res.json();
       return (json['ko'] || []).filter(h => h.code !== 'c0001' && h.code !== 'c1005');
     }
