@@ -141,12 +141,7 @@
     .e7-rec { border-radius: 14px; padding: 10px 12px; }
     .e7-rec-title { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
     .e7-rec-empty { font-size: 11px; color: var(--e7-sublight); padding: 4px 0; }
-    .e7-rec-grid { display: grid; gap: 6px; grid-template-columns: repeat(3, 1fr); }
-    .e7-rec-grid .hero-card-name { display: none; }
-    .e7-rec-grid .hero-card-stars { display: none; }
-    .e7-rec-grid .hero-card-portrait { padding: 4px 4px 0; }
-    .e7-rec-grid .hero-card-circle { width: 100% !important; height: 0 !important; padding-bottom: 100% !important; position: relative; }
-    .e7-rec-grid .hero-card-circle img.portrait { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
+    .e7-rec-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
 
     /* 필터 */
     .e7-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 8px 12px; }
@@ -249,9 +244,12 @@
       .e7-settings { flex-wrap: wrap; row-gap: 6px; }
       .e7-btn-reset { margin-left: 0; }
 
-      /* 2. 추천 섹션 — 아이콘 숨김 */
-      .e7-rec-grid .icon-tl,
-      .e7-rec-grid .icon-tr { display: none; }
+      /* 2. 추천 섹션 — 영웅 선택 그리드와 동일 */
+      .e7-rec-grid { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 5px; }
+      .e7-rec-grid .hero-card-name { display: none; }
+      .e7-rec-grid .hero-card-stars { display: none; }
+      .e7-rec-grid .hero-card-circle { width: 46px !important; height: 46px !important; }
+      .e7-rec-grid .hero-card-portrait { padding: 4px; }
 
       /* 3. 필터 — 속성 윗줄 / 직업 아랫줄 2행 레이아웃 */
       .e7-filter { flex-direction: column; align-items: flex-start; flex-wrap: nowrap; gap: 6px; }
