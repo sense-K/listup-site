@@ -61,7 +61,7 @@
     .hd-stat-val { font-size: 18px; font-weight: 800; }
 
     /* 2열 레이아웃 */
-    .hd-layout { display: grid; grid-template-columns: 1fr 300px; gap: 14px; }
+    .hd-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     @media (max-width: 720px) {
       .hd-layout { grid-template-columns: 1fr; }
     }
@@ -447,7 +447,10 @@
               ` : '<p style="font-size:13px;color:var(--text-sub,#64748b);">데이터를 불러오지 못했어요.</p>'}
             </div>
 
-            <!-- 주요 착용 세트 -->
+          </div>
+
+          <!-- 오른쪽: 주요 착용 세트 -->
+          <div>
             ${gearSets.length > 0 ? `
             <div class="hd-section">
               <h2>주요 착용 세트</h2>
@@ -475,49 +478,6 @@
               }).join('')}
             </div>
             ` : ''}
-          </div>
-
-          <!-- 오른쪽 -->
-          <div>
-            <!-- 시너지 영웅 -->
-            ${synergy.length > 0 ? `
-            <div class="hd-section" style="border-color:rgba(59,130,246,0.25);">
-              <h2 style="color:#3b82f6;">⚡ 함께 쓰면 좋은 영웅</h2>
-              ${synergy.map((s, i) => `
-                <a href="/epic7/heroes/detail/?code=${s.code}" class="hd-hero-row">
-                  <span class="hd-hero-rank">${i+1}</span>
-                  <div class="hd-hero-thumb" style="background:rgba(59,130,246,0.1);">
-                    <img src="${HERO_IMG(s.code)}" alt="${s.name}" onerror="this.style.display='none'" />
-                  </div>
-                  <span class="hd-hero-name">${s.name}</span>
-                  <span class="hd-hero-rate" style="color:#3b82f6;">${s.rate}%</span>
-                </a>
-              `).join('')}
-            </div>
-            ` : ''}
-
-            <!-- 카운터 영웅 -->
-            ${counter.length > 0 ? `
-            <div class="hd-section" style="border-color:rgba(239,68,68,0.25);">
-              <h2 style="color:#ef4444;">🛡️ 상대하기 어려운 영웅</h2>
-              ${counter.map((c, i) => `
-                <a href="/epic7/heroes/detail/?code=${c.code}" class="hd-hero-row">
-                  <span class="hd-hero-rank">${i+1}</span>
-                  <div class="hd-hero-thumb" style="background:rgba(239,68,68,0.1);">
-                    <img src="${HERO_IMG(c.code)}" alt="${c.name}" onerror="this.style.display='none'" />
-                  </div>
-                  <span class="hd-hero-name">${c.name}</span>
-                  <span class="hd-hero-rate" style="color:#ef4444;">${c.winRate}%</span>
-                </a>
-              `).join('')}
-            </div>
-            ` : ''}
-
-            <!-- RTA 바로가기 -->
-            <a href="/epic7/rta/" class="hd-rta-link">
-              <p>⚔️ 실레나에서 픽해보기</p>
-              <p>실레나 서포터에서 ${hero.name}을 활용한 드래프트를 시뮬레이션해보세요.</p>
-            </a>
           </div>
         </div>
       `;
