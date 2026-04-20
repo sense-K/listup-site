@@ -171,8 +171,8 @@
     .e7-filter-icon.active { transform: scale(1.1); }
 
     /* 영웅 그리드 */
-    .e7-grid-wrap { background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 10px; max-height: 300px; overflow-y: auto; }
-    .e7-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+    .e7-grid-wrap { background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 10px; overflow-x: auto; overflow-y: hidden; }
+    .e7-grid { display: grid; grid-template-rows: repeat(2, auto); grid-auto-flow: column; grid-auto-columns: 84px; gap: 8px; width: max-content; }
 
     /* 영웅 카드 */
     .hero-card {
@@ -257,7 +257,7 @@
       }
 
       /* 4. 영웅 선택 그리드 — 카드 작게, 이름·별 숨김 */
-      .e7-grid { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 5px; }
+      .e7-grid { grid-auto-columns: 62px; gap: 5px; }
       .e7-grid .hero-card-name { display: none; }
       .e7-grid .hero-card-stars { display: none; }
       .e7-grid .hero-card-circle { width: 46px !important; height: 46px !important; }
