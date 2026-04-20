@@ -171,8 +171,8 @@
     .e7-filter-icon.active { transform: scale(1.1); }
 
     /* 영웅 그리드 */
-    .e7-grid-wrap { background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 10px; max-height: 300px; overflow-y: auto; }
-    .e7-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+    .e7-grid-wrap { background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 10px; overflow-x: auto; overflow-y: hidden; }
+    .e7-grid { display: grid; grid-template-rows: repeat(2, auto); grid-auto-flow: column; grid-auto-columns: 82px; gap: 8px; width: max-content; }
 
     /* 영웅 카드 */
     .hero-card {
@@ -610,6 +610,12 @@
           ${recSectionHTML('🛡️ 카운터 추천','#ef4444','rgba(239,68,68,0.08)','rgba(239,68,68,0.25)', counterHeroes, '상대 픽에서 영웅을 선택하면 표시돼요')}
         </div>` : '';
 
+      const combinedRecHTML = (recBanHTML || recFpHTML)
+        ? (recBanHTML && recFpHTML
+            ? `<div class="e7-rec-row">${recBanHTML}${recFpHTML}</div>`
+            : (recBanHTML || recFpHTML))
+        : '';
+
       const html = `
         <!-- 가이드 -->
         <div class="e7-guide ${guideClass}">
@@ -645,8 +651,7 @@
           <!-- 센터 -->
           <div class="e7-center">
             ${banSlotsHTML}
-            ${recBanHTML}
-            ${recFpHTML}
+            ${combinedRecHTML}
             ${filterHTML}
             ${gridHTML}
             ${recMainHTML}
