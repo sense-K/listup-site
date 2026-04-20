@@ -88,6 +88,7 @@
     .hd-stat-range {
       font-size: 11px; font-weight: 600; width: 90px; text-align: right; flex-shrink: 0;
     }
+    .hd-tier-icon { width: 18px; text-align: center; flex-shrink: 0; font-size: 13px; }
     .hd-stat-row.valid-top .hd-stat-range { color: #3b82f6; }
     .hd-stat-row.valid-mid .hd-stat-range { color: #16a34a; }
     .hd-stat-row:not(.valid-top):not(.valid-mid) .hd-stat-range { color: var(--text-sub, #94a3b8); }
@@ -428,6 +429,7 @@
                       <div class="hd-stat-bar" style="left:${s.barLeft}%;background:${s.tier === 'top' ? '#3b82f6' : s.tier === 'mid' ? '#22c55e' : '#cbd5e1'};"></div>
                     </div>
                     <span class="hd-stat-range">${s.range}</span>
+                    ${s.tier === 'top' ? '<span class="hd-tier-icon" title="확실한 유효 옵션">🔥</span>' : s.tier === 'mid' ? '<span class="hd-tier-icon" title="챙기면 좋은 옵션">👍</span>' : '<span class="hd-tier-icon"></span>'}
                   </div>
                 `).join('')}
               </div>
