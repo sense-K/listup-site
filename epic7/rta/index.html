@@ -163,18 +163,15 @@
     .e7-filter-icon {
       width: 30px; height: 30px;
       border-radius: 50%;
-      position: relative;
       cursor: pointer;
       border: 2px solid var(--e7-border);
       background: transparent;
       transition: all 0.15s;
       padding: 0; flex-shrink: 0;
       box-sizing: border-box;
+      display: flex; align-items: center; justify-content: center;
     }
     .e7-filter-icon img {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
       width: 16px; height: 16px;
       display: block; object-fit: contain;
     }
@@ -613,7 +610,7 @@
             <div class="e7-filter-divider"></div>
             ${CLASSES.map(cls => {
               const active = filterClasses.has(cls);
-              return `<button class="e7-filter-icon ${active?'active':''}" onclick="toggleClass('${cls}')" style="border-color:${active?'#1e293b':'#dde5f0'};background:${active?'#1e293b':'transparent'}" title="${cls}"><img src="${CLASS_IMG[cls]}" width="16" height="16" style="filter:${active?'brightness(0) invert(1)':'brightness(0.6)'}"></button>`;
+              return `<button class="e7-filter-icon ${active?'active':''}" onclick="toggleClass('${cls}')" style="border-color:${active?'#1e293b':'#dde5f0'};background:${active?'#1e293b':'transparent'}" title="${cls}"><img src="${CLASS_IMG[cls]}" width="16" height="16" style="opacity:${active?'1':'0.55'};filter:${active?'brightness(0) invert(1)':'none'}"></button>`;
             }).join('')}
           </div>
         </div>`;
