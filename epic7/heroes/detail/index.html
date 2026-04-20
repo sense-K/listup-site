@@ -116,15 +116,52 @@
 
 
     /* 아티팩트 */
-    .hd-artifact-list { display: flex; flex-direction: column; gap: 10px; }
-    .hd-artifact-row { display: flex; align-items: flex-start; gap: 10px; text-decoration: none; padding: 8px; border-radius: 10px; transition: background 0.15s; }
-    .hd-artifact-row:hover { background: #f8fafc; }
-    .hd-artifact-icon { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: #f1f5f9; }
-    .hd-artifact-icon img { width: 100%; height: 100%; object-fit: contain; }
-    .hd-artifact-info { flex: 1; min-width: 0; }
-    .hd-artifact-name { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
-    .hd-artifact-desc { font-size: 11px; color: var(--text-sub, #64748b); line-height: 1.5; }
-    .hd-artifact-rate { font-size: 12px; font-weight: 700; color: #3b82f6; white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
+    .hd-artifact-list {
+      display: flex; gap: 10px;
+      overflow-x: auto; padding-bottom: 6px;
+      scrollbar-width: thin; scrollbar-color: #e2e8f0 transparent;
+    }
+    .hd-artifact-list::-webkit-scrollbar { height: 4px; }
+    .hd-artifact-list::-webkit-scrollbar-track { background: transparent; }
+    .hd-artifact-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
+    .hd-artifact-row {
+      position: relative; flex-shrink: 0;
+      width: 120px; aspect-ratio: 3/4;
+      border-radius: 12px; overflow: hidden;
+      background: #1e293b; cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .hd-artifact-row:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
+    .hd-artifact-img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.3s;
+    }
+    .hd-artifact-row:hover .hd-artifact-img { transform: scale(1.05); }
+    .hd-artifact-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.78) 100%);
+      pointer-events: none;
+    }
+    .hd-artifact-rank-badge {
+      position: absolute; top: 7px; left: 7px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      font-size: 11px; font-weight: 800; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .hd-artifact-rate-badge {
+      position: absolute; top: 7px; right: 7px;
+      font-size: 10px; font-weight: 700; color: #fff;
+      background: rgba(59,130,246,0.75); padding: 2px 6px;
+      border-radius: 999px;
+    }
+    .hd-artifact-bottom {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 8px 8px 9px;
+    }
+    .hd-artifact-name { font-size: 11px; font-weight: 700; color: #fff; line-height: 1.3; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+    .hd-artifact-desc { display: none; }
 
     /* 시너지 / 카운터 */
     .hd-hero-row {
@@ -501,15 +538,13 @@
           <div class="hd-artifact-list">
             ${artifacts.map((a, i) => `
               <a href="/epic7/artifacts/?code=${a.artifact_code}" class="hd-artifact-row">
-                <span class="hd-gear-rank">${i+1}</span>
-                <div class="hd-artifact-icon">
-                  <img src="${ARTIFACT_IMG(a.artifact_code, artifactSlugMap.get(a.artifact_code))}" alt="${a.artifact_name}" onerror="this.style.display='none'" />
-                </div>
-                <div class="hd-artifact-info">
+                <img class="hd-artifact-img" src="${ARTIFACT_IMG(a.artifact_code, artifactSlugMap.get(a.artifact_code))}" alt="${a.artifact_name}" loading="lazy" onerror="this.style.opacity='0'" />
+                <div class="hd-artifact-overlay"></div>
+                <div class="hd-artifact-rank-badge">${i+1}</div>
+                <div class="hd-artifact-rate-badge">${a.specific_gravity.toFixed(1)}%</div>
+                <div class="hd-artifact-bottom">
                   <div class="hd-artifact-name">${a.artifact_name}</div>
-                  <div class="hd-artifact-desc">${a.info_text}</div>
                 </div>
-                <span class="hd-artifact-rate">${a.specific_gravity.toFixed(1)}%</span>
               </a>
             `).join('')}
           </div>
