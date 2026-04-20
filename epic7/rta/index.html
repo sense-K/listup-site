@@ -238,18 +238,13 @@
       .e7-settings { flex-wrap: wrap; row-gap: 6px; }
       .e7-btn-reset { margin-left: 0; }
 
-      /* 2. 추천 섹션 — 가로 스크롤, 카드 고정폭으로 찌그러짐 방지 */
-      .e7-rec-grid {
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        gap: 6px;
-        -webkit-overflow-scrolling: touch;
-      }
-      .e7-rec-grid .hero-card { flex: 0 0 62px; width: 62px; }
+      /* 2. 추천 섹션 — 5명 균등 분배, 비율 유지 */
+      .e7-rec-grid { display: flex; flex-wrap: nowrap; gap: 4px; }
+      .e7-rec-grid .hero-card { flex: 1; min-width: 0; }
+      .e7-rec-grid .hero-card-portrait { padding: 3px 3px 0; }
+      .e7-rec-grid .hero-card-circle { width: 100% !important; height: auto !important; aspect-ratio: 1; }
       .e7-rec-grid .hero-card-name { display: none; }
       .e7-rec-grid .hero-card-stars { display: none; }
-      .e7-rec-grid .hero-card-portrait { padding: 6px 6px 6px; }
 
       /* 3. 필터 — 가로 스크롤, 아이콘 삐뚤어짐 방지 */
       .e7-filter {
