@@ -49,6 +49,7 @@ function renderNavbar(activePage = '') {
             </div>
           </div>
           <a href="/price/" class="muted">계정 시세</a>
+          <a href="/epic7/rta/" class="muted">게임 공략</a>
           <a href="/contact/" class="muted">문의하기</a>
         </div>
         <div class="navbar-actions" id="navbar-actions">
@@ -67,6 +68,8 @@ function renderNavbar(activePage = '') {
         <div id="mobile-game-links" class="mobile-game-grid"></div>
         <div class="mobile-menu-divider"></div>
         <a href="/price/" class="mobile-menu-link">계정 시세</a>
+        <div class="mobile-menu-divider"></div>
+        <a href="/epic7/rta/" class="mobile-menu-link">게임 공략</a>
         <div class="mobile-menu-divider"></div>
         <a href="/contact/" class="mobile-menu-link">문의하기</a>
         <div class="mobile-menu-divider"></div>

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>에픽세븐 RTA 드래프트 도우미 - 리세리스트</title>
+  <meta name="description" content="에픽세븐 실시간 아레나 드래프트를 도와주는 픽 추천 도구. 챔피언~레전드 등급 데이터 기반 시너지·카운터 영웅 추천." />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+  <style>
+    .e7-wrap { max-width: 1200px; margin: 0 auto; padding: 16px 12px; }
+
+    /* 색상 변수 */
+    :root {
+      --e7-my: #3b82f6;
+      --e7-opp: #ef4444;
+      --e7-ban: #dc2626;
+      --e7-border: var(--border, #e5e7eb);
+      --e7-card: #ffffff;
+      --e7-bg: #f1f5fb;
+      --e7-text: #1e293b;
+      --e7-sub: #64748b;
+      --e7-sublight: #94a3b8;
+    }
+
+    /* 가이드 바 */
+    .e7-guide {
+      border-radius: 14px;
+      padding: 10px 18px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      transition: background 0.2s, border 0.2s;
+    }
+    .e7-guide.ban { background: rgba(220,38,38,0.12); border: 1px solid rgba(220,38,38,0.4); color: var(--e7-ban); }
+    .e7-guide.my  { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.4); color: var(--e7-my); }
+    .e7-guide.opp { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.4);  color: var(--e7-opp); }
+    .e7-guide.done{ background: #f8fafc; border: 1px solid var(--e7-border); color: var(--e7-sub); }
+    .e7-guide .pulse { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; animation: pulse7 1.5s infinite; }
+
+    /* 설정 바 */
+    .e7-settings {
+      background: var(--e7-card);
+      border: 1px solid var(--e7-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .e7-toggle-group { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--e7-border); }
+    .e7-toggle-group button {
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--e7-sub);
+      transition: background 0.15s;
+    }
+    .e7-toggle-group button.active { background: var(--e7-my); color: #fff; }
+    .e7-label { font-size: 12px; color: var(--e7-sub); font-weight: 600; }
+    .e7-btn-reset {
+      margin-left: auto;
+      padding: 6px 14px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--e7-border);
+      font-size: 12px;
+      color: var(--e7-sub);
+      cursor: pointer;
+    }
+    .e7-select {
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--e7-border);
+      font-size: 13px;
+      color: var(--e7-text);
+      cursor: pointer;
+    }
+
+    /* 메인 3열 */
+    .e7-main { display: flex; gap: 10px; align-items: flex-start; }
+    .e7-picks-col { width: 108px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+    .e7-picks-col-label { text-align: center; font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .e7-center { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+    /* 픽 카드 */
+    .pick-card {
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      height: 100px;
+      cursor: default;
+      transition: transform 0.15s;
+    }
+    .pick-card.filled { cursor: pointer; }
+    .pick-card.filled:hover { transform: scale(1.02); }
+    .pick-card-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .pick-card-bg { position: absolute; inset: 0; }
+    .pick-card-grad { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.05) 55%, transparent 100%); }
+    .pick-card-hover { position: absolute; inset: 0; background: rgba(0,0,0,0); transition: background 0.15s; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; opacity: 0; }
+    .pick-card.filled:hover .pick-card-hover { background: rgba(0,0,0,0.35); opacity: 1; }
+    .pick-card-badge { position: absolute; top: 4px; left: 4px; padding: 2px 5px; border-radius: 5px; font-size: 8px; font-weight: 700; color: #fff; }
+    .pick-card-class { position: absolute; top: 4px; right: 4px; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.2); overflow: hidden; }
+    .pick-card-name { position: absolute; bottom: 0; left: 0; right: 0; padding: 2px 4px 4px; text-align: center; font-size: 9px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pick-card-accent { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; }
+    .pick-card-empty {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      border-radius: 12px;
+    }
+    .pick-card-empty .num { font-size: 9px; font-weight: 700; }
+    .pick-card-empty .plus { font-size: 18px; line-height: 1; }
+
+    /* 밴 슬롯 */
+    .e7-ban-row { display: flex; align-items: center; gap: 10px; background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 8px 14px; }
+    .e7-ban-row-label { font-size: 12px; font-weight: 600; color: var(--e7-sublight); flex-shrink: 0; }
+    .ban-slot { width: 44px; height: 44px; border-radius: 50%; position: relative; flex-shrink: 0; cursor: default; }
+    .ban-slot.filled { cursor: pointer; }
+    .ban-slot-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: top; filter: grayscale(1); border: 2px solid var(--e7-ban); }
+    .ban-slot-x { position: absolute; inset: 0; border-radius: 50%; background: rgba(220,38,38,0.5); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; color: #fff; }
+    .ban-slot-empty { width: 100%; height: 100%; border-radius: 50%; border: 1.5px dashed rgba(220,38,38,0.4); background: rgba(220,38,38,0.05); }
+
+    /* 추천 섹션 */
+    .e7-rec { border-radius: 14px; padding: 10px 12px; }
+    .e7-rec-title { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+    .e7-rec-empty { font-size: 11px; color: var(--e7-sublight); padding: 4px 0; }
+    .e7-rec-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+
+    /* 필터 */
+    .e7-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 8px 12px; }
+    .e7-filter-all {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--e7-border);
+      background: transparent;
+      color: var(--e7-sub);
+      transition: all 0.15s;
+    }
+    .e7-filter-all.active { background: var(--e7-my); color: #fff; border-color: var(--e7-my); }
+    .e7-filter-divider { width: 1px; height: 20px; background: var(--e7-border); }
+    .e7-filter-icon {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      border: 2px solid var(--e7-border);
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .e7-filter-icon img { width: 16px; height: 16px; }
+    .e7-filter-icon.active { transform: scale(1.1); }
+
+    /* 영웅 그리드 */
+    .e7-grid-wrap { background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 10px; max-height: 300px; overflow-y: auto; }
+    .e7-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+
+    /* 영웅 카드 */
+    .hero-card {
+      border-radius: 12px;
+      overflow: hidden;
+      background: #f8fafc;
+      border: 1px solid var(--e7-border);
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+    .hero-card:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .hero-card.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+    .hero-card-portrait { padding: 6px 6px 0; display: flex; justify-content: center; }
+    .hero-card-circle {
+      position: relative;
+      width: 56px; height: 56px;
+    }
+    .hero-card-circle img.portrait { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 50%; }
+    .hero-card-circle .icon-tl, .hero-card-circle .icon-tr {
+      position: absolute;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: rgba(0,0,0,0.65);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .hero-card-circle .icon-tl { top: -2px; left: -2px; }
+    .hero-card-circle .icon-tr { top: -2px; right: -2px; }
+    .hero-card-circle img.icon { width: 100%; height: 100%; }
+    .hero-card-stars { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); display: flex; }
+    .hero-card-stars img { width: 14px; height: 14px; margin-right: -4px; }
+    .hero-card-name { padding: 6px 4px 6px; text-align: center; font-size: 9px; font-weight: 700; color: var(--e7-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* 추천 2열 */
+    .e7-rec-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    /* 픽 순서 도트 */
+    .e7-pick-order { display: flex; gap: 3px; margin-left: 8px; }
+    .e7-pick-dot {
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--e7-border);
+      color: var(--e7-sub);
+    }
+
+    /* 로딩 */
+    .e7-loading { text-align: center; padding: 40px; color: var(--e7-sub); font-size: 14px; }
+
+    @keyframes pulse7 { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    @media (max-width: 640px) {
+      .e7-picks-col { width: 72px; }
+      .pick-card { height: 72px; }
+      .e7-rec-row { grid-template-columns: 1fr; }
+      .e7-pick-order { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <main class="e7-wrap">
+    <div id="e7-loading" class="e7-loading">영웅 데이터 불러오는 중...</div>
+    <div id="e7-app" style="display:none"></div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script>
+    document.getElementById('navbar-container').innerHTML = renderNavbar('epic7');
+    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : '';
+
+    // ── 상수 ──────────────────────────────────────────
+    const PROXY = 'https://epicsense-e7proxy.zzabhm.workers.dev';
+    const HERO_JSON_URL = 'https://static-pubcomm.onstove.com/gameRecord/epic7/epic7_hero.json';
+    const HERO_IMG = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png`;
+    const PICK_ORDER_FIRST  = [true,false,false,true,true,false,false,true,true,false];
+    const PICK_ORDER_SECOND = [false,true,true,false,false,true,true,false,false,true];
+    const GRADE_OPTIONS = [
+      { label:'챔피언', code:'champion' },
+      { label:'챌린저', code:'challenger' },
+      { label:'워로드', code:'warlord' },
+      { label:'엠페러', code:'emperor' },
+      { label:'레전드', code:'legend' },
+    ];
+    const ATTR_MAP = { fire:'fire', ice:'ice', wind:'earth', light:'light', dark:'dark' };
+    const JOB_MAP  = { warrior:'warrior', knight:'knight', mage:'mage', ranger:'ranger', assassin:'thief', manauser:'soul' };
+    const ELEMENT_COLOR = { fire:'#ef4444', ice:'#3b82f6', earth:'#22c55e', light:'#eab308', dark:'#a855f7' };
+    const ELEMENT_LABEL = { fire:'화염', ice:'냉기', earth:'자연', light:'광', dark:'암' };
+    const ELEMENT_IMG   = { fire:'/epic7-icons/element/fire.png', ice:'/epic7-icons/element/ice.png', earth:'/epic7-icons/element/wind.png', light:'/epic7-icons/element/light.png', dark:'/epic7-icons/element/dark.png' };
+    const CLASS_IMG     = { warrior:'/epic7-icons/class/warrior.webp', knight:'/epic7-icons/class/knight.webp', mage:'/epic7-icons/class/mage.png', thief:'/epic7-icons/class/thief.webp', ranger:'/epic7-icons/class/ranger.webp', soul:'/epic7-icons/class/soul.webp' };
+    const ELEMENT_BG    = { fire:'rgba(239,68,68,0.15)', ice:'rgba(59,130,246,0.15)', earth:'rgba(34,197,94,0.15)', light:'rgba(234,179,8,0.15)', dark:'rgba(168,85,247,0.15)' };
+    const STAR_IMG = '/epic7-icons/star/star1.svg';
+
+    // ── 상태 ──────────────────────────────────────────
+    let allHeroes = [];
+    let popularData = [];
+    let seasonCode = '';
+    let gradeCache = {};
+
+    let isFirstPick = true;
+    let preBans = 1;
+    let grade = 'champion';
+    let gradeLoading = false;
+
+    let bans = [];
+    let myPicks = [null,null,null,null,null];
+    let oppPicks = [null,null,null,null,null];
+    let usedCodes = new Set();
+    let currentTurn = 0;
+
+    let filterElements = new Set();
+    let filterClasses = new Set();
+
+    // ── API ───────────────────────────────────────────
+    async function e7fetch(endpoint, params = {}) {
+      const qs = new URLSearchParams(params).toString();
+      const url = `${PROXY}/api/e7/${endpoint}${qs ? '?' + qs : ''}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json.code !== 0) throw new Error('api error');
+      return json.value.result_body;
+    }
+
+    async function loadHeroJson() {
+      const res = await fetch(HERO_JSON_URL);
+      const json = await res.json();
+      return (json['ko'] || []).filter(h => h.code !== 'c0001' && h.code !== 'c1005');
+    }
+
+    async function fetchPopularHeroes(seasonCd, gradeCd) {
+      return e7fetch('getPopularHero', { season_code: seasonCd, grade_code: gradeCd, lang: 'ko' });
+    }
+
+    // ── 초기 로드 ─────────────────────────────────────
+    async function init() {
+      try {
+        const [heroJson, seasons] = await Promise.all([loadHeroJson(), e7fetch('getSeasonList', { lang: 'ko' })]);
+        seasonCode = (seasons.find(s => s.is_now_season === 1) || seasons[0])?.season_code || '';
+        const popular = await fetchPopularHeroes(seasonCode, 'champion');
+        gradeCache['champion'] = popular;
+        popularData = popular;
+
+        const popMap = new Map(popular.map(h => [h.hero_code, h]));
+        allHeroes = heroJson.map(h => {
+          const pop = popMap.get(h.code);
+          return {
+            code: h.code,
+            name: h.name,
+            element: ATTR_MAP[h.attribute_cd] || 'fire',
+            heroClass: JOB_MAP[h.job_cd] || 'warrior',
+            stars: parseInt(h.grade) || 5,
+            pickRate: pop?.pick_rate,
+            banRate: pop?.ban_rate,
+          };
+        });
+
+        document.getElementById('e7-loading').style.display = 'none';
+        document.getElementById('e7-app').style.display = '';
+        render();
+      } catch(e) {
+        document.getElementById('e7-loading').textContent = '데이터를 불러오지 못했어요. 잠시 후 새로고침 해주세요.';
+      }
+    }
+
+    // ── 파생 상태 ─────────────────────────────────────
+    function getPickOrder() { return isFirstPick ? PICK_ORDER_FIRST : PICK_ORDER_SECOND; }
+    function inBanPhase() { return bans.length < preBans; }
+    function isDone() { return !inBanPhase() && currentTurn >= 10; }
+    function isMyTurn() { const po = getPickOrder(); return currentTurn < 10 ? po[currentTurn] : null; }
+
+    function getMatchupMap() {
+      const map = new Map();
+      popularData.forEach(h => map.set(h.hero_code, { with: h.with_heroes, hard: h.hard_heroes }));
+      return map;
+    }
+
+    function getRecommendations(picks, type) {
+      const mm = getMatchupMap();
+      const scoreMap = new Map();
+      picks.filter(Boolean).forEach(hero => {
+        const m = mm.get(hero.code);
+        if (!m) return;
+        m[type].forEach((code, idx) => scoreMap.set(code, (scoreMap.get(code) || 0) + (m[type].length - idx)));
+      });
+      return Array.from(scoreMap.entries())
+        .sort((a,b) => b[1]-a[1]).slice(0,20)
+        .filter(([code]) => !usedCodes.has(code)).slice(0,5)
+        .map(([code]) => allHeroes.find(h => h.code === code)).filter(Boolean);
+    }
+
+    function getFirstPickRecs() {
+      const withCount = new Map();
+      popularData.forEach(h => h.with_heroes.forEach(code => withCount.set(code, (withCount.get(code)||0)+1)));
+      return allHeroes.filter(h => (withCount.get(h.code)||0) > 0)
+        .sort((a,b) => (withCount.get(b.code)||0)-(withCount.get(a.code)||0))
+        .slice(0,20).filter(h => !usedCodes.has(h.code)).slice(0,5);
+    }
+
+    function getBanRecs() {
+      const hardCount = new Map();
+      popularData.forEach(h => h.hard_heroes.forEach(code => hardCount.set(code, (hardCount.get(code)||0)+1)));
+      return allHeroes.filter(h => (hardCount.get(h.code)||0) > 0)
+        .sort((a,b) => (hardCount.get(b.code)||0)-(hardCount.get(a.code)||0))
+        .slice(0,20).filter(h => !usedCodes.has(h.code)).slice(0,5);
+    }
+
+    function getFilteredHeroes() {
+      return allHeroes.filter(h => {
+        if (usedCodes.has(h.code)) return false;
+        if (filterElements.size > 0 && !filterElements.has(h.element)) return false;
+        if (filterClasses.size > 0 && !filterClasses.has(h.heroClass)) return false;
+        return true;
+      });
+    }
+
+    function getMySlotPickNum(i) {
+      const t = getPickOrder().map((m,j) => ({m,j})).filter(x => x.m);
+      return (t[i]?.j ?? i*2) + 1;
+    }
+    function getOppSlotPickNum(i) {
+      const t = getPickOrder().map((m,j) => ({m,j})).filter(x => !x.m);
+      return (t[i]?.j ?? i*2+1) + 1;
+    }
+
+    // ── 액션 ──────────────────────────────────────────
+    function pickHero(hero) {
+      if (usedCodes.has(hero.code)) return;
+      usedCodes.add(hero.code);
+      if (inBanPhase()) { bans.push(hero); render(); return; }
+      if (currentTurn >= 10) return;
+      if (getPickOrder()[currentTurn]) {
+        const idx = myPicks.indexOf(null);
+        if (idx !== -1) myPicks[idx] = hero;
+      } else {
+        const idx = oppPicks.indexOf(null);
+        if (idx !== -1) oppPicks[idx] = hero;
+      }
+      currentTurn++;
+      render();
+    }
+
+    function removeHero(hero, isMine) {
+      const picks = isMine ? myPicks : oppPicks;
+      const idx = picks.findIndex(p => p?.code === hero.code);
+      if (idx === -1) return;
+      picks[idx] = null;
+      usedCodes.delete(hero.code);
+      currentTurn = [...myPicks,...oppPicks].filter(Boolean).length;
+      render();
+    }
+
+    function removeBan(hero) {
+      bans = bans.filter(b => b.code !== hero.code);
+      usedCodes.delete(hero.code);
+      render();
+    }
+
+    function reset() {
+      bans = []; myPicks = [null,null,null,null,null]; oppPicks = [null,null,null,null,null];
+      usedCodes = new Set(); currentTurn = 0;
+      render();
+    }
+
+    async function changeGrade(gradeCode) {
+      grade = gradeCode;
+      if (!seasonCode) return;
+      if (gradeCache[gradeCode]) { popularData = gradeCache[gradeCode]; render(); return; }
+      gradeLoading = true; render();
+      try {
+        const data = await fetchPopularHeroes(seasonCode, gradeCode);
+        gradeCache[gradeCode] = data;
+        popularData = data;
+      } catch(e) {}
+      gradeLoading = false;
+      render();
+    }
+
+    // ── 렌더 헬퍼 ─────────────────────────────────────
+    function heroCardHTML(hero, borderColor = '') {
+      const bc = borderColor || ELEMENT_COLOR[hero.element] + '40';
+      const stars = Array.from({length: hero.stars}, (_,i) =>
+        `<img src="${STAR_IMG}" style="width:12px;height:12px;margin-right:${i<hero.stars-1?'-3px':'0'}">`
+      ).join('');
+      return `
+        <div class="hero-card" onclick="pickHero_${hero.code}()" style="border-color:${bc}">
+          <div class="hero-card-portrait">
+            <div class="hero-card-circle" style="border-radius:50%;border:2.5px solid ${ELEMENT_COLOR[hero.element]};background:${ELEMENT_BG[hero.element]}">
+              <img class="portrait" src="${HERO_IMG(hero.code)}" onerror="this.src='/epic7-icons/element/${hero.element}.png'">
+              <div class="icon-tl"><img class="icon" src="${CLASS_IMG[hero.heroClass]}"></div>
+              <div class="icon-tr"><img class="icon" src="${ELEMENT_IMG[hero.element]}"></div>
+              <div class="hero-card-stars">${stars}</div>
+            </div>
+          </div>
+          <div class="hero-card-name">${hero.name}</div>
+        </div>`;
+    }
+
+    function pickCardHTML(hero, pickNum, isActive, isMine, slotId) {
+      const ac = isMine ? '#3b82f6' : '#ef4444';
+      const acBg = isMine ? 'rgba(59,130,246,0.08)' : 'rgba(239,68,68,0.07)';
+      if (hero) {
+        return `
+          <div class="pick-card filled" onclick="removeHero_${slotId}()" title="클릭하면 선택 해제">
+            <div class="pick-card-bg" style="background:${ELEMENT_BG[hero.element]}"></div>
+            <img class="pick-card-img" src="${HERO_IMG(hero.code)}" onerror="this.style.display='none'">
+            <div class="pick-card-grad"></div>
+            <div class="pick-card-hover">✕</div>
+            <div class="pick-card-badge" style="background:${ac}">${pickNum}픽</div>
+            <div class="pick-card-class"><img src="${CLASS_IMG[hero.heroClass]}" style="width:100%;height:100%"></div>
+            <div class="pick-card-name">${hero.name}</div>
+            <div class="pick-card-accent" style="background:${ELEMENT_COLOR[hero.element]}"></div>
+          </div>`;
+      }
+      return `
+        <div class="pick-card">
+          <div class="pick-card-empty" style="background:${isActive?acBg:'rgba(0,0,0,0.02)'};border:1.5px dashed ${isActive?ac:'#dde5f0'}">
+            <span class="num" style="color:${isActive?ac:'#94a3b8'}">${pickNum}픽</span>
+            ${isActive ? `<span class="plus" style="color:${ac}">+</span>` : ''}
+          </div>
+        </div>`;
+    }
+
+    function banSlotHTML(hero, idx) {
+      if (hero) {
+        return `<div class="ban-slot filled" onclick="removeBan_${idx}()" title="밴 해제">
+          <img class="ban-slot-img" src="${HERO_IMG(hero.code)}">
+          <div class="ban-slot-x">✕</div>
+        </div>`;
+      }
+      return `<div class="ban-slot"><div class="ban-slot-empty"></div></div>`;
+    }
+
+    function recSectionHTML(title, color, bgColor, borderColor, heroes, emptyMsg) {
+      const grid = heroes.length === 0
+        ? `<p class="e7-rec-empty">${emptyMsg}</p>`
+        : `<div class="e7-rec-grid">${heroes.map(h => heroCardHTML(h, borderColor)).join('')}</div>`;
+      return `<div class="e7-rec" style="background:${bgColor};border:1px solid ${borderColor}">
+        <div class="e7-rec-title" style="color:${color}">${title}</div>
+        ${grid}
+      </div>`;
+    }
+
+    // ── 메인 렌더 ─────────────────────────────────────
+    function render() {
+      const ban = inBanPhase();
+      const done = isDone();
+      const myTurn = isMyTurn();
+      const po = getPickOrder();
+
+      // 가이드 텍스트
+      let guideClass = 'done', guideText = '드래프트 완료', guideColor = '#64748b';
+      if (!done) {
+        if (ban) { guideClass='ban'; guideText=`밴 ${bans.length+1}/${preBans} — 밴할 영웅 선택`; guideColor='#dc2626'; }
+        else if (myTurn) { guideClass='my'; guideText=`${currentTurn+1}픽 — 내 영웅 선택`; guideColor='#3b82f6'; }
+        else { guideClass='opp'; guideText=`${currentTurn+1}픽 — 상대 영웅 입력`; guideColor='#ef4444'; }
+      }
+
+      const pickDots = !ban ? po.map((isMine,i) => {
+        const isNow = i === currentTurn;
+        const done2 = i < currentTurn;
+        const col = isNow ? (isMine ? '#3b82f6' : '#ef4444') : (done2 ? '#e2e8f0' : '#e2e8f0');
+        const textCol = isNow ? '#fff' : (done2 ? '#94a3b8' : '#94a3b8');
+        return `<div class="e7-pick-dot" style="background:${col};border-color:${col};color:${textCol};opacity:${done2?0.45:1}">${i+1}</div>`;
+      }).join('') : '';
+
+      // 추천
+      const synergyHeroes = getRecommendations(myPicks, 'with');
+      const counterHeroes = getRecommendations(oppPicks, 'hard');
+      const showBanRec = ban && preBans > 0 && getBanRecs().length > 0;
+      const showFirstPickRec = isFirstPick && !ban && currentTurn === 0;
+      const banRecs = getBanRecs();
+      const fpRecs = getFirstPickRecs();
+
+      // 필터
+      const ELEMENTS = Object.keys(ELEMENT_IMG);
+      const CLASSES  = Object.keys(CLASS_IMG);
+      const isAllFilter = filterElements.size === 0 && filterClasses.size === 0;
+
+      const filterHTML = `
+        <div class="e7-filter">
+          <button class="e7-filter-all ${isAllFilter?'active':''}" onclick="clearFilters()">전체</button>
+          <div class="e7-filter-divider"></div>
+          ${ELEMENTS.map(el => {
+            const active = filterElements.has(el);
+            return `<button class="e7-filter-icon ${active?'active':''}" onclick="toggleElement('${el}')"
+              style="border-color:${active?ELEMENT_COLOR[el]:'#dde5f0'};background:${active?ELEMENT_COLOR[el]+'25':'transparent'}"
+              title="${ELEMENT_LABEL[el]}">
+              <img src="${ELEMENT_IMG[el]}">
+            </button>`;
+          }).join('')}
+          <div class="e7-filter-divider"></div>
+          ${CLASSES.map(cls => {
+            const active = filterClasses.has(cls);
+            return `<button class="e7-filter-icon ${active?'active':''}" onclick="toggleClass('${cls}')"
+              style="border-color:${active?'#1e293b':'#dde5f0'};background:${active?'#1e293b':'transparent'}"
+              title="${cls}">
+              <img src="${CLASS_IMG[cls]}" style="filter:${active?'brightness(0) invert(1)':'brightness(0.6)'}">
+            </button>`;
+          }).join('')}
+        </div>`;
+
+      // 영웅 그리드
+      const filtered = getFilteredHeroes();
+      const gridHTML = `
+        <div class="e7-grid-wrap">
+          <div class="e7-grid">${filtered.map(h => heroCardHTML(h)).join('')}</div>
+        </div>`;
+
+      // 픽 컬럼
+      const myPicksHTML = myPicks.map((hero,i) => {
+        const isActive = !ban && myTurn === true && myPicks.indexOf(null) === i;
+        return pickCardHTML(hero, getMySlotPickNum(i), isActive, true, `my_${i}`);
+      }).join('');
+      const oppPicksHTML = oppPicks.map((hero,i) => {
+        const isActive = !ban && myTurn === false && oppPicks.indexOf(null) === i;
+        return pickCardHTML(hero, getOppSlotPickNum(i), isActive, false, `opp_${i}`);
+      }).join('');
+
+      // 밴 슬롯
+      const banSlotsHTML = preBans > 0 ? `
+        <div class="e7-ban-row">
+          <span class="e7-ban-row-label">밴 영웅</span>
+          ${Array.from({length:preBans},(_,i) => banSlotHTML(bans[i]||null, i)).join('')}
+        </div>` : '';
+
+      // 추천 섹션
+      const recBanHTML = showBanRec ? recSectionHTML('🚫 밴 추천','#f87171','rgba(220,38,38,0.08)','rgba(220,38,38,0.3)', banRecs, '') : '';
+      const recFpHTML  = showFirstPickRec && fpRecs.length > 0 ? recSectionHTML('⭐ 선픽 추천','#d97706','rgba(245,158,11,0.08)','rgba(245,158,11,0.25)', fpRecs, '') : '';
+      const recMainHTML = !ban ? `
+        <div class="e7-rec-row">
+          ${recSectionHTML('⚡ 시너지 추천','#3b82f6','rgba(59,130,246,0.08)','rgba(59,130,246,0.25)', synergyHeroes, '내 픽에서 영웅을 선택하면 표시돼요')}
+          ${recSectionHTML('🛡️ 카운터 추천','#ef4444','rgba(239,68,68,0.08)','rgba(239,68,68,0.25)', counterHeroes, '상대 픽에서 영웅을 선택하면 표시돼요')}
+        </div>` : '';
+
+      const html = `
+        <!-- 가이드 -->
+        <div class="e7-guide ${guideClass}">
+          ${!done ? `<span class="pulse" style="background:${guideColor}"></span>` : ''}
+          <span>${guideText}</span>
+          ${pickDots ? `<div class="e7-pick-order">${pickDots}</div>` : ''}
+        </div>
+
+        <!-- 설정 -->
+        <div class="e7-settings">
+          <div class="e7-toggle-group">
+            <button class="${isFirstPick?'active':''}" onclick="setFirstPick(true)">선픽</button>
+            <button class="${!isFirstPick?'active':''}" onclick="setFirstPick(false)">후픽</button>
+          </div>
+          <span class="e7-label">밴 영웅</span>
+          <div class="e7-toggle-group">
+            ${[0,1,2,3,4].map(n => `<button class="${preBans===n?'active':''}" onclick="setPreBans(${n})" style="width:32px">${n}</button>`).join('')}
+          </div>
+          <select class="e7-select" onchange="changeGrade(this.value)" ${gradeLoading?'disabled':''}>
+            ${GRADE_OPTIONS.map(g => `<option value="${g.code}" ${grade===g.code?'selected':''}>${g.label}${gradeLoading&&grade===g.code?' ⟳':''}</option>`).join('')}
+          </select>
+          <button class="e7-btn-reset" onclick="reset()">초기화</button>
+        </div>
+
+        <!-- 메인 -->
+        <div class="e7-main">
+          <!-- 내 픽 -->
+          <div class="e7-picks-col">
+            <div class="e7-picks-col-label" style="color:#3b82f6">내 픽</div>
+            ${myPicksHTML}
+          </div>
+
+          <!-- 센터 -->
+          <div class="e7-center">
+            ${banSlotsHTML}
+            ${recBanHTML}
+            ${recFpHTML}
+            ${filterHTML}
+            ${gridHTML}
+            ${recMainHTML}
+          </div>
+
+          <!-- 상대 픽 -->
+          <div class="e7-picks-col">
+            <div class="e7-picks-col-label" style="color:#ef4444">상대 픽</div>
+            ${oppPicksHTML}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('e7-app').innerHTML = html;
+
+      // 이벤트 바인딩 (innerHTML 후 동적 등록)
+      allHeroes.forEach(hero => {
+        window[`pickHero_${hero.code}`] = () => { if (!isDone()) pickHero(hero); };
+      });
+      myPicks.forEach((hero,i) => {
+        window[`removeHero_my_${i}`] = () => { if (hero) removeHero(hero, true); };
+      });
+      oppPicks.forEach((hero,i) => {
+        window[`removeHero_opp_${i}`] = () => { if (hero) removeHero(hero, false); };
+      });
+      bans.forEach((hero,i) => {
+        window[`removeBan_${i}`] = () => removeBan(hero);
+      });
+    }
+
+    // ── 전역 핸들러 ───────────────────────────────────
+    function setFirstPick(val) { isFirstPick = val; reset(); }
+    function setPreBans(n) { preBans = n; reset(); }
+    function clearFilters() { filterElements.clear(); filterClasses.clear(); render(); }
+    function toggleElement(el) { filterElements.has(el) ? filterElements.delete(el) : filterElements.add(el); render(); }
+    function toggleClass(cls)   { filterClasses.has(cls) ? filterClasses.delete(cls) : filterClasses.add(cls); render(); }
+
+    init();
+  </script>
+</body>
+</html>
