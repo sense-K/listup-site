@@ -50,19 +50,6 @@
     .h-chip img { width: 13px; height: 13px; object-fit: contain; }
     .h-chip-divider { width: 1px; height: 20px; background: var(--border, #e5e7eb); margin: 0 2px; }
 
-    /* 등급 선택 */
-    .h-grade-row {
-      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
-    }
-    .h-grade-btn {
-      padding: 5px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
-      border: 1px solid var(--border, #e5e7eb); background: transparent;
-      color: var(--text-sub, #64748b); cursor: pointer; transition: all 0.15s;
-    }
-    .h-grade-btn.active {
-      background: #3b82f6; border-color: #3b82f6; color: #fff;
-    }
-
     /* 결과 카운트 */
     .h-count { font-size: 13px; color: var(--text-sub, #64748b); margin-bottom: 14px; }
     .h-count strong { color: var(--text, #1e293b); }
@@ -114,10 +101,6 @@
       text-overflow: ellipsis; width: 100%;
       margin-top: 4px;
     }
-    .h-card-pick {
-      font-size: 10px; color: #7c3aed; font-weight: 600; margin-top: 2px;
-    }
-
     /* 로딩 */
     .h-loading { text-align: center; padding: 60px 20px; color: var(--text-sub, #64748b); font-size: 14px; }
     .h-empty { text-align: center; padding: 60px 20px; color: var(--text-sub, #64748b); font-size: 14px; }
@@ -136,14 +119,6 @@
     <div style="margin-bottom:16px;">
       <h1 style="font-size:20px;font-weight:800;color:var(--text,#1e293b);margin-bottom:4px;">에픽세븐 영웅 도감</h1>
       <p style="font-size:13px;color:var(--text-sub,#64748b);">전체 영웅의 장비 세팅, 추천 스탯 구간, 시너지 영웅 정보</p>
-    </div>
-
-    <!-- 등급 선택 -->
-    <div class="h-grade-row">
-      <button class="h-grade-btn active" data-grade="champion">챔피언</button>
-      <button class="h-grade-btn" data-grade="warlord">워로드</button>
-      <button class="h-grade-btn" data-grade="emperor">엠페러</button>
-      <button class="h-grade-btn" data-grade="legend">레전드</button>
     </div>
 
     <!-- 검색 + 필터 -->
@@ -184,9 +159,6 @@
 
     // ── 상태 ─────────────────────────────────────
     let allHeroes = [];
-    let seasonCode = '';
-    let currentGrade = 'champion';
-    let gradeCache = {};
     let filterEls = new Set();
     let filterCls = new Set();
     let searchText = '';
@@ -206,61 +178,22 @@
       return (json['ko'] || []).filter(h => h.code !== 'c0001' && h.code !== 'c1005');
     }
 
-    async function loadGrade(grade) {
-      if (gradeCache[grade]) return gradeCache[grade];
-      const data = await e7fetch('getPopularHero', { season_code: seasonCode, grade_code: grade, lang: 'ko' });
-      gradeCache[grade] = data;
-      return data;
-    }
-
     // ── 초기화 ───────────────────────────────────
     async function init() {
       try {
-        const [heroJson, seasons] = await Promise.all([loadHeroJson(), e7fetch('getSeasonList', { lang: 'ko' })]);
-        seasonCode = (seasons.find(s => s.is_now_season === 1) || seasons[0])?.season_code || '';
-        const popular = await loadGrade('champion');
-        buildHeroes(heroJson, popular);
-        buildChips();
-        renderGrid();
-      } catch(e) {
-        document.getElementById('heroGrid').innerHTML = '<div class="h-loading">데이터를 불러오지 못했어요. 잠시 후 새로고침 해주세요.</div>';
-      }
-    }
-
-    function buildHeroes(heroJson, popular) {
-      const popMap = new Map(popular.map(h => [h.hero_code, h]));
-      allHeroes = heroJson.map(h => {
-        const pop = popMap.get(h.code);
-        return {
+        const heroJson = await loadHeroJson();
+        allHeroes = heroJson.map(h => ({
           code: h.code,
           name: h.name,
           element: ATTR_MAP[h.attribute_cd] || 'fire',
           heroClass: JOB_MAP[h.job_cd] || 'warrior',
           stars: parseInt(h.grade) || 5,
-          pickRate: pop?.pick_rate ?? null,
-        };
-      });
-      // 픽률 높은 순 정렬
-      allHeroes.sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1));
-    }
-
-    async function switchGrade(grade) {
-      if (grade === currentGrade) return;
-      currentGrade = grade;
-      document.querySelectorAll('.h-grade-btn').forEach(b => b.classList.toggle('active', b.dataset.grade === grade));
-
-      // 픽률 데이터 업데이트
-      try {
-        const popular = await loadGrade(grade);
-        const popMap = new Map(popular.map(h => [h.hero_code, h]));
-        allHeroes = allHeroes.map(h => ({
-          ...h,
-          pickRate: popMap.get(h.code)?.pick_rate ?? null,
         }));
-        allHeroes.sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1));
-      } catch(_) {}
-
-      renderGrid();
+        buildChips();
+        renderGrid();
+      } catch(e) {
+        document.getElementById('heroGrid').innerHTML = '<div class="h-loading">데이터를 불러오지 못했어요. 잠시 후 새로고침 해주세요.</div>';
+      }
     }
 
     // ── 필터 칩 렌더 ─────────────────────────────
@@ -389,7 +322,6 @@
               <div class="h-stars">${stars}</div>
             </div>
             <div class="h-card-name">${h.name}</div>
-            ${h.pickRate != null ? `<div class="h-card-pick">픽률 ${h.pickRate.toFixed(1)}%</div>` : ''}
           </a>
         `;
       }).join('');
@@ -401,10 +333,6 @@
     document.getElementById('heroSearch').addEventListener('input', e => {
       searchText = e.target.value.trim();
       renderGrid();
-    });
-
-    document.querySelectorAll('.h-grade-btn').forEach(btn => {
-      btn.addEventListener('click', () => switchGrade(btn.dataset.grade));
     });
 
     init();
