@@ -8,11 +8,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/config.js"></script>
   <style>
-    .mh-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
+    .mh-wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px; }
 
     .mh-topbar {
       display: flex; align-items: center; gap: 12px;
-      margin-bottom: 20px; flex-wrap: wrap;
+      margin-bottom: 16px; flex-wrap: wrap;
     }
     .mh-back {
       font-size: 13px; color: var(--text-sub, #64748b);
@@ -20,24 +20,22 @@
     }
     .mh-back:hover { color: #1e293b; }
     .mh-title { font-size: 20px; font-weight: 800; color: #1e293b; flex: 1; }
-    .mh-count {
-      font-size: 13px; font-weight: 700;
-      background: rgba(59,130,246,0.1); color: #3b82f6;
-      padding: 6px 14px; border-radius: 999px;
+    .mh-status {
+      font-size: 12px; color: #64748b; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
     }
-    .mh-save-btn {
-      padding: 8px 20px; border-radius: 10px;
-      background: #3b82f6; color: #fff;
-      border: none; font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: background 0.15s;
+    .mh-status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #22c55e; transition: background 0.2s;
     }
-    .mh-save-btn:hover { background: #2563eb; }
-    .mh-save-btn:disabled { background: #94a3b8; cursor: default; }
+    .mh-status-dot.saving { background: #f59e0b; animation: pulse-dot 0.8s infinite alternate; }
+    @keyframes pulse-dot { from { opacity: 1; } to { opacity: 0.4; } }
 
+    /* 필터 바 */
     .mh-filter {
       display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
       background: #fff; border: 1px solid var(--border, #e5e7eb);
-      border-radius: 14px; padding: 10px 14px; margin-bottom: 14px;
+      border-radius: 14px; padding: 10px 14px; margin-bottom: 12px;
     }
     .mh-filter-row { display: contents; }
     .mh-filter-all {
@@ -46,13 +44,6 @@
       color: #64748b; transition: all 0.15s;
     }
     .mh-filter-all.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
-    .mh-select-all-btn {
-      margin-left: auto; padding: 5px 14px; border-radius: 999px;
-      font-size: 12px; font-weight: 700; cursor: pointer;
-      border: 1px solid #e2e8f0; background: transparent; color: #64748b;
-      transition: all 0.15s;
-    }
-    .mh-select-all-btn:hover { background: #f1f5f9; }
     .mh-filter-divider { width: 1px; height: 20px; background: #e2e8f0; }
     .mh-filter-icon {
       width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
@@ -62,22 +53,57 @@
     }
     .mh-filter-icon.active { transform: scale(1.1); }
     .mh-search {
-      padding: 7px 12px; border-radius: 10px 0 0 10px; border: 1px solid #e2e8f0;
+      padding: 6px 12px; border-radius: 10px 0 0 10px; border: 1px solid #e2e8f0;
       border-right: none; font-size: 13px; outline: none; width: 130px;
     }
     .mh-search:focus { border-color: #3b82f6; }
     .mh-search-btn {
-      padding: 7px 12px; border-radius: 0 10px 10px 0; border: 1px solid #e2e8f0;
+      padding: 6px 12px; border-radius: 0 10px 10px 0; border: 1px solid #e2e8f0;
       background: #f8fafc; font-size: 13px; cursor: pointer; color: #475569;
     }
     .mh-search-btn:hover { background: #e2e8f0; }
 
-    .mh-grid {
+    /* 두 패널 레이아웃 */
+    .mh-panels {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
 
+    .mh-panel {
+      background: #fff;
+      border: 1px solid var(--border, #e5e7eb);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      min-height: 480px;
+      max-height: 70vh;
+    }
+    .mh-panel-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      flex-shrink: 0;
+    }
+    .mh-panel-title { font-size: 14px; font-weight: 800; color: #1e293b; flex: 1; }
+    .mh-panel-count {
+      font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+    }
+    .mh-panel--all .mh-panel-count { background: #f1f5f9; color: #475569; }
+    .mh-panel--mine .mh-panel-count { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .mh-panel-hint { font-size: 11px; color: #94a3b8; padding: 0 16px 8px; flex-shrink: 0; }
+
+    .mh-panel-grid {
+      overflow-y: auto;
+      padding: 10px;
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+      gap: 7px;
+      align-content: start;
+    }
+
+    /* 영웅 카드 */
     .mh-card {
       border-radius: 12px; overflow: hidden; background: #f8fafc;
       border: 2px solid transparent; cursor: pointer;
@@ -85,42 +111,57 @@
       position: relative;
     }
     .mh-card:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-    .mh-card.selected { border-color: #3b82f6; }
-    .mh-card.selected .mh-card-portrait-wrap { background: rgba(59,130,246,0.12); }
-    .mh-check {
-      position: absolute; top: 4px; right: 4px;
-      width: 16px; height: 16px; border-radius: 50%;
-      background: #3b82f6; display: none;
-      align-items: center; justify-content: center;
-      font-size: 9px; color: #fff; font-weight: 900;
+
+    /* 왼쪽 카드 hover: 파란색 + 화살표 */
+    .mh-panel--all .mh-card:hover { border-color: #3b82f6; }
+    .mh-panel--all .mh-card-action {
+      position: absolute; inset: 0; border-radius: 10px;
+      background: rgba(59,130,246,0); display: flex; align-items: center;
+      justify-content: center; font-size: 20px; color: #fff;
+      opacity: 0; transition: all 0.15s;
     }
-    .mh-card.selected .mh-check { display: flex; }
+    .mh-panel--all .mh-card:hover .mh-card-action { background: rgba(59,130,246,0.45); opacity: 1; }
+
+    /* 오른쪽 카드 hover: 빨간색 + X */
+    .mh-panel--mine .mh-card { border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.04); }
+    .mh-panel--mine .mh-card:hover { border-color: #ef4444; }
+    .mh-panel--mine .mh-card-action {
+      position: absolute; inset: 0; border-radius: 10px;
+      background: rgba(239,68,68,0); display: flex; align-items: center;
+      justify-content: center; font-size: 20px; color: #fff;
+      opacity: 0; transition: all 0.15s;
+    }
+    .mh-panel--mine .mh-card:hover .mh-card-action { background: rgba(239,68,68,0.5); opacity: 1; }
+
     .mh-card-portrait-wrap {
       padding: 6px 6px 0; display: flex; justify-content: center;
     }
     .mh-card-circle {
-      position: relative; width: 56px; height: 56px;
+      position: relative; width: 52px; height: 52px;
     }
     .mh-card-circle img.portrait {
       width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 50%;
     }
     .mh-icon-tl, .mh-icon-tr {
-      position: absolute; width: 18px; height: 18px; border-radius: 50%;
+      position: absolute; width: 17px; height: 17px; border-radius: 50%;
       overflow: hidden; background: rgba(0,0,0,0.65);
       border: 1px solid rgba(255,255,255,0.15);
       display: flex; align-items: center; justify-content: center;
     }
     .mh-icon-tl { top: -2px; left: -2px; }
     .mh-icon-tr { top: -2px; right: -2px; }
-    .mh-icon-tl img, .mh-icon-tr img { width: 13px; height: 13px; object-fit: contain; }
+    .mh-icon-tl img, .mh-icon-tr img { width: 12px; height: 12px; object-fit: contain; }
     .mh-card-name {
-      padding: 5px 4px 6px; text-align: center;
+      padding: 4px 4px 5px; text-align: center;
       font-size: 9px; font-weight: 700; color: #1e293b;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    .mh-empty { text-align: center; padding: 60px 0; color: #94a3b8; font-size: 14px; }
-    .mh-loading { text-align: center; padding: 60px 0; color: #64748b; font-size: 14px; }
+    .mh-panel-empty {
+      grid-column: 1 / -1;
+      text-align: center; padding: 40px 0;
+      color: #94a3b8; font-size: 13px;
+    }
 
     .mh-toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -131,9 +172,9 @@
     }
     .mh-toast.show { opacity: 1; }
 
-    @media (max-width: 480px) {
-      .mh-grid { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px; }
-      .mh-card-circle { width: 46px; height: 46px; }
+    @media (max-width: 640px) {
+      .mh-panels { grid-template-columns: 1fr; max-height: none; }
+      .mh-panel { max-height: 50vh; }
     }
   </style>
 </head>
@@ -141,7 +182,7 @@
   <div id="navbar-container"></div>
 
   <main class="mh-wrap">
-    <div id="mh-loading" class="mh-loading">로그인 확인 중...</div>
+    <div id="mh-loading" style="text-align:center;padding:60px 0;color:#64748b;font-size:14px">로그인 확인 중...</div>
     <div id="mh-app" style="display:none"></div>
   </main>
 
@@ -168,13 +209,20 @@
     let filterClasses = new Set();
     let searchQuery = '';
     let currentUser = null;
-    let saving = false;
 
     function showToast(msg, duration = 2000) {
       const t = document.getElementById('mhToast');
       t.textContent = msg;
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), duration);
+    }
+
+    function setSaving(on) {
+      const dot = document.getElementById('mhStatusDot');
+      const txt = document.getElementById('mhStatusTxt');
+      if (!dot || !txt) return;
+      if (on) { dot.classList.add('saving'); txt.textContent = '저장 중...'; }
+      else     { dot.classList.remove('saving'); txt.textContent = '자동 저장됨'; }
     }
 
     function getFiltered() {
@@ -186,29 +234,37 @@
       });
     }
 
-    function toggleHero(code) {
-      selectedCodes.has(code) ? selectedCodes.delete(code) : selectedCodes.add(code);
-      // 카드 상태만 빠르게 업데이트 (전체 리렌더 없이)
-      const card = document.querySelector(`[data-code="${code}"]`);
-      if (card) {
-        card.classList.toggle('selected', selectedCodes.has(code));
-      }
-      document.getElementById('mhCount').textContent = `${selectedCodes.size}명 선택됨`;
+    function cardHTML(h) {
+      return `
+        <div class="mh-card" data-code="${h.code}" onclick="toggleHero('${h.code}')">
+          <div class="mh-card-action">${selectedCodes.has(h.code) ? '✕' : '+'}</div>
+          <div class="mh-card-portrait-wrap">
+            <div class="mh-card-circle" style="border-radius:50%;border:2.5px solid ${ELEMENT_COLOR[h.element]};background:${ELEMENT_BG[h.element]}">
+              <img class="portrait" src="${HERO_IMG(h.code)}" onerror="this.src='/epic7-icons/element/${h.element}.png'" />
+              <div class="mh-icon-tl"><img src="${CLASS_IMG[h.heroClass]}" /></div>
+              <div class="mh-icon-tr"><img src="${ELEMENT_IMG[h.element]}" /></div>
+            </div>
+          </div>
+          <div class="mh-card-name">${h.name}</div>
+        </div>`;
     }
 
     function render() {
       const filtered = getFiltered();
+      const leftHeroes  = filtered.filter(h => !selectedCodes.has(h.code));
+      const rightHeroes = filtered.filter(h =>  selectedCodes.has(h.code));
       const ELEMENTS = Object.keys(ELEMENT_IMG);
       const CLASSES  = Object.keys(CLASS_IMG);
       const isAll = filterElements.size === 0 && filterClasses.size === 0;
-      const visibleSelected = filtered.filter(h => selectedCodes.has(h.code)).length;
 
       document.getElementById('mh-app').innerHTML = `
         <div class="mh-topbar">
           <a href="/epic7/rta/" class="mh-back">← RTA로 돌아가기</a>
           <span class="mh-title">내 영웅 등록</span>
-          <span class="mh-count" id="mhCount">${selectedCodes.size}명 선택됨</span>
-          <button class="mh-save-btn" id="mhSaveBtn" onclick="saveHeroes()">저장하기</button>
+          <span class="mh-status">
+            <span class="mh-status-dot" id="mhStatusDot"></span>
+            <span id="mhStatusTxt">자동 저장됨</span>
+          </span>
         </div>
 
         <div class="mh-filter">
@@ -224,74 +280,65 @@
               const active = filterClasses.has(cls);
               return `<button class="mh-filter-icon ${active?'active':''}" onclick="toggleCls('${cls}')" style="border-color:${active?'#1e293b':'#e2e8f0'};background:${active?'#1e293b':'transparent'}" title="${cls}"><img src="${CLASS_IMG[cls]}" width="16" height="16" style="opacity:${active?1:0.55};filter:${active?'brightness(0) invert(1)':'none'}"></button>`;
             }).join('')}
-          </div>
-          <div class="mh-filter-row" style="display:flex;align-items:center;gap:6px;width:100%;margin-top:2px">
+            <div class="mh-filter-divider"></div>
             <input id="mh-search-input" class="mh-search" type="text" placeholder="영웅 이름 검색..." value="${searchQuery}" onkeydown="if(event.key==='Enter')onSearch()" />
             <button class="mh-search-btn" onclick="onSearch()">검색</button>
-            <button class="mh-select-all-btn" onclick="toggleSelectAll()">
-              ${visibleSelected === filtered.length && filtered.length > 0 ? '전체 해제' : '전체 선택'}
-            </button>
           </div>
         </div>
 
-        ${filtered.length === 0
-          ? '<div class="mh-empty">검색 결과가 없어요.</div>'
-          : `<div class="mh-grid">
-              ${filtered.map(h => `
-                <div class="mh-card ${selectedCodes.has(h.code)?'selected':''}" data-code="${h.code}" onclick="toggleHero('${h.code}')">
-                  <div class="mh-check">✓</div>
-                  <div class="mh-card-portrait-wrap">
-                    <div class="mh-card-circle" style="border-radius:50%;border:2.5px solid ${ELEMENT_COLOR[h.element]};background:${ELEMENT_BG[h.element]}">
-                      <img class="portrait" src="${HERO_IMG(h.code)}" onerror="this.src='/epic7-icons/element/${h.element}.png'" />
-                      <div class="mh-icon-tl"><img src="${CLASS_IMG[h.heroClass]}" /></div>
-                      <div class="mh-icon-tr"><img src="${ELEMENT_IMG[h.element]}" /></div>
-                    </div>
-                  </div>
-                  <div class="mh-card-name">${h.name}</div>
-                </div>
-              `).join('')}
-            </div>`
-        }
+        <div class="mh-panels">
+          <div class="mh-panel mh-panel--all">
+            <div class="mh-panel-header">
+              <span class="mh-panel-title">전체 영웅</span>
+              <span class="mh-panel-count">${leftHeroes.length}명</span>
+            </div>
+            <p class="mh-panel-hint">클릭하면 내 영웅으로 추가돼요</p>
+            <div class="mh-panel-grid">
+              ${leftHeroes.length === 0
+                ? '<div class="mh-panel-empty">영웅이 없어요.</div>'
+                : leftHeroes.map(h => cardHTML(h)).join('')}
+            </div>
+          </div>
+
+          <div class="mh-panel mh-panel--mine">
+            <div class="mh-panel-header">
+              <span class="mh-panel-title">내 영웅</span>
+              <span class="mh-panel-count">${rightHeroes.length}명</span>
+            </div>
+            <p class="mh-panel-hint">클릭하면 목록에서 제외돼요</p>
+            <div class="mh-panel-grid">
+              ${rightHeroes.length === 0
+                ? '<div class="mh-panel-empty">아직 등록한 영웅이 없어요.<br>왼쪽에서 영웅을 선택해 보세요!</div>'
+                : rightHeroes.map(h => cardHTML(h)).join('')}
+            </div>
+          </div>
+        </div>
       `;
     }
 
-    function toggleSelectAll() {
-      const filtered = getFiltered();
-      const allSelected = filtered.every(h => selectedCodes.has(h.code));
-      filtered.forEach(h => allSelected ? selectedCodes.delete(h.code) : selectedCodes.add(h.code));
+    async function toggleHero(code) {
+      const adding = !selectedCodes.has(code);
+      adding ? selectedCodes.add(code) : selectedCodes.delete(code);
       render();
-    }
-
-    async function saveHeroes() {
-      if (saving) return;
-      saving = true;
-      const btn = document.getElementById('mhSaveBtn');
-      if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
-
+      setSaving(true);
       try {
-        // 기존 내 영웅 전체 삭제 후 재삽입
-        await db.from('UserHero').delete().eq('user_id', currentUser.id);
-
-        if (selectedCodes.size > 0) {
-          const rows = Array.from(selectedCodes).map(code => ({
-            user_id: currentUser.id,
-            hero_code: code,
-          }));
-          const { error } = await db.from('UserHero').insert(rows);
-          if (error) throw error;
+        if (adding) {
+          await db.from('UserHero').upsert({ user_id: currentUser.id, hero_code: code });
+        } else {
+          await db.from('UserHero').delete().eq('user_id', currentUser.id).eq('hero_code', code);
         }
-
-        showToast(`✅ ${selectedCodes.size}명 저장됐어요!`);
       } catch(e) {
+        // 실패 시 롤백
+        adding ? selectedCodes.delete(code) : selectedCodes.add(code);
+        render();
         showToast('저장 중 오류가 발생했어요.');
       } finally {
-        saving = false;
-        if (btn) { btn.disabled = false; btn.textContent = '저장하기'; }
+        setSaving(false);
       }
     }
 
     function clearFilters() { filterElements.clear(); filterClasses.clear(); render(); }
-    function toggleEl(el) { filterElements.has(el) ? filterElements.delete(el) : filterElements.add(el); render(); }
+    function toggleEl(el)   { filterElements.has(el) ? filterElements.delete(el) : filterElements.add(el); render(); }
     function toggleCls(cls) { filterClasses.has(cls) ? filterClasses.delete(cls) : filterClasses.add(cls); render(); }
     function onSearch() {
       const input = document.getElementById('mh-search-input');
@@ -300,7 +347,6 @@
     }
 
     async function init() {
-      // 로그인 체크
       const { data: { session } } = await db.auth.getSession();
       if (!session) {
         location.href = '/auth/?redirect=' + encodeURIComponent(location.pathname);
@@ -310,7 +356,6 @@
 
       document.getElementById('mh-loading').textContent = '영웅 데이터 불러오는 중...';
 
-      // 영웅 목록 + 기존 내 영웅 병렬 로드
       const [heroRes, myHeroRes] = await Promise.all([
         fetch(`${PROXY}/api/hero-json`).then(r => r.json()),
         db.from('UserHero').select('hero_code').eq('user_id', currentUser.id),
