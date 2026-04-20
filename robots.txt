@@ -4,6 +4,13 @@ Allow: /genshin/
 Allow: /bluearchive/
 Allow: /nikke/
 Allow: /cookierunkingdom/
+Allow: /zzz/
+Allow: /sevenknightsre/
+Allow: /leehwan/
+Allow: /trickcal/
+Allow: /limbus/
+Allow: /stardive/
+Allow: /price/
 Allow: /contact/
 
 Disallow: /admin/
