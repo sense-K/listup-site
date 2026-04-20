@@ -176,7 +176,7 @@
     // ── 상수 ─────────────────────────────────────
     const PROXY        = 'https://epicsense-e7proxy.zzabhm.workers.dev';
     const HERO_IMG     = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png`;
-    const ARTIFACT_IMG = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/wearingStatus/images/artifacts/${code}.png`;
+    const ARTIFACT_IMG = (code, slug) => slug ? `https://epic7db.com/images/artifacts/${slug}.webp` : `${PROXY}/api/artifact-img/${code}`;
 
     const ATTR_MAP = { fire:'fire', ice:'ice', wind:'earth', light:'light', dark:'dark' };
     const JOB_MAP  = { warrior:'warrior', knight:'knight', mage:'mage', ranger:'ranger', assassin:'thief', manauser:'soul' };
@@ -348,27 +348,31 @@
         // 영웅명 맵 전체 heroJson에서 구성
         heroJson.forEach(h => heroNameMap.set(h.code, h.name));
 
-        // 분석 데이터 + 아티팩트 병렬 fetch
-        let analysis = null, artifacts = [];
+        // 분석 데이터 + 아티팩트 + 아티팩트 slug 맵 병렬 fetch
+        let analysis = null, artifacts = [], artifactSlugMap = new Map();
         try {
-          [analysis, artifacts] = await Promise.all([
+          const [analysisRes, artifactsRes, artifactJsonRes] = await Promise.all([
             e7fetch('getHeroAnalysis', { hero_code: heroCode, season_code: seasonCode, grade_code: 'champion', lang: 'ko' }).catch(() => null),
             fetch(`${PROXY}/api/e7/rankingHeroPickArtifact?world_code=world_kor&lang_code=ko&hero_code=${heroCode}&current_page=1`)
               .then(r => r.json()).then(d => (d.value?.guide_list || []).slice(0, 5)).catch(() => []),
+            fetch('/epic7/epic7_artifacts.json').then(r => r.json()).catch(() => []),
           ]);
+          analysis = analysisRes;
+          artifacts = artifactsRes;
+          artifactJsonRes.forEach(a => { if (a.slug) artifactSlugMap.set(a.code, a.slug); });
         } catch(_) {}
 
         // 페이지 타이틀
         document.title = `${hero.name} 장비 세팅 & 스탯 - 에픽세븐 영웅 도감 | 리세리스트`;
 
-        renderHero(hero, analysis, artifacts, heroNameMap);
+        renderHero(hero, analysis, artifacts, heroNameMap, artifactSlugMap);
       } catch(e) {
         document.getElementById('hdApp').innerHTML = '<div class="hd-loading">데이터를 불러오지 못했어요. 잠시 후 새로고침 해주세요.</div>';
       }
     }
 
     // ── 렌더 ─────────────────────────────────────
-    function renderHero(hero, analysis, artifacts, nameMap) {
+    function renderHero(hero, analysis, artifacts, nameMap, artifactSlugMap = new Map()) {
       const elColor  = ELEMENT_COLOR[hero.element];
       const elBg     = ELEMENT_BG[hero.element];
       const stars    = Array.from({length: hero.stars}, (_, i) =>
@@ -499,7 +503,7 @@
               <a href="/epic7/artifacts/?code=${a.artifact_code}" class="hd-artifact-row">
                 <span class="hd-gear-rank">${i+1}</span>
                 <div class="hd-artifact-icon">
-                  <img src="${ARTIFACT_IMG(a.artifact_code)}" alt="${a.artifact_name}" onerror="this.style.display='none'" />
+                  <img src="${ARTIFACT_IMG(a.artifact_code, artifactSlugMap.get(a.artifact_code))}" alt="${a.artifact_name}" onerror="this.style.display='none'" />
                 </div>
                 <div class="hd-artifact-info">
                   <div class="hd-artifact-name">${a.artifact_name}</div>

@@ -164,7 +164,7 @@
     document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : '';
 
     const PROXY = 'https://epicsense-e7proxy.zzabhm.workers.dev';
-    const ARTIFACT_IMG = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/wearingStatus/images/artifacts/${code}.png`;
+    const ARTIFACT_IMG = (code, slug) => slug ? `https://epic7db.com/images/artifacts/${slug}.webp` : `${PROXY}/api/artifact-img/${code}`;
     const HERO_IMG = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png`;
 
     const JOB_LABEL = { NN:'공용', warrior:'전사', knight:'기사', mage:'마도사', thief:'도적', ranger:'사수', manauser:'정령사', assassin:'도적' };
@@ -219,7 +219,7 @@
       grid.innerHTML = list.map(a => `
         <div class="af-card" onclick="openModal(allArtifacts.find(x=>x.code==='${a.code}'))">
           <div class="af-card-icon">
-            <img src="${ARTIFACT_IMG(a.code)}" alt="${a.name}" onerror="this.style.display='none'" />
+            <img src="${ARTIFACT_IMG(a.code, a.slug)}" alt="${a.name}" onerror="this.style.display='none'" />
           </div>
           <div class="af-card-body">
             <div class="af-card-top">
@@ -242,7 +242,7 @@
       content.innerHTML = `
         <div class="af-modal-top">
           <div class="af-modal-icon">
-            <img src="${ARTIFACT_IMG(artifact.code)}" alt="${artifact.name}" onerror="this.style.display='none'" />
+            <img src="${ARTIFACT_IMG(artifact.code, artifact.slug)}" alt="${artifact.name}" onerror="this.style.display='none'" />
           </div>
           <div>
             <div class="af-modal-name">${artifact.name}</div>
