@@ -771,8 +771,6 @@
   }
 
   // ===== 초기화 =====
-  const ADMIN_EMAIL = 'zzabhm@gmail.com'
-
   async function checkAdmin() {
     const { data: { session } } = await db.auth.getSession()
     if (!session || session.user.email !== ADMIN_EMAIL) {
