@@ -141,7 +141,7 @@
     .e7-rec { border-radius: 14px; padding: 10px 12px; }
     .e7-rec-title { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
     .e7-rec-empty { font-size: 11px; color: var(--e7-sublight); padding: 4px 0; }
-    .e7-rec-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+    .e7-rec-grid { display: grid; gap: 8px; grid-template-columns: repeat(2, 1fr); }
 
     /* 필터 */
     .e7-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 8px 12px; }
@@ -172,7 +172,7 @@
 
     /* 영웅 그리드 */
     .e7-grid-wrap { background: var(--e7-card); border: 1px solid var(--e7-border); border-radius: 14px; padding: 10px; max-height: 300px; overflow-y: auto; }
-    .e7-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+    .e7-grid { display: grid; gap: 8px; grid-template-columns: repeat(2, 1fr); }
 
     /* 영웅 카드 */
     .hero-card {
@@ -388,7 +388,7 @@
         if (filterElements.size > 0 && !filterElements.has(h.element)) return false;
         if (filterClasses.size > 0 && !filterClasses.has(h.heroClass)) return false;
         return true;
-      });
+      }).sort((a, b) => (b.pickRate ?? 0) - (a.pickRate ?? 0));
     }
 
     function getMySlotPickNum(i) {
