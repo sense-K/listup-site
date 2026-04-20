@@ -314,6 +314,7 @@
     let preBans = 1;
     let grade = 'champion';
     let gradeLoading = false;
+    let matchupData = []; // 전체 등급 병합 — 시너지·카운터 추천용
 
     let bans = [];
     let myPicks = [null,null,null,null,null];
@@ -344,32 +345,56 @@
       return e7fetch('getPopularHero', { season_code: seasonCd, grade_code: gradeCd, lang: 'ko' });
     }
 
+    // ── 유틸 ─────────────────────────────────────────
+    function mergePopularData(arrays) {
+      const map = new Map();
+      arrays.flat().forEach(h => {
+        if (!map.has(h.hero_code)) {
+          map.set(h.hero_code, { ...h, with_heroes: [...h.with_heroes], hard_heroes: [...h.hard_heroes] });
+        } else {
+          const ex = map.get(h.hero_code);
+          ex.with_heroes = [...new Set([...ex.with_heroes, ...h.with_heroes])];
+          ex.hard_heroes = [...new Set([...ex.hard_heroes, ...h.hard_heroes])];
+        }
+      });
+      return Array.from(map.values());
+    }
+
     // ── 초기 로드 ─────────────────────────────────────
     async function init() {
       try {
         const [heroJson, seasons] = await Promise.all([loadHeroJson(), e7fetch('getSeasonList', { lang: 'ko' })]);
         seasonCode = (seasons.find(s => s.is_now_season === 1) || seasons[0])?.season_code || '';
-        const popular = await fetchPopularHeroes(seasonCode, 'champion');
-        gradeCache['champion'] = popular;
-        popularData = popular;
+        const champion = await fetchPopularHeroes(seasonCode, 'champion');
+        gradeCache['champion'] = champion;
+        popularData = champion;
+        matchupData = champion;
 
-        const popMap = new Map(popular.map(h => [h.hero_code, h]));
+        const popMap = new Map(champion.map(h => [h.hero_code, h]));
         allHeroes = heroJson.map(h => {
           const pop = popMap.get(h.code);
           return {
-            code: h.code,
-            name: h.name,
+            code: h.code, name: h.name,
             element: ATTR_MAP[h.attribute_cd] || 'fire',
             heroClass: JOB_MAP[h.job_cd] || 'warrior',
             stars: parseInt(h.grade) || 5,
-            pickRate: pop?.pick_rate,
-            banRate: pop?.ban_rate,
+            pickRate: pop?.pick_rate, banRate: pop?.ban_rate,
           };
         });
 
         document.getElementById('e7-loading').style.display = 'none';
         document.getElementById('e7-app').style.display = '';
         render();
+
+        // 나머지 등급 백그라운드 페치 → matchupData 확장 (추천 커버리지 향상)
+        const otherGrades = ['warlord', 'emperor', 'legend'];
+        Promise.allSettled(otherGrades.map(g => fetchPopularHeroes(seasonCode, g)))
+          .then(results => {
+            results.forEach((r, i) => { if (r.status === 'fulfilled') gradeCache[otherGrades[i]] = r.value; });
+            const fetched = [champion, ...results.filter(r => r.status === 'fulfilled').map(r => r.value)];
+            matchupData = mergePopularData(fetched);
+            render();
+          });
       } catch(e) {
         document.getElementById('e7-loading').textContent = '데이터를 불러오지 못했어요. 잠시 후 새로고침 해주세요.';
       }
@@ -383,7 +408,7 @@
 
     function getMatchupMap() {
       const map = new Map();
-      popularData.forEach(h => map.set(h.hero_code, { with: h.with_heroes, hard: h.hard_heroes }));
+      matchupData.forEach(h => map.set(h.hero_code, { with: h.with_heroes, hard: h.hard_heroes }));
       return map;
     }
 
@@ -477,14 +502,24 @@
     async function changeGrade(gradeCode) {
       grade = gradeCode;
       if (!seasonCode) return;
-      if (gradeCache[gradeCode]) { popularData = gradeCache[gradeCode]; render(); return; }
-      gradeLoading = true; render();
-      try {
-        const data = await fetchPopularHeroes(seasonCode, gradeCode);
-        gradeCache[gradeCode] = data;
-        popularData = data;
-      } catch(e) {}
-      gradeLoading = false;
+      let data;
+      if (gradeCache[gradeCode]) {
+        data = gradeCache[gradeCode];
+      } else {
+        gradeLoading = true; render();
+        try {
+          data = await fetchPopularHeroes(seasonCode, gradeCode);
+          gradeCache[gradeCode] = data;
+        } catch(e) { gradeLoading = false; render(); return; }
+        gradeLoading = false;
+      }
+      popularData = data;
+      // 선택 등급 기준으로 픽률 업데이트
+      const popMap = new Map(data.map(h => [h.hero_code, h]));
+      allHeroes = allHeroes.map(h => {
+        const pop = popMap.get(h.code);
+        return { ...h, pickRate: pop?.pick_rate ?? undefined, banRate: pop?.ban_rate ?? undefined };
+      });
       render();
     }
 
