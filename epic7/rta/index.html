@@ -271,6 +271,11 @@
       .e7-grid .hero-card-stars { display: none; }
       .e7-grid .hero-card-circle { width: 46px !important; height: 46px !important; }
       .e7-grid .hero-card-portrait { padding: 4px; }
+
+      /* 5. 시너지·카운터 추천 — 카드 폭 고정 (적은 수여도 크게 늘어나지 않도록) */
+      .e7-rec-row .e7-rec-grid { justify-content: flex-start; }
+      .e7-rec-row .e7-rec-grid .hero-card { flex: 0 0 50px; max-width: 50px; }
+
     }
   </style>
 </head>
