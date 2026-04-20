@@ -94,10 +94,8 @@
     }
     .hd-stat-row.valid .hd-stat-name { color: #3b82f6; }
     .hd-stat-row:not(.valid) .hd-stat-name { color: var(--text-sub, #64748b); }
-    .hd-stat-bar-area { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-    .hd-stat-bar-wrap { height: 6px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
-    .hd-stat-bar { height: 100%; border-radius: 999px; transition: width 0.6s ease; }
-    .hd-stat-scale { display: flex; justify-content: space-between; font-size: 9px; color: #b0bec5; }
+    .hd-stat-bar-wrap { flex: 1; height: 8px; border-radius: 999px; background: #e5e7eb; position: relative; overflow: hidden; }
+    .hd-stat-bar { position: absolute; top: 0; height: 100%; border-radius: 999px; transition: left 0.5s, width 0.5s; }
     .hd-stat-range {
       font-size: 11px; font-weight: 600; width: 80px; text-align: right; flex-shrink: 0;
     }
@@ -219,14 +217,15 @@
 
     const STAT_LABELS = { att:'공격력', def:'방어력', max_hp:'생명력', speed:'속도', cri:'치명확률', cri_dmg:'치명피해', acc:'효과적중', res:'효과저항' };
     const STAT_BUCKETS = {
-      att:     ['~2999','3000~3499','3500~3999','4000~4499','4500~4999','5000~5499','5500~5999','6000~6499','6500~6999','7000~'],
-      def:     ['~299','300~499','500~699','700~899','900~1099','1100~1299','1300~1499','1500~1699','1700~1899','1900~'],
-      max_hp:  ['~9999','10000~13999','14000~17999','18000~21999','22000~25999','26000~29999','30000~33999','34000~37999','38000~41999','42000~'],
-      speed:   ['~149','150~164','165~179','180~199','200~214','215~229','230~244','245~259','260~274','275~'],
-      cri:     ['~49%','50~54%','55~59%','60~64%','65~69%','70~74%','75~79%','80~84%','85~89%','90~%'],
-      cri_dmg: ['~149%','150~174%','175~199%','200~224%','225~249%','250~274%','275~299%','300~324%','325~349%','350~%'],
-      acc:     ['~9','10~29','30~59','60~89','90~109','110~129','130~149','150~164','165~174','175~'],
-      res:     ['~9','10~29','30~59','60~89','90~119','120~149','150~174','175~199','200~214','215~'],
+      // 표시 범위를 10등분한 균등 구간 레이블
+      att:     ['1200~1599','1600~1999','2000~2399','2400~2799','2800~3199','3200~3599','3600~3999','4000~4399','4400~4799','4800~5200'],
+      def:     ['800~959','960~1119','1120~1279','1280~1439','1440~1599','1600~1759','1760~1919','1920~2079','2080~2239','2240~2400'],
+      max_hp:  ['9000~10599','10600~12199','12200~13799','13800~15399','15400~16999','17000~18599','18600~20199','20200~21799','21800~23399','23400~25000'],
+      speed:   ['110~125','126~141','142~157','158~173','174~189','190~205','206~221','222~237','238~253','254~270'],
+      cri:     ['15~23','24~32','33~41','42~50','51~59','60~68','69~77','78~86','87~93','94~100'],
+      cri_dmg: ['150~169','170~189','190~209','210~229','230~249','250~269','270~289','290~309','310~329','330~350'],
+      acc:     ['0~17','18~35','36~53','54~71','72~89','90~107','108~125','126~143','144~161','162~180'],
+      res:     ['0~22','23~45','46~68','69~91','92~114','115~137','138~160','161~183','184~206','207~225'],
     };
     // 스탯 표시 범위 (그래프 스케일 기준)
     const STAT_DISPLAY_RANGE = {
@@ -238,17 +237,6 @@
       cri_dmg: { min: 150,  max: 350 },
       acc:     { min: 0,    max: 180 },
       res:     { min: 0,    max: 225 },
-    };
-    // 각 버킷 구간의 대표값 (중앙값 기준)
-    const STAT_BUCKET_MIDS = {
-      att:     [2500, 3250, 3750, 4250, 4750, 5250, 5750, 6250, 6750, 7500],
-      def:     [ 200,  400,  600,  800, 1000, 1200, 1400, 1600, 1800, 2100],
-      max_hp:  [7000,12000,16000,20000,24000,28000,32000,36000,40000,44000],
-      speed:   [ 130,  157,  172,  190,  207,  222,  237,  252,  267,  282],
-      cri:     [  30,   52,   57,   62,   67,   72,   77,   82,   87,   95],
-      cri_dmg: [ 120,  162,  187,  212,  237,  262,  287,  312,  337,  370],
-      acc:     [   5,   20,   45,   75,  100,  120,  140,  157,  170,  180],
-      res:     [   5,   20,   45,   75,  105,  135,  162,  187,  207,  220],
     };
 
     // ── 헬퍼 ─────────────────────────────────────
@@ -267,12 +255,27 @@
       return buckets[peakIdx]?.label || '-';
     }
 
-    function getPeakFillPct(buckets, key) {
-      const peakIdx = buckets.reduce((best, b, i) => b.count > buckets[best].count ? i : best, 0);
-      const mid = (STAT_BUCKET_MIDS[key] || [])[peakIdx];
+    // 버킷 레이블 "1200~1599" → {start, end} 파싱
+    function parseBucketRange(label, key) {
       const r = STAT_DISPLAY_RANGE[key];
-      if (mid == null || !r) return Math.round((peakIdx / 9) * 100);
-      return Math.max(5, Math.min(100, Math.round((mid - r.min) / (r.max - r.min) * 100)));
+      const clean = label.replace(/%/g, '').trim();
+      if (clean.startsWith('~')) return { start: r.min, end: parseInt(clean.slice(1)) };
+      if (clean.endsWith('~'))  return { start: parseInt(clean.slice(0, -1)), end: r.max };
+      const parts = clean.split('~');
+      return { start: parseInt(parts[0]), end: parseInt(parts[1]) };
+    }
+
+    // 세그먼트 위치 계산 → {left%, width%}
+    function getBarSegment(buckets, key) {
+      const peakIdx = buckets.reduce((best, b, i) => b.count > buckets[best].count ? i : best, 0);
+      const label = (STAT_BUCKETS[key] || [])[peakIdx];
+      const r = STAT_DISPLAY_RANGE[key];
+      if (!label || !r) return { left: 0, width: 100 };
+      const { start, end } = parseBucketRange(label, key);
+      const span = r.max - r.min;
+      const left  = Math.max(0, Math.min(100, (start - r.min) / span * 100));
+      const right = Math.max(0, Math.min(100, (end   - r.min) / span * 100));
+      return { left, width: Math.max(2, right - left) };
     }
 
     // ── API ──────────────────────────────────────
@@ -366,12 +369,14 @@
       const stats = STAT_KEYS.map(key => {
         const raw = analysis?.abillity?.[key] || '';
         const buckets = parseBuckets(raw, key);
+        const seg = raw ? getBarSegment(buckets, key) : { left: 0, width: 0 };
         return {
           key, label: STAT_LABELS[key],
           buckets,
           isValid: raw ? isValidStat(buckets) : false,
           range: raw ? getPeakLabel(buckets) : '-',
-          fillPct: raw ? getPeakFillPct(buckets, key) : 0,
+          barLeft: seg.left,
+          barWidth: seg.width,
         };
       });
       const validCount = stats.filter(s => s.isValid).length;
@@ -436,14 +441,8 @@
                   <div class="hd-stat-row${s.isValid ? ' valid' : ''}">
                     <img src="${STAT_ICON[s.key]}" alt="${s.label}" />
                     <span class="hd-stat-name">${s.label}</span>
-                    <div class="hd-stat-bar-area">
-                      <div class="hd-stat-bar-wrap">
-                        <div class="hd-stat-bar" style="width:${s.fillPct}%;background:${s.isValid ? '#3b82f6' : '#cbd5e1'};"></div>
-                      </div>
-                      <div class="hd-stat-scale">
-                        <span>${STAT_DISPLAY_RANGE[s.key]?.min ?? ''}</span>
-                        <span>${STAT_DISPLAY_RANGE[s.key]?.max ?? ''}</span>
-                      </div>
+                    <div class="hd-stat-bar-wrap">
+                      <div class="hd-stat-bar" style="left:${s.barLeft}%;width:${s.barWidth}%;background:${s.isValid ? '#3b82f6' : '#cbd5e1'};"></div>
                     </div>
                     <span class="hd-stat-range">${s.range}</span>
                     ${s.isValid ? '<span class="hd-recommend-badge">추천</span>' : ''}
