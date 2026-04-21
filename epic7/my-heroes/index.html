@@ -76,8 +76,9 @@
       border-radius: 14px;
       display: flex;
       flex-direction: column;
-      min-height: 480px;
-      max-height: 70vh;
+      height: 70vh;
+      min-height: 400px;
+      overflow: hidden;
     }
     .mh-panel-header {
       display: flex; align-items: center; gap: 8px;
@@ -110,6 +111,7 @@
       border: 2px solid transparent; cursor: pointer;
       transition: transform 0.12s, box-shadow 0.12s, border-color 0.15s;
       position: relative;
+      min-height: 86px;
     }
     .mh-card:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
 
