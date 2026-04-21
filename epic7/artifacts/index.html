@@ -31,8 +31,11 @@
       border-radius: 999px; border: 1px solid var(--border,#e5e7eb);
       background: #fff; color: var(--text-sub,#64748b); cursor: pointer;
       transition: all 0.15s;
+      display: inline-flex; align-items: center; gap: 5px;
     }
     .af-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .af-btn img { width: 16px; height: 16px; object-fit: contain; }
+    .af-btn.active img { filter: brightness(0) invert(1); }
 
     .af-grid {
       display: grid;
@@ -66,10 +69,11 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .af-card-job-badge {
-      font-size: 10px; font-weight: 700; padding: 2px 7px;
-      border-radius: 999px; background: rgba(0,0,0,0.45);
-      color: #fff; backdrop-filter: blur(4px);
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
     }
+    .af-card-job-badge img { width: 15px; height: 15px; object-fit: contain; filter: brightness(0) invert(1); }
     .af-card-stars {
       display: flex; gap: 1px;
     }
@@ -158,12 +162,12 @@
       <div class="af-filter-btns" id="afJobFilter">
         <button class="af-btn active" data-job="all">전체</button>
         <button class="af-btn" data-job="NN">공용</button>
-        <button class="af-btn" data-job="warrior">전사</button>
-        <button class="af-btn" data-job="knight">기사</button>
-        <button class="af-btn" data-job="mage">마도사</button>
-        <button class="af-btn" data-job="thief">도적</button>
-        <button class="af-btn" data-job="ranger">사수</button>
-        <button class="af-btn" data-job="manauser">정령사</button>
+        <button class="af-btn" data-job="warrior"><img src="/epic7-icons/class/warrior.webp" alt="">전사</button>
+        <button class="af-btn" data-job="knight"><img src="/epic7-icons/class/knight.webp" alt="">기사</button>
+        <button class="af-btn" data-job="mage"><img src="/epic7-icons/class/mage.png" alt="">마도사</button>
+        <button class="af-btn" data-job="thief"><img src="/epic7-icons/class/thief.webp" alt="">도적</button>
+        <button class="af-btn" data-job="ranger"><img src="/epic7-icons/class/ranger.webp" alt="">사수</button>
+        <button class="af-btn" data-job="manauser"><img src="/epic7-icons/class/soul.webp" alt="">정령사</button>
       </div>
       <div class="af-filter-btns" id="afGradeFilter">
         <button class="af-btn active" data-grade="all">등급 전체</button>
@@ -193,6 +197,15 @@
     const HERO_IMG = code => `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png`;
 
     const JOB_LABEL = { NN:'공용', warrior:'전사', knight:'기사', mage:'마도사', thief:'도적', ranger:'사수', manauser:'정령사', assassin:'도적' };
+    const JOB_ICON = {
+      warrior:  '/epic7-icons/class/warrior.webp',
+      knight:   '/epic7-icons/class/knight.webp',
+      mage:     '/epic7-icons/class/mage.png',
+      thief:    '/epic7-icons/class/thief.webp',
+      ranger:   '/epic7-icons/class/ranger.webp',
+      manauser: '/epic7-icons/class/soul.webp',
+      assassin: '/epic7-icons/class/thief.webp',
+    };
     const GRADE_LABEL = { 5:'★★★★★', 4:'★★★★', 3:'★★★' };
 
     let allArtifacts = [];
@@ -250,7 +263,7 @@
           }
           <div class="af-card-overlay"></div>
           <div class="af-card-top-row">
-            ${a.job_code !== 'NN' ? `<span class="af-card-job-badge">${JOB_LABEL[a.job_code] || a.job_code}</span>` : '<span></span>'}
+            ${a.job_code !== 'NN' && JOB_ICON[a.job_code] ? `<span class="af-card-job-badge"><img src="${JOB_ICON[a.job_code]}" alt="${JOB_LABEL[a.job_code] || a.job_code}"></span>` : '<span></span>'}
             <div class="af-card-stars"><span>${STARS[a.grade] || ''}</span></div>
           </div>
           <div class="af-card-bottom">
