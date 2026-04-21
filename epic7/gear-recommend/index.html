@@ -15,141 +15,150 @@
       padding: 24px 16px 60px;
       min-height: calc(100vh - 60px - 140px);
     }
-
-    /* 헤더 */
     .gr-header { margin-bottom: 20px; }
     .gr-header h1 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
     .gr-header p { font-size: 13px; color: var(--text-muted, #64748b); }
 
-    /* 스탯 선택 패널 */
+    /* 패널 */
     .gr-panel {
       background: #fff;
       border: 1px solid var(--border, #e5e7eb);
       border-radius: 16px;
       padding: 20px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .gr-panel-label {
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 12px; font-weight: 700;
       color: var(--text-muted, #64748b);
       margin-bottom: 12px;
     }
-    .gr-stat-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
+    .gr-panel-label span { font-weight: 400; }
+
+    /* 스탯 버튼 */
+    .gr-stat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
     .gr-stat-btn {
-      padding: 8px 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
+      padding: 8px 18px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
       border: 1.5px solid var(--border, #e5e7eb);
-      background: #f8fafc;
-      color: #64748b;
-      cursor: pointer;
-      transition: all 0.15s;
+      background: #f8fafc; color: #64748b;
+      cursor: pointer; transition: all 0.15s;
+      position: relative;
     }
     .gr-stat-btn:hover { border-color: #7c3aed; color: #7c3aed; }
     .gr-stat-btn.active {
-      background: #7c3aed;
-      border-color: #7c3aed;
-      color: #fff;
-      transform: scale(1.04);
+      background: #7c3aed; border-color: #7c3aed; color: #fff;
     }
+    .gr-stat-btn.disabled-max {
+      opacity: 0.4; cursor: not-allowed;
+    }
+    .gr-stat-btn.disabled-max:hover { border-color: var(--border, #e5e7eb); color: #64748b; }
 
-    /* 선택된 스탯 태그 */
-    .gr-selected-row {
-      display: flex;
-      align-items: center;
+    /* 선택된 스탯 슬롯 */
+    .gr-slot-row {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .gr-slot {
+      display: flex; align-items: center; justify-content: center;
+      width: 90px; height: 34px; border-radius: 8px;
+      border: 1.5px dashed #d1d5db;
+      font-size: 12px; color: #cbd5e1;
+      background: #f8fafc;
+    }
+    .gr-slot.filled {
+      border-style: solid; border-color: #7c3aed;
+      background: rgba(124,58,237,0.07);
+      color: #7c3aed; font-weight: 700;
+      cursor: pointer;
+    }
+    .gr-slot.filled:hover { background: rgba(124,58,237,0.15); }
+
+    /* 토글 + 검색 버튼 행 */
+    .gr-action-row {
+      display: flex; align-items: center; gap: 12px; margin-top: 16px;
       flex-wrap: wrap;
-      gap: 6px;
-      min-height: 28px;
     }
-    .gr-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(124,58,237,0.1);
-      color: #7c3aed;
-      border-radius: 999px;
-      padding: 3px 10px 3px 12px;
-      font-size: 12px;
-      font-weight: 600;
+    .gr-toggle {
+      display: flex; border-radius: 10px; overflow: hidden;
+      border: 1.5px solid var(--border, #e5e7eb);
+      flex-shrink: 0;
     }
-    .gr-tag button {
-      background: none;
-      border: none;
-      color: #7c3aed;
-      cursor: pointer;
-      font-size: 14px;
-      line-height: 1;
-      padding: 0;
-      opacity: 0.6;
+    .gr-toggle-btn {
+      padding: 8px 18px; font-size: 13px; font-weight: 700;
+      background: #f8fafc; color: #94a3b8;
+      border: none; cursor: pointer; transition: all 0.15s;
     }
-    .gr-tag button:hover { opacity: 1; }
-    .gr-reset-btn {
-      font-size: 11px;
-      padding: 3px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border, #e5e7eb);
-      background: none;
-      color: #94a3b8;
-      cursor: pointer;
-    }
-    .gr-reset-btn:hover { color: #64748b; }
+    .gr-toggle-btn.active { background: #111; color: #fff; }
+    .gr-toggle-sep { width: 1px; background: var(--border, #e5e7eb); }
 
-    /* 결과 영역 */
+    .gr-search-btn {
+      flex: 1; min-width: 120px;
+      padding: 9px 24px; border-radius: 10px;
+      font-size: 14px; font-weight: 700; color: #fff;
+      background: #7c3aed; border: none; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .gr-search-btn:hover { background: #6d28d9; }
+    .gr-search-btn:disabled {
+      background: #e5e7eb; color: #94a3b8; cursor: not-allowed;
+    }
+
+    /* 로딩 */
+    .gr-loading {
+      text-align: center; padding: 60px 20px;
+      background: #fff; border: 1px solid var(--border, #e5e7eb);
+      border-radius: 16px;
+    }
+    .gr-loading-spinner {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid #e5e7eb; border-top-color: #7c3aed;
+      animation: spin 0.8s linear infinite; margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .gr-loading-text { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 6px; }
+    .gr-loading-sub { font-size: 12px; color: #94a3b8; }
+    .gr-progress-bar-wrap {
+      width: 200px; height: 4px; background: #e5e7eb;
+      border-radius: 999px; margin: 12px auto 0;
+    }
+    .gr-progress-bar { height: 100%; background: #7c3aed; border-radius: 999px; transition: width 0.3s; }
+
+    /* 결과 헤더 */
     .gr-result-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-      gap: 10px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
     }
-    .gr-result-count { font-size: 13px; color: var(--text-muted, #64748b); }
+    .gr-result-count { font-size: 13px; color: #64748b; }
     .gr-result-count strong { color: #7c3aed; font-weight: 700; }
 
-    /* 필터 칩 (속성/직업) */
+    /* 속성/직업 필터 */
     .gr-filter-chips { display: flex; flex-wrap: wrap; gap: 5px; }
     .gr-fchip {
-      width: 28px; height: 28px;
-      border-radius: 50%;
+      width: 28px; height: 28px; border-radius: 50%;
       border: 1.5px solid var(--border, #e5e7eb);
-      background: #fff;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s;
-      padding: 0;
+      background: #fff; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s; padding: 0;
     }
     .gr-fchip img { width: 14px; height: 14px; object-fit: contain; }
-    .gr-fchip.active { border-color: #111; background: #111; }
-    .gr-fchip.active img { filter: brightness(0) invert(1); }
-    .gr-fchip-divider { width: 1px; height: 20px; background: var(--border, #e5e7eb); margin: 0 2px; align-self: center; }
+    .gr-fchip.active-el { border-width: 2px; }
+    .gr-fchip.active-cls { border-color: #111; background: #111; }
+    .gr-fchip.active-cls img { filter: brightness(0) invert(1); }
+    .gr-fchip-div { width: 1px; height: 20px; background: var(--border, #e5e7eb); margin: 0 2px; align-self: center; }
 
-    /* 영웅 카드 그리드 */
+    /* 그리드 */
     .gr-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
       gap: 10px;
     }
     .gr-card {
-      background: #fff;
-      border: 1.5px solid var(--border, #e5e7eb);
-      border-radius: 14px;
-      padding: 12px 8px 10px;
+      background: #fff; border: 1.5px solid var(--border, #e5e7eb);
+      border-radius: 14px; padding: 12px 8px 10px;
       display: flex; flex-direction: column; align-items: center;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform 0.15s, box-shadow 0.15s;
+      text-decoration: none; transition: transform 0.15s, box-shadow 0.15s;
     }
     .gr-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
     .gr-card.perfect { border-color: #7c3aed; box-shadow: 0 0 0 1px #7c3aed; }
 
-    /* 초상화 */
     .gr-portrait-wrap { position: relative; width: 68px; height: 68px; margin-bottom: 8px; }
     .gr-portrait {
       width: 68px; height: 68px; border-radius: 50%; overflow: hidden;
@@ -157,58 +166,48 @@
     }
     .gr-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
     .gr-el-badge, .gr-cls-badge {
-      position: absolute;
-      width: 18px; height: 18px; border-radius: 50%; overflow: hidden;
-      background: rgba(0,0,0,0.55);
+      position: absolute; width: 18px; height: 18px; border-radius: 50%;
+      overflow: hidden; background: rgba(0,0,0,0.55);
       display: flex; align-items: center; justify-content: center;
     }
     .gr-el-badge { top: -2px; right: -2px; }
     .gr-cls-badge { top: -2px; left: -2px; }
     .gr-el-badge img, .gr-cls-badge img { width: 12px; height: 12px; object-fit: contain; }
 
-    /* 이름 + 매칭 */
     .gr-name {
       font-size: 11px; font-weight: 600; color: #1e293b;
-      text-align: center; line-height: 1.3;
-      margin-bottom: 6px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      max-width: 100%;
+      text-align: center; line-height: 1.3; margin-bottom: 6px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
     }
     .gr-match-bar { display: flex; gap: 2px; justify-content: center; margin-bottom: 3px; }
     .gr-match-seg { height: 3px; width: 12px; border-radius: 99px; background: #e5e7eb; }
-    .gr-match-seg.filled { background: #7c3aed; }
+    .gr-match-seg.top { background: #3b82f6; }
+    .gr-match-seg.mid { background: #22c55e; }
     .gr-match-label { font-size: 10px; color: #94a3b8; text-align: center; }
     .gr-match-label.perfect { color: #7c3aed; font-weight: 700; }
 
-    /* 빈 상태 / 로딩 */
+    /* 빈 상태 */
     .gr-empty {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-muted, #64748b);
-      background: #fff;
-      border: 1px solid var(--border, #e5e7eb);
+      text-align: center; padding: 60px 20px;
+      background: #fff; border: 1px solid var(--border, #e5e7eb);
       border-radius: 16px;
     }
     .gr-empty-icon { font-size: 36px; margin-bottom: 12px; }
     .gr-empty-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
-    .gr-empty-desc { font-size: 13px; }
+    .gr-empty-desc { font-size: 13px; color: #64748b; }
 
-    /* 더보기 */
     .gr-more-wrap { text-align: center; margin-top: 20px; }
     .gr-more-btn {
-      padding: 10px 28px;
-      border-radius: 10px;
+      padding: 10px 28px; border-radius: 10px;
       border: 1px solid var(--border, #e5e7eb);
-      background: #fff;
-      font-size: 13px; font-weight: 600; color: #64748b;
-      cursor: pointer;
+      background: #fff; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer;
     }
     .gr-more-btn:hover { background: #f8fafc; }
-
     .gr-hint { text-align: center; font-size: 11px; color: #cbd5e1; margin-top: 20px; }
 
     @media (max-width: 480px) {
       .gr-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+      .gr-stat-btn { padding: 7px 12px; font-size: 12px; }
     }
   </style>
 </head>
@@ -218,237 +217,340 @@
 <div class="gr-wrap">
   <div class="gr-header">
     <h1>🔍 장비 주인 찾기</h1>
-    <p>장비의 보조 옵션을 선택하면 해당 스탯이 유효한 영웅을 추천해드려요</p>
+    <p>보조 옵션 4개를 선택하고 검색하면 해당 장비를 쓸 수 있는 영웅을 찾아드려요</p>
   </div>
 
-  <!-- 스탯 선택 -->
+  <!-- 옵션 선택 패널 -->
   <div class="gr-panel">
-    <div class="gr-panel-label">보조 옵션 선택 <span style="font-weight:400;">(여러 개 선택 가능)</span></div>
+    <div class="gr-panel-label">보조 옵션 선택 <span id="slot-count-label">(0/4 선택)</span></div>
     <div class="gr-stat-grid" id="stat-btns"></div>
-    <div class="gr-selected-row" id="selected-row">
-      <span style="font-size:12px;color:#cbd5e1;">옵션을 선택하면 여기 표시돼요</span>
+
+    <!-- 슬롯 -->
+    <div class="gr-panel-label" style="margin-top:4px;">선택된 옵션</div>
+    <div class="gr-slot-row" id="slot-row"></div>
+
+    <!-- 토글 + 검색 -->
+    <div class="gr-action-row">
+      <div class="gr-toggle">
+        <button class="gr-toggle-btn" id="toggle-perfect" onclick="setMode('perfect')">전부일치</button>
+        <div class="gr-toggle-sep"></div>
+        <button class="gr-toggle-btn active" id="toggle-usable" onclick="setMode('usable')">사용가능</button>
+      </div>
+      <button class="gr-search-btn" id="search-btn" onclick="doSearch()" disabled>
+        🔍 찾기
+      </button>
     </div>
   </div>
 
-  <!-- 결과 -->
+  <!-- 결과 영역 -->
   <div id="result-area">
     <div class="gr-empty">
       <div class="gr-empty-icon">⚔️</div>
-      <div class="gr-empty-title">보조 옵션을 선택해주세요</div>
-      <div class="gr-empty-desc">선택한 옵션이 모두 유효한 영웅을 우선 추천해드려요</div>
+      <div class="gr-empty-title">보조 옵션 4개를 선택 후 검색하세요</div>
+      <div class="gr-empty-desc">처음 검색 시 영웅 분석 데이터를 불러와요 (약 10~20초)</div>
     </div>
   </div>
 </div>
 
 <div id="footer"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/config.js"></script>
 <script>
 document.getElementById('navbar').innerHTML = renderNavbar('epic7')
 loadAndRenderGameUI(null)
 
-// ─── 상수 ───────────────────────────────────────────
-const PROXY_URL = 'https://epicsense-e7proxy.zzabhm.workers.dev'
+// ─── 상수 ────────────────────────────────────────
+const PROXY = 'https://epicsense-e7proxy.zzabhm.workers.dev'
 
 const STATS = [
-  { key: 'att_pct',  label: '공격력%'  },
-  { key: 'def_pct',  label: '방어력%'  },
-  { key: 'hp_pct',   label: '생명력%'  },
-  { key: 'spd',      label: '속도'     },
-  { key: 'crit',     label: '치명확률' },
-  { key: 'crit_dmg', label: '치명피해' },
-  { key: 'eff',      label: '효과적중' },
-  { key: 'eff_res',  label: '효과저항' },
+  { key: 'att',     label: '공격력'  },
+  { key: 'def',     label: '방어력'  },
+  { key: 'max_hp',  label: '생명력'  },
+  { key: 'speed',   label: '속도'    },
+  { key: 'cri',     label: '치명확률'},
+  { key: 'cri_dmg', label: '치명피해'},
+  { key: 'acc',     label: '효과적중'},
+  { key: 'res',     label: '효과저항'},
 ]
-
-// 직업별 유효 스탯
-const CLASS_VALID = {
-  warrior:  ['att_pct','hp_pct','def_pct','spd','crit','crit_dmg','eff'],
-  knight:   ['hp_pct','def_pct','spd','eff_res'],
-  mage:     ['att_pct','spd','eff','crit','crit_dmg'],
-  ranger:   ['att_pct','crit','crit_dmg','spd'],
-  assassin: ['att_pct','crit','crit_dmg','spd','eff'],
-  manauser: ['hp_pct','spd','eff','eff_res'],
-}
-
-const ATTR_MAP = { fire:'화염', ice:'냉기', wind:'자연', light:'광', dark:'암' }
-const JOB_MAP  = { warrior:'전사', knight:'기사', mage:'마도사', ranger:'사수', assassin:'도적', manauser:'정령사' }
 
 const ATTR_COLOR = { fire:'#ef4444', ice:'#3b82f6', wind:'#22c55e', light:'#eab308', dark:'#a855f7' }
 const ATTR_BG    = { fire:'rgba(239,68,68,.15)', ice:'rgba(59,130,246,.15)', wind:'rgba(34,197,94,.15)', light:'rgba(234,179,8,.15)', dark:'rgba(168,85,247,.15)' }
+const EL_ICON    = { fire:'/icons/element/fire.png', ice:'/icons/element/ice.png', wind:'/icons/element/wind.png', light:'/icons/element/light.png', dark:'/icons/element/dark.png' }
+const CLS_ICON   = { warrior:'/epic7-icons/class/warrior.webp', knight:'/epic7-icons/class/knight.webp', mage:'/epic7-icons/class/mage.png', ranger:'/epic7-icons/class/ranger.webp', assassin:'/epic7-icons/class/thief.webp', manauser:'/epic7-icons/class/soul.webp' }
+const STAT_LABEL_MAP = { att:'공격력', def:'방어력', max_hp:'생명력', speed:'속도', cri:'치명확률', cri_dmg:'치명피해', acc:'효과적중', res:'효과저항' }
 
-const EL_ICON  = { fire:'/icons/element/fire.png', ice:'/icons/element/ice.png', wind:'/icons/element/wind.png', light:'/icons/element/light.png', dark:'/icons/element/dark.png' }
-const CLS_ICON = { warrior:'/epic7-icons/class/warrior.webp', knight:'/epic7-icons/class/knight.webp', mage:'/epic7-icons/class/mage.png', ranger:'/epic7-icons/class/ranger.webp', assassin:'/epic7-icons/class/thief.webp', manauser:'/epic7-icons/class/soul.webp' }
+function heroImg(code) { return `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png` }
 
-function heroImgUrl(code) {
-  return `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png`
-}
+// ─── 상태 ────────────────────────────────────────
+let allHeroes    = []   // hero json
+let selectedStats = []  // 최대 4개, 순서 있음
+let mode         = 'usable' // 'perfect' | 'usable'
+let filterAttr   = null
+let filterJob    = null
+let showAll      = false
+let lastResults  = []
+let currentSeason = ''
 
-// ─── 상태 ────────────────────────────────────────────
-let allHeroes = []       // { code, name, attribute_cd, job_cd }
-let selectedStats = new Set()
-let filterAttr = null
-let filterJob  = null
-let showAll = false
-
-// ─── 초기화 ──────────────────────────────────────────
+// ─── 초기화 ──────────────────────────────────────
 async function init() {
-  // 스탯 버튼 렌더
-  const btnWrap = document.getElementById('stat-btns')
-  btnWrap.innerHTML = STATS.map(s => `
-    <button class="gr-stat-btn" id="sb-${s.key}" onclick="toggleStat('${s.key}')">${s.label}</button>
-  `).join('')
+  renderStatBtns()
+  renderSlots()
 
-  // 영웅 데이터 로드
   try {
-    const res = await fetch(`${PROXY_URL}/api/hero-json`)
+    const res = await fetch(`${PROXY}/api/hero-json`)
     const json = await res.json()
     allHeroes = (json.ko ?? []).filter(h => h.grade === '5')
-  } catch(e) {
-    console.error('영웅 데이터 로드 실패', e)
-  }
+  } catch(e) { console.error('영웅 로드 실패', e) }
+
+  try {
+    const res2 = await fetch(`${PROXY}/api/e7/getSeasonList?lang=ko`)
+    const j2   = await res2.json()
+    const seasons = j2?.value?.result_body ?? []
+    const now  = seasons.find(s => s.is_now_season === 1) ?? seasons[0]
+    currentSeason = now?.season_code ?? ''
+  } catch(e) { console.error('시즌 로드 실패', e) }
 }
 
-// ─── 스탯 토글 ───────────────────────────────────────
+// ─── 스탯 버튼 ───────────────────────────────────
+function renderStatBtns() {
+  document.getElementById('stat-btns').innerHTML = STATS.map(s => `
+    <button class="gr-stat-btn" id="sb-${s.key}" onclick="toggleStat('${s.key}')">${s.label}</button>
+  `).join('')
+}
+
 function toggleStat(key) {
-  selectedStats.has(key) ? selectedStats.delete(key) : selectedStats.add(key)
-  document.getElementById('sb-' + key).classList.toggle('active', selectedStats.has(key))
-  showAll = false
-  renderSelectedRow()
-  renderResult()
+  const idx = selectedStats.indexOf(key)
+  if (idx >= 0) {
+    selectedStats.splice(idx, 1)
+  } else {
+    if (selectedStats.length >= 4) return
+    selectedStats.push(key)
+  }
+  syncStatBtns()
+  renderSlots()
+  document.getElementById('search-btn').disabled = selectedStats.length < 4
+  const label = document.getElementById('slot-count-label')
+  label.textContent = `(${selectedStats.length}/4 선택)`
+  label.style.color = selectedStats.length === 4 ? '#7c3aed' : ''
 }
 
-function removeStat(key) {
-  selectedStats.delete(key)
-  document.getElementById('sb-' + key)?.classList.remove('active')
-  showAll = false
-  renderSelectedRow()
-  renderResult()
+function syncStatBtns() {
+  STATS.forEach(s => {
+    const btn = document.getElementById('sb-' + s.key)
+    if (!btn) return
+    const active = selectedStats.includes(s.key)
+    const maxed  = selectedStats.length >= 4 && !active
+    btn.classList.toggle('active', active)
+    btn.classList.toggle('disabled-max', maxed)
+  })
 }
 
-function resetAll() {
-  selectedStats.clear()
-  document.querySelectorAll('.gr-stat-btn').forEach(b => b.classList.remove('active'))
+function removeSlot(key) { toggleStat(key) }
+
+// ─── 슬롯 렌더 ───────────────────────────────────
+function renderSlots() {
+  const row = document.getElementById('slot-row')
+  const slots = []
+  for (let i = 0; i < 4; i++) {
+    const key = selectedStats[i]
+    if (key) {
+      slots.push(`<div class="gr-slot filled" onclick="removeSlot('${key}')" title="클릭하여 제거">${STAT_LABEL_MAP[key]}</div>`)
+    } else {
+      slots.push(`<div class="gr-slot">${i+1}번 옵션</div>`)
+    }
+  }
+  row.innerHTML = slots.join('')
+}
+
+// ─── 토글 모드 ───────────────────────────────────
+function setMode(m) {
+  mode = m
+  document.getElementById('toggle-perfect').classList.toggle('active', m === 'perfect')
+  document.getElementById('toggle-usable').classList.toggle('active', m === 'usable')
+  if (lastResults.length > 0) applyAndRender()
+}
+
+// ─── 유효 옵션 계산 (hero analysis 기준) ─────────
+function getStatTier(bucketsStr) {
+  const counts = (bucketsStr || '').split(',').map(v => parseInt(v) || 0)
+  if (counts.every(v => v === 0)) return 'invalid'
+  const maxIdx = counts.reduce((best, v, i) => v > counts[best] ? i : best, 0)
+  const pct = maxIdx / (counts.length - 1)
+  if (pct >= 0.75) return 'top'
+  if (pct >= 0.25) return 'mid'
+  return 'invalid'
+}
+
+// analysis.abillity → { att:'top'|'mid'|'invalid', ... }
+function computeValidOptions(abillity) {
+  const keys = ['att','def','max_hp','speed','cri','cri_dmg','acc','res']
+  const result = {}
+  keys.forEach(k => {
+    result[k] = getStatTier(abillity?.[k] ?? '')
+  })
+  return result
+}
+
+// ─── 검색 ────────────────────────────────────────
+async function doSearch() {
+  if (selectedStats.length < 4) return
+  showAll = false
   filterAttr = null
-  filterJob = null
-  showAll = false
-  renderSelectedRow()
-  renderResult()
+  filterJob  = null
+
+  // 로딩 UI
+  document.getElementById('result-area').innerHTML = `
+    <div class="gr-loading">
+      <div class="gr-loading-spinner"></div>
+      <div class="gr-loading-text">영웅 분석 데이터 불러오는 중...</div>
+      <div class="gr-loading-sub" id="progress-label">캐시 확인 중</div>
+      <div class="gr-progress-bar-wrap"><div class="gr-progress-bar" id="progress-bar" style="width:0%"></div></div>
+    </div>`
+
+  const validOptsMap = await fetchValidOptions()
+  if (!validOptsMap) return
+
+  // 결과 계산
+  lastResults = allHeroes.map(hero => {
+    const opts = validOptsMap[hero.code] ?? {}
+    const validKeys = Object.keys(opts).filter(k => opts[k] !== 'invalid')
+    const matchDetails = selectedStats.map(k => opts[k] ?? 'invalid')
+    const score = matchDetails.filter(t => t !== 'invalid').length
+    return { hero, opts, validKeys, matchDetails, score }
+  }).filter(r => r.score > 0)
+
+  applyAndRender()
 }
 
-// ─── 선택 태그 렌더 ──────────────────────────────────
-function renderSelectedRow() {
-  const el = document.getElementById('selected-row')
-  if (selectedStats.size === 0) {
-    el.innerHTML = '<span style="font-size:12px;color:#cbd5e1;">옵션을 선택하면 여기 표시돼요</span>'
-    return
+async function fetchValidOptions() {
+  const cacheKey = `e7-valid-opts-${currentSeason}`
+  try {
+    const cached = sessionStorage.getItem(cacheKey)
+    if (cached) {
+      setProgress(100, '캐시에서 불러왔어요')
+      return JSON.parse(cached)
+    }
+  } catch(e) {}
+
+  if (!currentSeason) {
+    alert('시즌 정보를 불러오지 못했어요. 페이지를 새로고침해주세요.')
+    return null
   }
-  const tags = [...selectedStats].map(key => {
-    const label = STATS.find(s => s.key === key)?.label ?? key
-    return `<span class="gr-tag">${label}<button onclick="removeStat('${key}')">×</button></span>`
-  }).join('')
-  el.innerHTML = tags + `<button class="gr-reset-btn" onclick="resetAll()">초기화</button>`
+
+  const total = allHeroes.length
+  const result = {}
+  const BATCH = 15
+
+  for (let i = 0; i < total; i += BATCH) {
+    const batch = allHeroes.slice(i, i + BATCH)
+    const responses = await Promise.allSettled(
+      batch.map(h => fetch(`${PROXY}/api/e7/getHeroAnalysis?hero_code=${h.code}&season_code=${currentSeason}&grade_code=master&lang=ko`)
+        .then(r => r.json()).then(j => ({ code: h.code, data: j?.value?.result_body })))
+    )
+    responses.forEach(r => {
+      if (r.status === 'fulfilled' && r.value?.data) {
+        result[r.value.code] = computeValidOptions(r.value.data.abillity)
+      }
+    })
+    const done = Math.min(i + BATCH, total)
+    setProgress(Math.round(done / total * 100), `${done} / ${total} 영웅 분석 중...`)
+  }
+
+  try { sessionStorage.setItem(cacheKey, JSON.stringify(result)) } catch(e) {}
+  return result
 }
 
-// ─── 매칭 ────────────────────────────────────────────
-function getScore(hero) {
-  const valid = CLASS_VALID[hero.job_cd] ?? []
-  return [...selectedStats].filter(s => valid.includes(s)).length
+function setProgress(pct, label) {
+  const bar = document.getElementById('progress-bar')
+  const lbl = document.getElementById('progress-label')
+  if (bar) bar.style.width = pct + '%'
+  if (lbl) lbl.textContent = label
 }
 
-// ─── 결과 렌더 ───────────────────────────────────────
-function renderResult() {
-  const area = document.getElementById('result-area')
+// ─── 필터 + 렌더 ─────────────────────────────────
+function applyAndRender() {
+  const filtered = lastResults.filter(r => {
+    if (filterAttr && r.hero.attribute_cd !== filterAttr) return false
+    if (filterJob  && r.hero.job_cd !== filterJob) return false
+    if (mode === 'perfect') return r.score === 4
+    // 사용가능: score >= min(3, validCount), 단 score > 0
+    const threshold = Math.min(3, r.validKeys.length)
+    return r.score >= threshold
+  }).sort((a, b) => b.score - a.score)
 
-  if (selectedStats.size === 0) {
-    area.innerHTML = `
+  const perfectCount = filtered.filter(r => r.score === 4).length
+  const displayed = showAll ? filtered : filtered.slice(0, 30)
+
+  if (filtered.length === 0) {
+    document.getElementById('result-area').innerHTML = `
       <div class="gr-empty">
-        <div class="gr-empty-icon">⚔️</div>
-        <div class="gr-empty-title">보조 옵션을 선택해주세요</div>
-        <div class="gr-empty-desc">선택한 옵션이 모두 유효한 영웅을 우선 추천해드려요</div>
+        <div class="gr-empty-icon">😶</div>
+        <div class="gr-empty-title">매칭되는 영웅이 없어요</div>
+        <div class="gr-empty-desc">다른 옵션 조합을 시도해보세요</div>
       </div>`
-    return
-  }
-
-  const total = selectedStats.size
-
-  let results = allHeroes
-    .filter(h => !filterAttr || h.attribute_cd === filterAttr)
-    .filter(h => !filterJob  || h.job_cd === filterJob)
-    .map(h => ({ hero: h, score: getScore(h) }))
-    .filter(r => r.score > 0)
-    .sort((a, b) => b.score - a.score)
-
-  const perfectCount = results.filter(r => r.score === total).length
-  const displayed = showAll ? results : results.slice(0, 24)
-
-  if (results.length === 0) {
-    area.innerHTML = `<div class="gr-empty"><div class="gr-empty-icon">😶</div><div class="gr-empty-title">매칭되는 영웅이 없어요</div><div class="gr-empty-desc">다른 옵션을 선택해보세요</div></div>`
     return
   }
 
   const filterHtml = `
     <div class="gr-result-header">
-      <div class="gr-filter-chips" id="filter-chips">${renderFilterChips()}</div>
+      <div class="gr-filter-chips">${renderFilterChips()}</div>
       <div class="gr-result-count">
-        ${results.length}명 중 <strong>완전 일치 ${perfectCount}명</strong>
+        ${filtered.length}명 · <strong>완전일치 ${perfectCount}명</strong>
       </div>
     </div>`
 
-  const cardsHtml = displayed.map(({ hero, score }) => {
-    const isPerfect = score === total
-    const bars = Array.from({ length: total }, (_, i) =>
-      `<div class="gr-match-seg${i < score ? ' filled' : ''}"></div>`
-    ).join('')
+  const cardsHtml = displayed.map(({ hero, matchDetails, score, validKeys }) => {
+    const isPerfect = score === 4
     const color = ATTR_COLOR[hero.attribute_cd] ?? '#94a3b8'
     const bg    = ATTR_BG[hero.attribute_cd]    ?? '#f1f5f9'
+    const bars  = matchDetails.map(t =>
+      `<div class="gr-match-seg${t === 'top' ? ' top' : t === 'mid' ? ' mid' : ''}"></div>`
+    ).join('')
     return `
       <a href="/epic7/heroes/detail/?code=${hero.code}" class="gr-card${isPerfect ? ' perfect' : ''}">
         <div class="gr-portrait-wrap">
           <div class="gr-portrait" style="border-color:${color};background:${bg};">
-            <img src="${heroImgUrl(hero.code)}" alt="${hero.name}" loading="lazy" onerror="this.style.display='none'">
+            <img src="${heroImg(hero.code)}" alt="${hero.name}" loading="lazy" onerror="this.style.opacity='.3'">
           </div>
-          ${EL_ICON[hero.attribute_cd] ? `<div class="gr-el-badge"><img src="${EL_ICON[hero.attribute_cd]}" alt=""></div>` : ''}
-          ${CLS_ICON[hero.job_cd]      ? `<div class="gr-cls-badge"><img src="${CLS_ICON[hero.job_cd]}" alt=""></div>` : ''}
+          ${EL_ICON[hero.attribute_cd]  ? `<div class="gr-el-badge"><img src="${EL_ICON[hero.attribute_cd]}" alt=""></div>` : ''}
+          ${CLS_ICON[hero.job_cd]       ? `<div class="gr-cls-badge"><img src="${CLS_ICON[hero.job_cd]}" alt=""></div>` : ''}
         </div>
         <div class="gr-name">${hero.name}</div>
         <div class="gr-match-bar">${bars}</div>
-        <div class="gr-match-label${isPerfect ? ' perfect' : ''}">${score}/${total} 일치</div>
+        <div class="gr-match-label${isPerfect ? ' perfect' : ''}">${score}/4 일치 · 유효${validKeys.length}개</div>
       </a>`
   }).join('')
 
-  const moreHtml = !showAll && results.length > 24
-    ? `<div class="gr-more-wrap"><button class="gr-more-btn" onclick="loadMore()">나머지 ${results.length - 24}명 더 보기</button></div>`
+  const moreHtml = !showAll && filtered.length > 30
+    ? `<div class="gr-more-wrap"><button class="gr-more-btn" onclick="loadMore()">나머지 ${filtered.length - 30}명 더 보기</button></div>`
     : ''
 
-  area.innerHTML = filterHtml +
+  document.getElementById('result-area').innerHTML =
+    filterHtml +
     `<div class="gr-grid">${cardsHtml}</div>` +
     moreHtml +
-    `<p class="gr-hint">직업별 선호 스탯 기준으로 매칭됩니다 · 영웅 빌드에 따라 다를 수 있어요</p>`
+    `<p class="gr-hint">파란 막대 = 강력 유효 / 초록 막대 = 유효 · 영웅 도감 상세 기준</p>`
 }
 
 function renderFilterChips() {
   const attrs = ['fire','ice','wind','light','dark']
   const jobs  = ['warrior','knight','mage','ranger','assassin','manauser']
-
-  const attrChips = attrs.map(a => `
-    <button class="gr-fchip${filterAttr === a ? ' active' : ''}" onclick="toggleAttr('${a}')" title="${ATTR_MAP[a] ?? a}">
-      <img src="${EL_ICON[a]}" alt="${ATTR_MAP[a] ?? a}">
-    </button>`).join('')
-
-  const jobChips = jobs.map(j => `
-    <button class="gr-fchip${filterJob === j ? ' active' : ''}" onclick="toggleJob('${j}')" title="${JOB_MAP[j] ?? j}"
-      style="${filterJob === j ? 'background:#111;border-color:#111;' : ''}">
-      <img src="${CLS_ICON[j]}" alt="${JOB_MAP[j] ?? j}" style="${filterJob === j ? 'filter:brightness(0) invert(1);' : ''}">
-    </button>`).join('')
-
-  return attrChips + '<div class="gr-fchip-divider"></div>' + jobChips
+  const attrChips = attrs.map(a => {
+    const isActive = filterAttr === a
+    return `<button class="gr-fchip${isActive ? ' active-el' : ''}"
+      style="${isActive ? `border-color:${ATTR_COLOR[a]};background:${ATTR_BG[a]};` : ''}"
+      onclick="toggleAttr('${a}')" title="${a}">
+      <img src="${EL_ICON[a]}" alt="${a}"></button>`
+  }).join('')
+  const jobChips = jobs.map(j =>
+    `<button class="gr-fchip${filterJob === j ? ' active-cls' : ''}" onclick="toggleJob('${j}')">
+      <img src="${CLS_ICON[j]}" alt="${j}"></button>`
+  ).join('')
+  return attrChips + '<div class="gr-fchip-div"></div>' + jobChips
 }
 
-function toggleAttr(a) { filterAttr = filterAttr === a ? null : a; showAll = false; renderResult() }
-function toggleJob(j)   { filterJob  = filterJob  === j ? null : j; showAll = false; renderResult() }
-function loadMore()     { showAll = true; renderResult() }
+function toggleAttr(a) { filterAttr = filterAttr === a ? null : a; showAll = false; applyAndRender() }
+function toggleJob(j)  { filterJob  = filterJob  === j ? null : j; showAll = false; applyAndRender() }
+function loadMore()    { showAll = true; applyAndRender() }
 
 init()
 </script>
