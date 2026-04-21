@@ -247,19 +247,25 @@
     <p>부위와 옵션을 선택하고 검색하면 해당 장비를 쓸 수 있는 영웅을 찾아드려요</p>
   </div>
 
-  <!-- 1. 부위 선택 -->
+  <!-- 1. 세트 선택 -->
+  <div class="gr-panel">
+    <div class="gr-panel-label">세트 선택 <span>(선택사항 · 해당 세트를 착용하는 영웅만 표시)</span></div>
+    <div class="gr-set-grid" id="set-btns"></div>
+  </div>
+
+  <!-- 2. 부위 선택 -->
   <div class="gr-panel">
     <div class="gr-panel-label">부위 선택 <span>(선택사항)</span></div>
     <div class="gr-stat-grid" id="slot-btns"></div>
   </div>
 
-  <!-- 2. 주옵션 선택 -->
+  <!-- 3. 주옵션 선택 -->
   <div class="gr-panel" id="main-stat-panel">
     <div class="gr-panel-label">주옵션 선택 <span>(선택사항)</span></div>
     <div class="gr-stat-grid" id="main-stat-btns"></div>
   </div>
 
-  <!-- 3. 보조옵션 선택 -->
+  <!-- 4. 보조옵션 선택 -->
   <div class="gr-panel">
     <div class="gr-panel-label">보조 옵션 선택 <span id="slot-count-label">(0/4 선택)</span></div>
     <div class="gr-stat-grid" id="stat-btns"></div>
@@ -279,12 +285,6 @@
       </button>
       <button class="gr-reset-btn" onclick="resetAll()">↺ 초기화</button>
     </div>
-  </div>
-
-  <!-- 4. 세트 선택 -->
-  <div class="gr-panel">
-    <div class="gr-panel-label">세트 선택 <span>(선택사항 · 해당 세트를 착용하는 영웅만 표시)</span></div>
-    <div class="gr-set-grid" id="set-btns"></div>
   </div>
 
   <!-- 5. 결과 -->
