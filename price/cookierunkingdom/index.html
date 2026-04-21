@@ -122,6 +122,7 @@
   const GAME_SLUG = 'cookie-run'
   const GAME_PATH = '/cookierunkingdom/'
   document.getElementById('navbar').innerHTML = renderNavbar()
+    loadAndRenderGameUI(null)
 
   async function loadPriceData() {
     const [{ data: game }, { data: rows }] = await Promise.all([

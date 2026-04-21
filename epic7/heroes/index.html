@@ -138,6 +138,7 @@
 
   <script>
     document.getElementById('navbar-container').innerHTML = renderNavbar('epic7');
+    loadAndRenderGameUI(null)
     document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : '';
 
     // ── 상수 ─────────────────────────────────────

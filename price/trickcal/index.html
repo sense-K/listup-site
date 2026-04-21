@@ -88,6 +88,7 @@
 <script>
   const GAME_SLUG = 'trickcal'
   document.getElementById('navbar').innerHTML = renderNavbar()
+    loadAndRenderGameUI(null)
   async function loadPriceData() {
     const [{ data: game }, { data: rows }] = await Promise.all([
       db.from('Game').select('id, nameKo, imageUrl').eq('slug', GAME_SLUG).single(),

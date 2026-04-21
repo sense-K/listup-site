@@ -195,6 +195,7 @@
 
   <script>
     document.getElementById('navbar-container').innerHTML = renderNavbar('epic7');
+    loadAndRenderGameUI(null)
     document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : '';
 
     const PROXY = 'https://epicsense-e7proxy.zzabhm.workers.dev';
