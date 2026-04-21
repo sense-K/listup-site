@@ -42,21 +42,14 @@
       border: 1.5px solid var(--border, #e5e7eb);
       background: #f8fafc; color: #64748b;
       cursor: pointer; transition: all 0.15s;
-      position: relative;
     }
     .gr-stat-btn:hover { border-color: #7c3aed; color: #7c3aed; }
-    .gr-stat-btn.active {
-      background: #7c3aed; border-color: #7c3aed; color: #fff;
-    }
-    .gr-stat-btn.disabled-max {
-      opacity: 0.4; cursor: not-allowed;
-    }
+    .gr-stat-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    .gr-stat-btn.disabled-max { opacity: 0.4; cursor: not-allowed; }
     .gr-stat-btn.disabled-max:hover { border-color: var(--border, #e5e7eb); color: #64748b; }
 
     /* 선택된 스탯 슬롯 */
-    .gr-slot-row {
-      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
-    }
+    .gr-slot-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .gr-slot {
       display: flex; align-items: center; justify-content: center;
       width: 90px; height: 34px; border-radius: 8px;
@@ -71,6 +64,22 @@
       cursor: pointer;
     }
     .gr-slot.filled:hover { background: rgba(124,58,237,0.15); }
+
+    /* 세트 버튼 */
+    .gr-set-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .gr-set-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+      border: 1.5px solid var(--border, #e5e7eb);
+      background: #f8fafc; color: #64748b;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .gr-set-btn img { width: 18px; height: 18px; object-fit: contain; }
+    .gr-set-btn:hover { border-color: #7c3aed; color: #7c3aed; }
+    .gr-set-btn.active {
+      background: rgba(124,58,237,0.1); border-color: #7c3aed; color: #7c3aed;
+    }
 
     /* 토글 + 검색 버튼 행 */
     .gr-action-row {
@@ -98,9 +107,7 @@
       transition: all 0.15s;
     }
     .gr-search-btn:hover { background: #6d28d9; }
-    .gr-search-btn:disabled {
-      background: #e5e7eb; color: #94a3b8; cursor: not-allowed;
-    }
+    .gr-search-btn:disabled { background: #e5e7eb; color: #94a3b8; cursor: not-allowed; }
     .gr-reset-btn {
       padding: 9px 16px; border-radius: 10px;
       font-size: 13px; font-weight: 600; color: #94a3b8;
@@ -250,6 +257,12 @@
     </div>
   </div>
 
+  <!-- 세트 선택 패널 -->
+  <div class="gr-panel">
+    <div class="gr-panel-label">세트 선택 <span>(선택사항 · 해당 세트를 착용하는 영웅만 표시)</span></div>
+    <div class="gr-set-grid" id="set-btns"></div>
+  </div>
+
   <!-- 결과 영역 -->
   <div id="result-area">
     <div class="gr-empty">
@@ -268,6 +281,7 @@ loadAndRenderGameUI(null)
 
 // ─── 상수 ────────────────────────────────────────
 const PROXY = 'https://epicsense-e7proxy.zzabhm.workers.dev'
+const SET_IMG_BASE = 'https://static-pubcomm.onstove.com/event/live/epic7/guide/wearingStatus/images/sets'
 
 const STATS = [
   { key: 'att',     label: '공격력'  },
@@ -280,6 +294,31 @@ const STATS = [
   { key: 'res',     label: '효과저항'},
 ]
 
+const SETS = [
+  { key: 'set_speed',    name: '속도'  },
+  { key: 'set_cri',      name: '치명'  },
+  { key: 'set_cri_dmg',  name: '파멸'  },
+  { key: 'set_attack',   name: '공격'  },
+  { key: 'set_rage',     name: '분노'  },
+  { key: 'set_counter',  name: '반격'  },
+  { key: 'set_vampire',  name: '흡혈'  },
+  { key: 'set_immune',   name: '면역'  },
+  { key: 'set_res',      name: '저항'  },
+  { key: 'set_acc',      name: '적중'  },
+  { key: 'set_max_hp',   name: '체력'  },
+  { key: 'set_def',      name: '방어'  },
+  { key: 'set_shield',   name: '수호'  },
+  { key: 'set_revenge',  name: '복수'  },
+  { key: 'set_injury',   name: '상처'  },
+  { key: 'set_opener',   name: '개전'  },
+  { key: 'set_penetrate',name: '관통'  },
+  { key: 'set_revenant', name: '역습'  },
+  { key: 'set_riposte',  name: '응수'  },
+  { key: 'set_coop',     name: '협공'  },
+  { key: 'set_torrent',  name: '격류'  },
+  { key: 'set_chase',    name: '추격'  },
+]
+
 const ATTR_COLOR = { fire:'#ef4444', ice:'#3b82f6', wind:'#22c55e', light:'#eab308', dark:'#a855f7' }
 const ATTR_BG    = { fire:'rgba(239,68,68,.15)', ice:'rgba(59,130,246,.15)', wind:'rgba(34,197,94,.15)', light:'rgba(234,179,8,.15)', dark:'rgba(168,85,247,.15)' }
 const EL_ICON    = { fire:'/epic7-icons/element/fire.png', ice:'/epic7-icons/element/ice.png', wind:'/epic7-icons/element/wind.png', light:'/epic7-icons/element/light.png', dark:'/epic7-icons/element/dark.png' }
@@ -289,18 +328,20 @@ const STAT_LABEL_MAP = { att:'공격력', def:'방어력', max_hp:'생명력', s
 function heroImg(code) { return `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png` }
 
 // ─── 상태 ────────────────────────────────────────
-let allHeroes    = []   // hero json
-let selectedStats = []  // 최대 4개, 순서 있음
-let mode         = 'usable' // 'perfect' | 'usable'
-let filterAttr   = null
-let filterJob    = null
-let showAll      = false
-let lastResults  = []
+let allHeroes     = []
+let selectedStats  = []   // 최대 4개
+let selectedSet    = null  // 세트 키 또는 null
+let mode          = 'usable'
+let filterAttr    = null
+let filterJob     = null
+let showAll       = false
+let lastResults   = []
 let currentSeason = ''
 
 // ─── 초기화 ──────────────────────────────────────
 async function init() {
   renderStatBtns()
+  renderSetBtns()
   renderSlots()
 
   try {
@@ -354,24 +395,23 @@ function syncStatBtns() {
 
 function removeSlot(key) { toggleStat(key) }
 
-function resetAll() {
-  selectedStats = []
-  filterAttr = null
-  filterJob  = null
-  showAll    = false
-  lastResults = []
-  syncStatBtns()
-  renderSlots()
-  document.getElementById('search-btn').disabled = true
-  const label = document.getElementById('slot-count-label')
-  label.textContent = '(0/4 선택)'
-  label.style.color = ''
-  document.getElementById('result-area').innerHTML = `
-    <div class="gr-empty">
-      <div class="gr-empty-icon">⚔️</div>
-      <div class="gr-empty-title">보조 옵션 4개를 선택 후 검색하세요</div>
-      <div class="gr-empty-desc">처음 검색 시 영웅 분석 데이터를 불러와요 (약 10~20초)</div>
-    </div>`
+// ─── 세트 버튼 ───────────────────────────────────
+function renderSetBtns() {
+  document.getElementById('set-btns').innerHTML = SETS.map(s => `
+    <button class="gr-set-btn" id="setbtn-${s.key}" onclick="toggleSet('${s.key}')">
+      <img src="${SET_IMG_BASE}/${s.key}.png" alt="${s.name}" onerror="this.style.display='none'">
+      ${s.name}
+    </button>
+  `).join('')
+}
+
+function toggleSet(key) {
+  selectedSet = selectedSet === key ? null : key
+  SETS.forEach(s => {
+    const btn = document.getElementById('setbtn-' + s.key)
+    if (btn) btn.classList.toggle('active', selectedSet === s.key)
+  })
+  if (lastResults.length > 0) applyAndRender()
 }
 
 // ─── 슬롯 렌더 ───────────────────────────────────
@@ -397,7 +437,33 @@ function setMode(m) {
   if (lastResults.length > 0) applyAndRender()
 }
 
-// ─── 유효 옵션 계산 (hero analysis 기준) ─────────
+// ─── 초기화 ──────────────────────────────────────
+function resetAll() {
+  selectedStats = []
+  selectedSet   = null
+  filterAttr    = null
+  filterJob     = null
+  showAll       = false
+  lastResults   = []
+  syncStatBtns()
+  renderSlots()
+  SETS.forEach(s => {
+    const btn = document.getElementById('setbtn-' + s.key)
+    if (btn) btn.classList.remove('active')
+  })
+  document.getElementById('search-btn').disabled = true
+  const label = document.getElementById('slot-count-label')
+  label.textContent = '(0/4 선택)'
+  label.style.color = ''
+  document.getElementById('result-area').innerHTML = `
+    <div class="gr-empty">
+      <div class="gr-empty-icon">⚔️</div>
+      <div class="gr-empty-title">보조 옵션 4개를 선택 후 검색하세요</div>
+      <div class="gr-empty-desc">처음 검색 시 영웅 분석 데이터를 불러와요 (약 10~20초)</div>
+    </div>`
+}
+
+// ─── 유효 옵션 계산 ───────────────────────────────
 function getStatTier(bucketsStr) {
   const counts = (bucketsStr || '').split(',').map(v => parseInt(v) || 0)
   if (counts.every(v => v === 0)) return 'invalid'
@@ -408,14 +474,17 @@ function getStatTier(bucketsStr) {
   return 'invalid'
 }
 
-// analysis.abillity → { att:'top'|'mid'|'invalid', ... }
 function computeValidOptions(abillity) {
   const keys = ['att','def','max_hp','speed','cri','cri_dmg','acc','res']
   const result = {}
-  keys.forEach(k => {
-    result[k] = getStatTier(abillity?.[k] ?? '')
-  })
+  keys.forEach(k => { result[k] = getStatTier(abillity?.[k] ?? '') })
   return result
+}
+
+function extractSets(equip) {
+  const all = new Set()
+  ;(equip || []).forEach(e => (e.equip_list || []).forEach(s => all.add(s)))
+  return [...all]
 }
 
 // ─── 검색 ────────────────────────────────────────
@@ -425,7 +494,6 @@ async function doSearch() {
   filterAttr = null
   filterJob  = null
 
-  // 로딩 UI
   document.getElementById('result-area').innerHTML = `
     <div class="gr-loading">
       <div class="gr-loading-spinner"></div>
@@ -434,23 +502,24 @@ async function doSearch() {
       <div class="gr-progress-bar-wrap"><div class="gr-progress-bar" id="progress-bar" style="width:0%"></div></div>
     </div>`
 
-  const validOptsMap = await fetchValidOptions()
-  if (!validOptsMap) return
+  const heroDataMap = await fetchHeroData()
+  if (!heroDataMap) return
 
-  // 결과 계산
   lastResults = allHeroes.map(hero => {
-    const opts = validOptsMap[hero.code] ?? {}
-    const validKeys = Object.keys(opts).filter(k => opts[k] !== 'invalid')
+    const data = heroDataMap[hero.code] ?? {}
+    const opts     = data.opts  ?? {}
+    const heroSets = data.sets  ?? []
+    const validKeys    = Object.keys(opts).filter(k => opts[k] !== 'invalid')
     const matchDetails = selectedStats.map(k => opts[k] ?? 'invalid')
-    const score = matchDetails.filter(t => t !== 'invalid').length
-    return { hero, opts, validKeys, matchDetails, score }
+    const score        = matchDetails.filter(t => t !== 'invalid').length
+    return { hero, opts, heroSets, validKeys, matchDetails, score }
   }).filter(r => r.score > 0)
 
   applyAndRender()
 }
 
-async function fetchValidOptions() {
-  const cacheKey = `e7-valid-opts-${currentSeason}`
+async function fetchHeroData() {
+  const cacheKey = `e7-hero-data-v2-${currentSeason}`
   try {
     const cached = sessionStorage.getItem(cacheKey)
     if (cached) {
@@ -476,7 +545,10 @@ async function fetchValidOptions() {
     )
     responses.forEach(r => {
       if (r.status === 'fulfilled' && r.value?.data) {
-        result[r.value.code] = computeValidOptions(r.value.data.abillity)
+        result[r.value.code] = {
+          opts: computeValidOptions(r.value.data.abillity),
+          sets: extractSets(r.value.data.equip),
+        }
       }
     })
     const done = Math.min(i + BATCH, total)
@@ -499,8 +571,8 @@ function applyAndRender() {
   const filtered = lastResults.filter(r => {
     if (filterAttr && r.hero.attribute_cd !== filterAttr) return false
     if (filterJob  && r.hero.job_cd !== filterJob) return false
+    if (selectedSet && !r.heroSets.includes(selectedSet)) return false
     if (mode === 'perfect') return r.score === 4
-    // 사용가능: score >= min(3, validCount), 단 score > 0
     const threshold = Math.min(3, r.validKeys.length)
     return r.score >= threshold
   }).sort((a, b) => b.score - a.score)
@@ -513,7 +585,7 @@ function applyAndRender() {
       <div class="gr-empty">
         <div class="gr-empty-icon">😶</div>
         <div class="gr-empty-title">매칭되는 영웅이 없어요</div>
-        <div class="gr-empty-desc">다른 옵션 조합을 시도해보세요</div>
+        <div class="gr-empty-desc">세트 조건이나 옵션 조합을 바꿔보세요</div>
       </div>`
     return
   }
