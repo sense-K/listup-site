@@ -2,6 +2,11 @@
 (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-N4LHKZKZ');
 document.addEventListener('DOMContentLoaded',function(){var n=document.createElement('noscript');var f=document.createElement('iframe');f.src='https://www.googletagmanager.com/ns.html?id=GTM-N4LHKZKZ';f.height='0';f.width='0';f.style.cssText='display:none;visibility:hidden';n.appendChild(f);document.body.insertBefore(n,document.body.firstChild);});
 
+// ===== Google Analytics 4 =====
+(function(){var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=G-SQDKTZQYCW';document.head.appendChild(s);})();
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','G-SQDKTZQYCW');
+
 // ===== Supabase 설정 =====
 const SUPABASE_URL = 'https://ltcibadxwkupwjikqzik.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0Y2liYWR4d2t1cHdqaWtxemlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTQ5OTEsImV4cCI6MjA5MDY5MDk5MX0.KYrP2xopjSxBOee2KcS8tM89misAkyzfBvx0828t4No'
