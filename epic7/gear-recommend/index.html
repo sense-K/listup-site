@@ -99,18 +99,6 @@
       display: flex; align-items: center; gap: 12px; margin-top: 16px;
       flex-wrap: wrap;
     }
-    .gr-toggle {
-      display: flex; border-radius: 10px; overflow: hidden;
-      border: 1.5px solid var(--border, #e5e7eb);
-      flex-shrink: 0;
-    }
-    .gr-toggle-btn {
-      padding: 8px 18px; font-size: 13px; font-weight: 700;
-      background: #f8fafc; color: #94a3b8;
-      border: none; cursor: pointer; transition: all 0.15s;
-    }
-    .gr-toggle-btn.active { background: #111; color: #fff; }
-    .gr-toggle-sep { width: 1px; background: var(--border, #e5e7eb); }
 
     .gr-search-btn {
       flex: 1; min-width: 120px;
@@ -184,7 +172,7 @@
       text-decoration: none; transition: transform 0.15s, box-shadow 0.15s;
     }
     .gr-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
-    .gr-card.perfect { border-color: #7c3aed; box-shadow: 0 0 0 1px #7c3aed; }
+    .gr-card.perfect { border-color: #7c3aed; box-shadow: 0 0 0 2px #7c3aed, 0 4px 16px rgba(124,58,237,0.18); }
 
     .gr-portrait-wrap { position: relative; width: 68px; height: 68px; margin-bottom: 8px; }
     .gr-portrait {
@@ -275,12 +263,7 @@
 
     <!-- 토글 + 검색 -->
     <div class="gr-action-row">
-      <div class="gr-toggle">
-        <button class="gr-toggle-btn" id="toggle-perfect" onclick="setMode('perfect')">완전일치</button>
-        <div class="gr-toggle-sep"></div>
-        <button class="gr-toggle-btn active" id="toggle-usable" onclick="setMode('usable')">일치</button>
-      </div>
-      <button class="gr-search-btn" id="search-btn" onclick="doSearch()" disabled>
+<button class="gr-search-btn" id="search-btn" onclick="doSearch()" disabled>
         🔍 찾기
       </button>
       <button class="gr-reset-btn" onclick="resetAll()">↺ 초기화</button>
@@ -367,7 +350,6 @@ let selectedSlot   = null   // 부위
 let selectedMain   = null   // 주옵션
 let selectedStats  = []     // 보조옵션 최대 4개
 let selectedSet    = null   // 세트
-let mode           = 'usable'
 let filterAttr     = null
 let filterJob      = null
 let showAll        = false
@@ -553,13 +535,6 @@ function toggleSet(key) {
   if (lastResults.length > 0) applyAndRender()
 }
 
-// ─── 토글 모드 ───────────────────────────────────
-function setMode(m) {
-  mode = m
-  document.getElementById('toggle-perfect').classList.toggle('active', m === 'perfect')
-  document.getElementById('toggle-usable').classList.toggle('active', m === 'usable')
-  if (lastResults.length > 0) applyAndRender()
-}
 
 // ─── 전체 초기화 ─────────────────────────────────
 function resetAll() {
@@ -699,7 +674,6 @@ function applyAndRender() {
     if (selectedSet  && !r.heroSets.includes(selectedSet)) return false
     // 주옵션 필터: 해당 스탯이 유효해야 함
     if (selectedMain && r.opts[selectedMain] === 'invalid') return false
-    if (mode === 'perfect') return r.score >= Math.min(3, r.validKeys.length)
     return r.score >= Math.min(2, r.validKeys.length)
   }).sort((a, b) => b.score - a.score)
 
