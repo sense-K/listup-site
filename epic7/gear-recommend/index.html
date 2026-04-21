@@ -276,9 +276,9 @@
     <!-- 토글 + 검색 -->
     <div class="gr-action-row">
       <div class="gr-toggle">
-        <button class="gr-toggle-btn" id="toggle-perfect" onclick="setMode('perfect')">전부일치</button>
+        <button class="gr-toggle-btn" id="toggle-perfect" onclick="setMode('perfect')">완전일치</button>
         <div class="gr-toggle-sep"></div>
-        <button class="gr-toggle-btn active" id="toggle-usable" onclick="setMode('usable')">사용가능</button>
+        <button class="gr-toggle-btn active" id="toggle-usable" onclick="setMode('usable')">일치</button>
       </div>
       <button class="gr-search-btn" id="search-btn" onclick="doSearch()" disabled>
         🔍 찾기
@@ -699,12 +699,11 @@ function applyAndRender() {
     if (selectedSet  && !r.heroSets.includes(selectedSet)) return false
     // 주옵션 필터: 해당 스탯이 유효해야 함
     if (selectedMain && r.opts[selectedMain] === 'invalid') return false
-    if (mode === 'perfect') return r.score === 4
-    const threshold = Math.min(3, r.validKeys.length)
-    return r.score >= threshold
+    if (mode === 'perfect') return r.score >= Math.min(3, r.validKeys.length)
+    return r.score >= Math.min(2, r.validKeys.length)
   }).sort((a, b) => b.score - a.score)
 
-  const perfectCount = filtered.filter(r => r.score === 4).length
+  const perfectCount = filtered.filter(r => r.score >= Math.min(3, r.validKeys.length)).length
   const displayed = showAll ? filtered : filtered.slice(0, 30)
 
   if (filtered.length === 0) {
@@ -726,7 +725,7 @@ function applyAndRender() {
     </div>`
 
   const cardsHtml = displayed.map(({ hero, matchDetails, score, validKeys }) => {
-    const isPerfect = score === 4
+    const isPerfect = score >= Math.min(3, validKeys.length)
     const color = ATTR_COLOR[hero.attribute_cd] ?? '#94a3b8'
     const bg    = ATTR_BG[hero.attribute_cd]    ?? '#f1f5f9'
     const bars  = matchDetails.map(t =>
