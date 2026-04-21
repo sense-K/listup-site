@@ -607,7 +607,7 @@ function applyAndRender() {
       `<div class="gr-match-seg${t === 'top' ? ' top' : t === 'mid' ? ' mid' : ''}"></div>`
     ).join('')
     return `
-      <a href="/epic7/heroes/detail/?code=${hero.code}" class="gr-card${isPerfect ? ' perfect' : ''}">
+      <a href="/epic7/heroes/detail/?code=${hero.code}" class="gr-card${isPerfect ? ' perfect' : ''}" target="_blank" rel="noopener">
         <div class="gr-portrait-wrap">
           <div class="gr-portrait" style="border-color:${color};background:${bg};">
             <img src="${heroImg(hero.code)}" alt="${hero.name}" loading="lazy" onerror="this.style.opacity='.3'">
