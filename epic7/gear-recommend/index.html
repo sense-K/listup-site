@@ -450,7 +450,15 @@ function renderMainStatBtns() {
 
 function toggleMain(key) {
   selectedMain = selectedMain === key ? null : key
+  // 주옵션으로 선택된 스탯이 보조옵션에 있으면 제거
+  if (selectedMain) {
+    const idx = selectedStats.indexOf(selectedMain)
+    if (idx >= 0) selectedStats.splice(idx, 1)
+  }
   syncMainStatBtns()
+  syncSubStatBtns()
+  renderSubSlots()
+  updateSearchBtn()
 }
 
 function syncMainStatBtns() {
@@ -474,6 +482,7 @@ function renderSubStatBtns() {
 function toggleStat(key) {
   const rules = getSlotRules()
   if (rules.disabledSubs.includes(key)) return
+  if (selectedMain === key) return
   const idx = selectedStats.indexOf(key)
   if (idx >= 0) {
     selectedStats.splice(idx, 1)
@@ -491,7 +500,7 @@ function syncSubStatBtns() {
   STATS.forEach(s => {
     const btn = document.getElementById('sb-' + s.key)
     if (!btn) return
-    const isSlotDisabled = rules.disabledSubs.includes(s.key)
+    const isSlotDisabled = rules.disabledSubs.includes(s.key) || selectedMain === s.key
     const active  = selectedStats.includes(s.key)
     const maxed   = selectedStats.length >= 4 && !active && !isSlotDisabled
     btn.classList.toggle('active', active)
