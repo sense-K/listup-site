@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>원신 UID 조회 - 리세리스트</title>
+  <meta name="description" content="원신 UID를 입력하면 보유 캐릭터의 성유물·무기·스탯을 카드 형태로 확인할 수 있어요." />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+  <style>
+    .uid-wrap { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+
+    /* 검색 */
+    .uid-search-section {
+      text-align: center;
+      padding: 32px 16px 24px;
+    }
+    .uid-search-title { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
+    .uid-search-sub   { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+    .uid-search-row   { display: flex; gap: 10px; justify-content: center; max-width: 420px; margin: 0 auto; }
+    .uid-input {
+      flex: 1; padding: 11px 16px; border-radius: 12px;
+      border: 1.5px solid #e5e7eb; font-size: 15px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .uid-input:focus { border-color: #7c3aed; }
+    .uid-btn {
+      padding: 11px 22px; border-radius: 12px; border: none;
+      background: #7c3aed; color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+    }
+    .uid-btn:hover { opacity: 0.85; }
+    .uid-btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* 에러/로딩 */
+    .uid-status {
+      text-align: center; padding: 32px 16px;
+      font-size: 14px; color: #64748b;
+    }
+    .uid-error { color: #ef4444; font-weight: 600; }
+
+    /* 플레이어 카드 */
+    .uid-player-card {
+      background: linear-gradient(135deg, #312e81, #4c1d95);
+      border-radius: 18px; padding: 20px 24px;
+      color: #fff; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 18px;
+    }
+    .uid-player-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.3);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .uid-player-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .uid-player-info { flex: 1; min-width: 0; }
+    .uid-player-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .uid-player-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .uid-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 999px; background: rgba(255,255,255,0.15);
+    }
+    .uid-player-sig {
+      font-size: 12px; color: rgba(255,255,255,0.7);
+      margin-top: 6px; font-style: italic;
+    }
+
+    /* 캐릭터 카드 그리드 */
+    .uid-chars-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+      gap: 16px;
+    }
+    @media (max-width: 520px) {
+      .uid-chars-grid { grid-template-columns: 1fr; }
+    }
+
+    /* 캐릭터 빌드 카드 */
+    .uid-char-card {
+      background: #fff;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    /* 캐릭터 헤더 */
+    .uid-char-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .uid-char-portrait {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: #f1f5f9; border: 2px solid;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .uid-char-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .uid-char-meta { flex: 1; min-width: 0; }
+    .uid-char-name { font-size: 16px; font-weight: 800; color: #1e293b; }
+    .uid-char-tags { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+    .uid-char-tag {
+      font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+      background: #f1f5f9; color: #475569;
+    }
+    .uid-char-tag.const { background: rgba(124,58,237,0.1); color: #7c3aed; }
+    .uid-char-tag.lv    { background: rgba(59,130,246,0.1); color: #2563eb; }
+
+    /* 무기 */
+    .uid-weapon-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      background: #fafafa;
+    }
+    .uid-weapon-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: #f1f5f9; flex-shrink: 0; overflow: hidden;
+    }
+    .uid-weapon-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .uid-weapon-info { flex: 1; min-width: 0; }
+    .uid-weapon-name { font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .uid-weapon-stats { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .uid-weapon-rank { font-size: 11px; font-weight: 700; color: #f59e0b; flex-shrink: 0; }
+
+    /* 성유물 */
+    .uid-relics-row {
+      display: flex; gap: 6px; padding: 10px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      overflow-x: auto;
+    }
+    .uid-relic-slot {
+      flex: 1; min-width: 80px;
+      background: #f8fafc; border-radius: 10px;
+      padding: 8px; display: flex; flex-direction: column; gap: 4px;
+    }
+    .uid-relic-top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+    .uid-relic-icon { width: 28px; height: 28px; border-radius: 6px; background: #e5e7eb; flex-shrink: 0; overflow: hidden; }
+    .uid-relic-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .uid-relic-main { font-size: 10px; font-weight: 700; color: #1e293b; line-height: 1.2; }
+    .uid-relic-val  { font-size: 11px; font-weight: 800; color: #7c3aed; }
+    .uid-relic-subs { display: flex; flex-direction: column; gap: 1px; }
+    .uid-relic-sub  { font-size: 9.5px; color: #64748b; white-space: nowrap; }
+    .uid-relic-sub.good { color: #3b82f6; font-weight: 700; }
+    .uid-relic-empty {
+      flex: 1; min-width: 80px; background: #f1f5f9; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 80px; color: #cbd5e1; font-size: 18px;
+    }
+
+    /* 스탯 요약 */
+    .uid-stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4px 8px; padding: 10px 16px 14px;
+    }
+    .uid-stat-row {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; padding: 3px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .uid-stat-row:last-child { border-bottom: none; }
+    .uid-stat-label { color: #64748b; }
+    .uid-stat-val   { font-weight: 700; color: #1e293b; }
+    .uid-stat-val.crit { color: #f59e0b; }
+    .uid-stat-val.elem { color: #7c3aed; }
+  </style>
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <main class="uid-wrap">
+    <!-- 검색 영역 -->
+    <div class="uid-search-section">
+      <div class="uid-search-title">🔍 원신 UID 조회</div>
+      <div class="uid-search-sub">UID를 입력하면 쇼케이스 캐릭터의 빌드를 확인할 수 있어요</div>
+      <div class="uid-search-row">
+        <input class="uid-input" id="uid-input" type="text" placeholder="UID 입력 (예: 618285856)"
+          maxlength="12" inputmode="numeric" onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="uid-btn" id="uid-btn" onclick="doSearch()">조회</button>
+      </div>
+    </div>
+
+    <!-- 결과 영역 -->
+    <div id="result-area"></div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script>
+    const ENKA   = 'https://enka.network'
+    const YATTA  = 'https://gi.yatta.moe/api/v2/KR/avatar'
+
+    // 캐시
+    let charMap = null  // avatarId → { name, icon, element }
+
+    // 속성 색상
+    const ELEM_COLOR = {
+      Fire: '#ef4444', Water: '#3b82f6', Electric: '#a855f7',
+      Wind: '#10b981', Ice: '#67e8f9', Rock: '#f59e0b',
+      Grass: '#84cc16', None: '#94a3b8',
+    }
+    const ELEM_LABEL = {
+      Fire: '불', Water: '물', Electric: '번개',
+      Wind: '바람', Ice: '얼음', Rock: '바위',
+      Grass: '초', None: '-',
+    }
+
+    // 스탯 레이블
+    const PROP_KO = {
+      FIGHT_PROP_HP: 'HP', FIGHT_PROP_HP_PERCENT: 'HP%',
+      FIGHT_PROP_ATTACK: '공격력', FIGHT_PROP_ATTACK_PERCENT: '공격력%',
+      FIGHT_PROP_DEFENSE: '방어력', FIGHT_PROP_DEFENSE_PERCENT: '방어력%',
+      FIGHT_PROP_ELEMENT_MASTERY: '원소 마스터리',
+      FIGHT_PROP_CHARGE_EFFICIENCY: '원소 충전 효율',
+      FIGHT_PROP_CRITICAL: '치명타 확률',
+      FIGHT_PROP_CRITICAL_HURT: '치명타 피해',
+      FIGHT_PROP_PHYSICAL_ADD_HURT: '물리 피해',
+      FIGHT_PROP_FIRE_ADD_HURT: '불 피해', FIGHT_PROP_WATER_ADD_HURT: '물 피해',
+      FIGHT_PROP_ELEC_ADD_HURT: '번개 피해', FIGHT_PROP_ICE_ADD_HURT: '얼음 피해',
+      FIGHT_PROP_WIND_ADD_HURT: '바람 피해', FIGHT_PROP_ROCK_ADD_HURT: '바위 피해',
+      FIGHT_PROP_GRASS_ADD_HURT: '초 피해', FIGHT_PROP_HEAL_ADD: '치유 보너스',
+    }
+    const PCT_PROPS = new Set([
+      'FIGHT_PROP_HP_PERCENT','FIGHT_PROP_ATTACK_PERCENT','FIGHT_PROP_DEFENSE_PERCENT',
+      'FIGHT_PROP_CRITICAL','FIGHT_PROP_CRITICAL_HURT','FIGHT_PROP_CHARGE_EFFICIENCY',
+      'FIGHT_PROP_PHYSICAL_ADD_HURT','FIGHT_PROP_FIRE_ADD_HURT','FIGHT_PROP_WATER_ADD_HURT',
+      'FIGHT_PROP_ELEC_ADD_HURT','FIGHT_PROP_ICE_ADD_HURT','FIGHT_PROP_WIND_ADD_HURT',
+      'FIGHT_PROP_ROCK_ADD_HURT','FIGHT_PROP_GRASS_ADD_HURT','FIGHT_PROP_HEAL_ADD',
+    ])
+
+    // fightPropMap 숫자 키
+    const ELEM_PROP_KEYS = {
+      30: '물리 피해', 40: '불 피해', 41: '번개 피해', 42: '물 피해',
+      43: '초 피해', 44: '바람 피해', 45: '바위 피해', 46: '얼음 피해',
+    }
+
+    function fmtStat(prop, val) {
+      if (PCT_PROPS.has(prop)) return (val * 100).toFixed(1) + '%'
+      return Math.round(val).toLocaleString()
+    }
+    function fmtSubStat(prop, val) {
+      if (PCT_PROPS.has(prop)) return (val).toFixed(1) + '%'
+      return Math.round(val)
+    }
+
+    async function loadCharMap() {
+      if (charMap) return charMap
+      const cached = sessionStorage.getItem('gi-char-map-v1')
+      if (cached) { charMap = JSON.parse(cached); return charMap }
+      const res = await fetch(YATTA)
+      const json = await res.json()
+      charMap = {}
+      for (const [id, ch] of Object.entries(json.data.items)) {
+        charMap[id] = { name: ch.name, icon: ch.icon, element: ch.element }
+      }
+      // 여행자 처리 (10000005/10000007)
+      charMap['10000005'] = charMap['10000005'] || { name: '여행자(남)', icon: 'UI_AvatarIcon_PlayerBoy', element: 'None' }
+      charMap['10000007'] = charMap['10000007'] || { name: '여행자(여)', icon: 'UI_AvatarIcon_PlayerGirl', element: 'None' }
+      sessionStorage.setItem('gi-char-map-v1', JSON.stringify(charMap))
+      return charMap
+    }
+
+    async function doSearch() {
+      const uid = document.getElementById('uid-input').value.trim()
+      if (!uid) return
+      const btn = document.getElementById('uid-btn')
+      btn.disabled = true
+      btn.textContent = '조회 중...'
+      document.getElementById('result-area').innerHTML = `<div class="uid-status">불러오는 중...</div>`
+
+      try {
+        const [cmap, res] = await Promise.all([
+          loadCharMap(),
+          fetch(`${ENKA}/api/uid/${uid}`, { headers: { 'User-Agent': 'resetlist.kr/1.0' } }),
+        ])
+        if (!res.ok) {
+          const code = res.status
+          const msg = code === 404 ? 'UID를 찾을 수 없어요' :
+                      code === 429 ? '요청이 너무 많아요. 잠시 후 다시 시도해주세요' :
+                      code === 400 ? 'UID 형식이 잘못됐어요' : `오류 (${code})`
+          throw new Error(msg)
+        }
+        const data = await res.json()
+        render(data, cmap)
+      } catch(e) {
+        document.getElementById('result-area').innerHTML =
+          `<div class="uid-status uid-error">⚠️ ${e.message || '조회 실패'}</div>`
+      } finally {
+        btn.disabled = false
+        btn.textContent = '조회'
+      }
+    }
+
+    function render(data, cmap) {
+      const pi = data.playerInfo
+      const chars = data.avatarInfoList || []
+
+      const profileId = pi.profilePicture?.avatarId
+      const profileChar = cmap[profileId] || {}
+      const profileIcon = profileChar.icon || 'UI_AvatarIcon_PlayerBoy'
+
+      const abyss = pi.towerFloorIndex
+        ? `나선비경 ${pi.towerFloorIndex}-${pi.towerLevelIndex}`
+        : null
+
+      const playerHtml = `
+        <div class="uid-player-card">
+          <div class="uid-player-avatar">
+            <img src="${ENKA}/ui/${profileIcon}.png" onerror="this.style.opacity='.3'">
+          </div>
+          <div class="uid-player-info">
+            <div class="uid-player-name">${escHtml(pi.nickname)}</div>
+            <div class="uid-player-badges">
+              <span class="uid-badge">AR ${pi.level}</span>
+              <span class="uid-badge">세계 레벨 ${pi.worldLevel ?? '-'}</span>
+              ${abyss ? `<span class="uid-badge">${abyss}</span>` : ''}
+              ${pi.finishAchievementNum ? `<span class="uid-badge">업적 ${pi.finishAchievementNum}</span>` : ''}
+            </div>
+            ${pi.signature ? `<div class="uid-player-sig">${escHtml(pi.signature)}</div>` : ''}
+          </div>
+        </div>`
+
+      if (chars.length === 0) {
+        document.getElementById('result-area').innerHTML = playerHtml +
+          `<div class="uid-status">쇼케이스에 캐릭터가 없어요.<br>게임 내 '개인 명함 → 캐릭터 쇼케이스'에서 캐릭터를 추가해주세요.</div>`
+        return
+      }
+
+      const charsHtml = chars.map(c => renderChar(c, cmap)).join('')
+      document.getElementById('result-area').innerHTML =
+        playerHtml + `<div class="uid-chars-grid">${charsHtml}</div>`
+    }
+
+    function renderChar(c, cmap) {
+      const id = String(c.avatarId)
+      const info = cmap[id] || {}
+      const name = info.name || `캐릭터 #${id}`
+      const icon = info.icon || 'UI_AvatarIcon_PlayerBoy'
+      const elem = info.element || 'None'
+      const color = ELEM_COLOR[elem] || '#94a3b8'
+      const elemLabel = ELEM_LABEL[elem] || ''
+
+      const lv = c.propMap?.['4001']?.val || '?'
+      const constel = (c.talentIdList || []).length
+      const fp = c.fightPropMap || {}
+
+      const equips = c.equipList || []
+      const weapon = equips.find(e => e.weapon)
+      const relics = ['EQUIP_BRACER','EQUIP_NECKLACE','EQUIP_SHOES','EQUIP_RING','EQUIP_DRESS']
+        .map(t => equips.find(e => e.reliquary && e.flat?.equipType === t) || null)
+
+      return `
+        <div class="uid-char-card">
+          ${renderCharHeader(name, icon, color, elem, elemLabel, lv, constel)}
+          ${weapon ? renderWeapon(weapon) : ''}
+          <div class="uid-relics-row">${relics.map(r => r ? renderRelic(r) : renderEmptyRelic()).join('')}</div>
+          ${renderStats(fp)}
+        </div>`
+    }
+
+    function renderCharHeader(name, icon, color, elem, elemLabel, lv, constel) {
+      return `
+        <div class="uid-char-header">
+          <div class="uid-char-portrait" style="border-color:${color}">
+            <img src="${ENKA}/ui/${icon}.png" onerror="this.style.opacity='.3'">
+          </div>
+          <div class="uid-char-meta">
+            <div class="uid-char-name">${escHtml(name)}</div>
+            <div class="uid-char-tags">
+              <span class="uid-char-tag lv">Lv.${lv}</span>
+              <span class="uid-char-tag const">C${constel}</span>
+              <span class="uid-char-tag">${elemLabel}</span>
+            </div>
+          </div>
+        </div>`
+    }
+
+    function renderWeapon(w) {
+      const flat = w.flat || {}
+      const stats = flat.weaponStats || []
+      const baseAtk = stats.find(s => s.appendPropId === 'FIGHT_PROP_BASE_ATTACK')?.statValue
+      const sub = stats.find(s => s.appendPropId !== 'FIGHT_PROP_BASE_ATTACK')
+      const refine = w.weapon?.affixMap ? Object.values(w.weapon.affixMap)[0] + 1 : 1
+      const lv = w.weapon?.level || '?'
+      const stars = flat.rankLevel || 1
+      const starColor = stars >= 5 ? '#f59e0b' : stars >= 4 ? '#a855f7' : '#94a3b8'
+
+      const subText = sub
+        ? `${PROP_KO[sub.appendPropId] || sub.appendPropId} ${fmtSubStat(sub.appendPropId, sub.statValue)}`
+        : ''
+
+      return `
+        <div class="uid-weapon-row">
+          <div class="uid-weapon-icon">
+            <img src="${ENKA}/ui/${flat.icon}.png" onerror="this.style.opacity='.3'">
+          </div>
+          <div class="uid-weapon-info">
+            <div class="uid-weapon-name">${escHtml(flat.icon?.replace('UI_EquipIcon_','').replace(/_/g,' ') || '무기')}</div>
+            <div class="uid-weapon-stats">
+              기본 공격력 ${baseAtk ? Math.round(baseAtk) : '?'}
+              ${subText ? ` · ${subText}` : ''}
+            </div>
+          </div>
+          <div class="uid-weapon-rank" style="color:${starColor}">
+            Lv.${lv} R${refine}
+          </div>
+        </div>`
+    }
+
+    function renderRelic(r) {
+      const flat = r.flat || {}
+      const main = flat.reliquaryMainstat || {}
+      const subs = flat.reliquarySubstats || []
+      const mainLabel = PROP_KO[main.mainPropId] || main.mainPropId || ''
+      const mainVal   = main.statValue != null ? fmtStat(main.mainPropId, main.statValue) : ''
+
+      const goodProps = new Set(['FIGHT_PROP_CRITICAL','FIGHT_PROP_CRITICAL_HURT','FIGHT_PROP_ATTACK_PERCENT','FIGHT_PROP_CHARGE_EFFICIENCY','FIGHT_PROP_ELEMENT_MASTERY'])
+
+      const subsHtml = subs.map(s => {
+        const label = PROP_KO[s.appendPropId] || s.appendPropId
+        const val   = fmtSubStat(s.appendPropId, s.statValue)
+        const good  = goodProps.has(s.appendPropId)
+        return `<div class="uid-relic-sub${good ? ' good' : ''}">${label} +${val}</div>`
+      }).join('')
+
+      return `
+        <div class="uid-relic-slot">
+          <div class="uid-relic-top">
+            <div class="uid-relic-icon">
+              <img src="${ENKA}/ui/${flat.icon}.png" onerror="this.style.opacity='.3'">
+            </div>
+          </div>
+          <div class="uid-relic-main">${mainLabel}</div>
+          <div class="uid-relic-val">${mainVal}</div>
+          <div class="uid-relic-subs">${subsHtml}</div>
+        </div>`
+    }
+
+    function renderEmptyRelic() {
+      return `<div class="uid-relic-empty">—</div>`
+    }
+
+    function renderStats(fp) {
+      // 최대 원소 피해 찾기
+      let elemBonus = 0, elemLabel = ''
+      for (const [k, label] of Object.entries(ELEM_PROP_KEYS)) {
+        const v = fp[k] || 0
+        if (v > elemBonus) { elemBonus = v; elemLabel = label }
+      }
+      const healBonus = fp[23] || 0
+
+      const rows = [
+        ['HP', Math.round(fp[2000] || 0).toLocaleString(), false],
+        ['공격력', Math.round(fp[2001] || 0).toLocaleString(), false],
+        ['방어력', Math.round(fp[2002] || 0).toLocaleString(), false],
+        ['원소 마스터리', Math.round(fp[28] || 0), false],
+        ['원소 충전 효율', ((fp[29] || 1) * 100).toFixed(1) + '%', false],
+        ['치명타 확률', ((fp[20] || 0) * 100).toFixed(1) + '%', true],
+        ['치명타 피해', ((fp[22] || 0) * 100).toFixed(1) + '%', true],
+        elemBonus > 0.005 ? [elemLabel, (elemBonus * 100).toFixed(1) + '%', null] : null,
+        healBonus > 0.005 ? ['치유 보너스', (healBonus * 100).toFixed(1) + '%', false] : null,
+      ].filter(Boolean)
+
+      const rowsHtml = rows.map(([label, val, isCrit]) => `
+        <div class="uid-stat-row">
+          <span class="uid-stat-label">${label}</span>
+          <span class="uid-stat-val${isCrit === true ? ' crit' : isCrit === null ? ' elem' : ''}">${val}</span>
+        </div>`).join('')
+
+      return `<div class="uid-stats-grid">${rowsHtml}</div>`
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    }
+
+    document.getElementById('navbar-container').innerHTML = renderNavbar('genshin')
+    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : ''
+  </script>
+</body>
+</html>
