@@ -298,7 +298,7 @@ const SETS = [
   { key: 'set_speed',    name: '속도'  },
   { key: 'set_cri',      name: '치명'  },
   { key: 'set_cri_dmg',  name: '파멸'  },
-  { key: 'set_attack',   name: '공격'  },
+  { key: 'set_attack',   name: '공격', img: 'https://i.namu.wiki/i/cj4sjkju90Yrrd2NO9KaxFzBOaBYyaHaLdJAAO5H5ZbNWeD_x3lN8KAqIADu009CMg3cCLoC0pKUQHZ3OSkaiA.webp' },
   { key: 'set_rage',     name: '분노'  },
   { key: 'set_counter',  name: '반격'  },
   { key: 'set_vampire',  name: '흡혈'  },
@@ -399,7 +399,7 @@ function removeSlot(key) { toggleStat(key) }
 function renderSetBtns() {
   document.getElementById('set-btns').innerHTML = SETS.map(s => `
     <button class="gr-set-btn" id="setbtn-${s.key}" onclick="toggleSet('${s.key}')">
-      <img src="${SET_IMG_BASE}/${s.key}.png" alt="${s.name}" onerror="this.style.display='none'">
+      <img src="${s.img || `${SET_IMG_BASE}/${s.key}.png`}" alt="${s.name}" onerror="this.style.display='none'">
       ${s.name}
     </button>
   `).join('')
