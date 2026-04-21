@@ -26,6 +26,11 @@
       border-radius: 16px;
       padding: 20px;
       margin-bottom: 16px;
+      transition: opacity 0.2s;
+    }
+    .gr-panel.panel-disabled {
+      opacity: 0.35;
+      pointer-events: none;
     }
     .gr-panel-label {
       font-size: 12px; font-weight: 700;
@@ -34,8 +39,10 @@
     }
     .gr-panel-label span { font-weight: 400; }
 
-    /* 스탯 버튼 */
-    .gr-stat-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    /* 공용 버튼 그리드 */
+    .gr-stat-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* 부위 / 스탯 / 주옵션 버튼 */
     .gr-stat-btn {
       padding: 8px 18px; border-radius: 10px;
       font-size: 13px; font-weight: 600;
@@ -47,9 +54,14 @@
     .gr-stat-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
     .gr-stat-btn.disabled-max { opacity: 0.4; cursor: not-allowed; }
     .gr-stat-btn.disabled-max:hover { border-color: var(--border, #e5e7eb); color: #64748b; }
+    .gr-stat-btn.slot-disabled {
+      opacity: 0.25; cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    .gr-stat-btn.slot-disabled:hover { border-color: var(--border, #e5e7eb); color: #64748b; }
 
-    /* 선택된 스탯 슬롯 */
-    .gr-slot-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    /* 선택된 보조옵션 슬롯 */
+    .gr-slot-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
     .gr-slot {
       display: flex; align-items: center; justify-content: center;
       width: 90px; height: 34px; border-radius: 8px;
@@ -77,9 +89,7 @@
     }
     .gr-set-btn img { width: 18px; height: 18px; object-fit: contain; }
     .gr-set-btn:hover { border-color: #7c3aed; color: #7c3aed; }
-    .gr-set-btn.active {
-      background: rgba(124,58,237,0.1); border-color: #7c3aed; color: #7c3aed;
-    }
+    .gr-set-btn.active { background: rgba(124,58,237,0.1); border-color: #7c3aed; color: #7c3aed; }
 
     /* 토글 + 검색 버튼 행 */
     .gr-action-row {
@@ -231,17 +241,28 @@
 <div class="gr-wrap">
   <div class="gr-header">
     <h1>🔍 장비 주인 찾기</h1>
-    <p>보조 옵션 4개를 선택하고 검색하면 해당 장비를 쓸 수 있는 영웅을 찾아드려요</p>
+    <p>부위와 옵션을 선택하고 검색하면 해당 장비를 쓸 수 있는 영웅을 찾아드려요</p>
   </div>
 
-  <!-- 옵션 선택 패널 -->
+  <!-- 1. 부위 선택 -->
+  <div class="gr-panel">
+    <div class="gr-panel-label">부위 선택 <span>(선택사항)</span></div>
+    <div class="gr-stat-grid" id="slot-btns"></div>
+  </div>
+
+  <!-- 2. 주옵션 선택 -->
+  <div class="gr-panel" id="main-stat-panel">
+    <div class="gr-panel-label">주옵션 선택 <span>(선택사항)</span></div>
+    <div class="gr-stat-grid" id="main-stat-btns"></div>
+  </div>
+
+  <!-- 3. 보조옵션 선택 -->
   <div class="gr-panel">
     <div class="gr-panel-label">보조 옵션 선택 <span id="slot-count-label">(0/4 선택)</span></div>
     <div class="gr-stat-grid" id="stat-btns"></div>
 
-    <!-- 슬롯 -->
-    <div class="gr-panel-label" style="margin-top:4px;">선택된 옵션</div>
-    <div class="gr-slot-row" id="slot-row"></div>
+    <div class="gr-panel-label" style="margin-top:14px;">선택된 옵션</div>
+    <div class="gr-slot-row" id="slot-row" style="margin-top:0;"></div>
 
     <!-- 토글 + 검색 -->
     <div class="gr-action-row">
@@ -257,13 +278,13 @@
     </div>
   </div>
 
-  <!-- 세트 선택 패널 -->
+  <!-- 4. 세트 선택 -->
   <div class="gr-panel">
     <div class="gr-panel-label">세트 선택 <span>(선택사항 · 해당 세트를 착용하는 영웅만 표시)</span></div>
     <div class="gr-set-grid" id="set-btns"></div>
   </div>
 
-  <!-- 결과 영역 -->
+  <!-- 5. 결과 -->
   <div id="result-area">
     <div class="gr-empty">
       <div class="gr-empty-icon">⚔️</div>
@@ -292,6 +313,16 @@ const STATS = [
   { key: 'cri_dmg', label: '치명피해' },
   { key: 'acc',     label: '효과적중%'},
   { key: 'res',     label: '효과저항%'},
+]
+
+// 부위별 규칙: disabledSubs = 보조옵션 비활성, disableMain = 주옵션 패널 전체 비활성
+const SLOTS = [
+  { key: 'weapon', name: '무기',   disabledSubs: ['def'],  disableMain: true  },
+  { key: 'helmet', name: '투구',   disabledSubs: [],       disableMain: true  },
+  { key: 'armor',  name: '갑옷',   disabledSubs: ['att'],  disableMain: true  },
+  { key: 'neck',   name: '목걸이', disabledSubs: [],       disableMain: false },
+  { key: 'ring',   name: '반지',   disabledSubs: [],       disableMain: false },
+  { key: 'boots',  name: '신발',   disabledSubs: [],       disableMain: false },
 ]
 
 const SETS = [
@@ -328,21 +359,25 @@ const STAT_LABEL_MAP = { att:'공격력%', def:'방어력%', max_hp:'생명력%'
 function heroImg(code) { return `https://static-pubcomm.onstove.com/event/live/epic7/guide/images/hero/${code}_s.png` }
 
 // ─── 상태 ────────────────────────────────────────
-let allHeroes     = []
-let selectedStats  = []   // 최대 4개
-let selectedSet    = null  // 세트 키 또는 null
-let mode          = 'usable'
-let filterAttr    = null
-let filterJob     = null
-let showAll       = false
-let lastResults   = []
-let currentSeason = ''
+let allHeroes      = []
+let selectedSlot   = null   // 부위
+let selectedMain   = null   // 주옵션
+let selectedStats  = []     // 보조옵션 최대 4개
+let selectedSet    = null   // 세트
+let mode           = 'usable'
+let filterAttr     = null
+let filterJob      = null
+let showAll        = false
+let lastResults    = []
+let currentSeason  = ''
 
 // ─── 초기화 ──────────────────────────────────────
 async function init() {
-  renderStatBtns()
+  renderSlotBtns()
+  renderMainStatBtns()
+  renderSubStatBtns()
   renderSetBtns()
-  renderSlots()
+  renderSubSlots()
 
   try {
     const res = await fetch(`${PROXY}/api/hero-json`)
@@ -359,14 +394,77 @@ async function init() {
   } catch(e) { console.error('시즌 로드 실패', e) }
 }
 
-// ─── 스탯 버튼 ───────────────────────────────────
-function renderStatBtns() {
+// ─── 부위 버튼 ───────────────────────────────────
+function renderSlotBtns() {
+  document.getElementById('slot-btns').innerHTML = SLOTS.map(s => `
+    <button class="gr-stat-btn" id="slotbtn-${s.key}" onclick="toggleSlot('${s.key}')">${s.name}</button>
+  `).join('')
+}
+
+function toggleSlot(key) {
+  selectedSlot = selectedSlot === key ? null : key
+  SLOTS.forEach(s => {
+    const btn = document.getElementById('slotbtn-' + s.key)
+    if (btn) btn.classList.toggle('active', selectedSlot === s.key)
+  })
+  applySlotRules()
+}
+
+function getSlotRules() {
+  return SLOTS.find(s => s.key === selectedSlot) ?? { disabledSubs: [], disableMain: false }
+}
+
+function applySlotRules() {
+  const rules = getSlotRules()
+
+  // 비활성 보조옵션이 선택돼 있으면 제거
+  rules.disabledSubs.forEach(key => {
+    const idx = selectedStats.indexOf(key)
+    if (idx >= 0) selectedStats.splice(idx, 1)
+  })
+
+  // 주옵션 패널 비활성 시 선택 초기화
+  if (rules.disableMain) selectedMain = null
+
+  document.getElementById('main-stat-panel').classList.toggle('panel-disabled', rules.disableMain)
+
+  syncMainStatBtns()
+  syncSubStatBtns()
+  renderSubSlots()
+  updateSearchBtn()
+}
+
+// ─── 주옵션 버튼 ─────────────────────────────────
+function renderMainStatBtns() {
+  document.getElementById('main-stat-btns').innerHTML = STATS.map(s => `
+    <button class="gr-stat-btn" id="msb-${s.key}" onclick="toggleMain('${s.key}')">${s.label}</button>
+  `).join('')
+}
+
+function toggleMain(key) {
+  selectedMain = selectedMain === key ? null : key
+  syncMainStatBtns()
+}
+
+function syncMainStatBtns() {
+  STATS.forEach(s => {
+    const btn = document.getElementById('msb-' + s.key)
+    if (!btn) return
+    btn.classList.toggle('active', selectedMain === s.key)
+    btn.classList.remove('disabled-max')
+  })
+}
+
+// ─── 보조옵션 버튼 ───────────────────────────────
+function renderSubStatBtns() {
   document.getElementById('stat-btns').innerHTML = STATS.map(s => `
     <button class="gr-stat-btn" id="sb-${s.key}" onclick="toggleStat('${s.key}')">${s.label}</button>
   `).join('')
 }
 
 function toggleStat(key) {
+  const rules = getSlotRules()
+  if (rules.disabledSubs.includes(key)) return
   const idx = selectedStats.indexOf(key)
   if (idx >= 0) {
     selectedStats.splice(idx, 1)
@@ -374,26 +472,49 @@ function toggleStat(key) {
     if (selectedStats.length >= 4) return
     selectedStats.push(key)
   }
-  syncStatBtns()
-  renderSlots()
-  document.getElementById('search-btn').disabled = selectedStats.length < 4
-  const label = document.getElementById('slot-count-label')
-  label.textContent = `(${selectedStats.length}/4 선택)`
-  label.style.color = selectedStats.length === 4 ? '#7c3aed' : ''
+  syncSubStatBtns()
+  renderSubSlots()
+  updateSearchBtn()
 }
 
-function syncStatBtns() {
+function syncSubStatBtns() {
+  const rules = getSlotRules()
   STATS.forEach(s => {
     const btn = document.getElementById('sb-' + s.key)
     if (!btn) return
-    const active = selectedStats.includes(s.key)
-    const maxed  = selectedStats.length >= 4 && !active
+    const isSlotDisabled = rules.disabledSubs.includes(s.key)
+    const active  = selectedStats.includes(s.key)
+    const maxed   = selectedStats.length >= 4 && !active && !isSlotDisabled
     btn.classList.toggle('active', active)
     btn.classList.toggle('disabled-max', maxed)
+    btn.classList.toggle('slot-disabled', isSlotDisabled)
+    btn.disabled = isSlotDisabled
   })
 }
 
-function removeSlot(key) { toggleStat(key) }
+function removeSubSlot(key) { toggleStat(key) }
+
+function renderSubSlots() {
+  const row = document.getElementById('slot-row')
+  const slots = []
+  for (let i = 0; i < 4; i++) {
+    const key = selectedStats[i]
+    if (key) {
+      slots.push(`<div class="gr-slot filled" onclick="removeSubSlot('${key}')" title="클릭하여 제거">${STAT_LABEL_MAP[key]}</div>`)
+    } else {
+      slots.push(`<div class="gr-slot">${i+1}번 옵션</div>`)
+    }
+  }
+  row.innerHTML = slots.join('')
+}
+
+function updateSearchBtn() {
+  const cnt = selectedStats.length
+  document.getElementById('search-btn').disabled = cnt < 4
+  const label = document.getElementById('slot-count-label')
+  label.textContent = `(${cnt}/4 선택)`
+  label.style.color = cnt === 4 ? '#7c3aed' : ''
+}
 
 // ─── 세트 버튼 ───────────────────────────────────
 function renderSetBtns() {
@@ -414,21 +535,6 @@ function toggleSet(key) {
   if (lastResults.length > 0) applyAndRender()
 }
 
-// ─── 슬롯 렌더 ───────────────────────────────────
-function renderSlots() {
-  const row = document.getElementById('slot-row')
-  const slots = []
-  for (let i = 0; i < 4; i++) {
-    const key = selectedStats[i]
-    if (key) {
-      slots.push(`<div class="gr-slot filled" onclick="removeSlot('${key}')" title="클릭하여 제거">${STAT_LABEL_MAP[key]}</div>`)
-    } else {
-      slots.push(`<div class="gr-slot">${i+1}번 옵션</div>`)
-    }
-  }
-  row.innerHTML = slots.join('')
-}
-
 // ─── 토글 모드 ───────────────────────────────────
 function setMode(m) {
   mode = m
@@ -437,24 +543,25 @@ function setMode(m) {
   if (lastResults.length > 0) applyAndRender()
 }
 
-// ─── 초기화 ──────────────────────────────────────
+// ─── 전체 초기화 ─────────────────────────────────
 function resetAll() {
+  selectedSlot  = null
+  selectedMain  = null
   selectedStats = []
   selectedSet   = null
   filterAttr    = null
   filterJob     = null
   showAll       = false
   lastResults   = []
-  syncStatBtns()
-  renderSlots()
-  SETS.forEach(s => {
-    const btn = document.getElementById('setbtn-' + s.key)
-    if (btn) btn.classList.remove('active')
-  })
-  document.getElementById('search-btn').disabled = true
-  const label = document.getElementById('slot-count-label')
-  label.textContent = '(0/4 선택)'
-  label.style.color = ''
+
+  SLOTS.forEach(s => document.getElementById('slotbtn-' + s.key)?.classList.remove('active'))
+  document.getElementById('main-stat-panel').classList.remove('panel-disabled')
+  syncMainStatBtns()
+  syncSubStatBtns()
+  renderSubSlots()
+  SETS.forEach(s => document.getElementById('setbtn-' + s.key)?.classList.remove('active'))
+  updateSearchBtn()
+
   document.getElementById('result-area').innerHTML = `
     <div class="gr-empty">
       <div class="gr-empty-icon">⚔️</div>
@@ -482,7 +589,6 @@ function computeValidOptions(abillity) {
 }
 
 function extractSets(equip) {
-  // 도감 표시와 동일하게 상위 5개 세트 조합만 참조
   const all = new Set()
   ;(equip || []).slice(0, 5).forEach(e => (e.equip_list || []).forEach(s => all.add(s)))
   return [...all]
@@ -507,7 +613,7 @@ async function doSearch() {
   if (!heroDataMap) return
 
   lastResults = allHeroes.map(hero => {
-    const data = heroDataMap[hero.code] ?? {}
+    const data     = heroDataMap[hero.code] ?? {}
     const opts     = data.opts  ?? {}
     const heroSets = data.sets  ?? []
     const validKeys    = Object.keys(opts).filter(k => opts[k] !== 'invalid')
@@ -572,7 +678,9 @@ function applyAndRender() {
   const filtered = lastResults.filter(r => {
     if (filterAttr && r.hero.attribute_cd !== filterAttr) return false
     if (filterJob  && r.hero.job_cd !== filterJob) return false
-    if (selectedSet && !r.heroSets.includes(selectedSet)) return false
+    if (selectedSet  && !r.heroSets.includes(selectedSet)) return false
+    // 주옵션 필터: 해당 스탯이 유효해야 함
+    if (selectedMain && r.opts[selectedMain] === 'invalid') return false
     if (mode === 'perfect') return r.score === 4
     const threshold = Math.min(3, r.validKeys.length)
     return r.score >= threshold
@@ -586,7 +694,7 @@ function applyAndRender() {
       <div class="gr-empty">
         <div class="gr-empty-icon">😶</div>
         <div class="gr-empty-title">매칭되는 영웅이 없어요</div>
-        <div class="gr-empty-desc">세트 조건이나 옵션 조합을 바꿔보세요</div>
+        <div class="gr-empty-desc">조건을 바꿔보세요</div>
       </div>`
     return
   }
