@@ -57,8 +57,6 @@
     "/trade/bulk",
     "/trade/bulk/*",
     "/trade/price",
-    "/trade/price/*",
-    "/trade/starrail",
-    "/trade/starrail/*"
+    "/trade/price/*"
   ]
 }
