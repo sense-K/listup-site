@@ -50,7 +50,14 @@ function renderNavbar(activePage = '') {
               <div class="nav-dropdown-loading">불러오는 중...</div>
             </div>
           </div>
-          <a href="/trade/" class="muted">거래소</a>
+          <div class="nav-dropdown-wrap" id="nav-trade-dropdown-wrap" onclick="toggleTradeDropdown()">
+            <span class="muted" style="cursor:pointer;">거래소 ▾</span>
+            <div class="nav-dropdown" id="nav-trade-dropdown">
+              <a href="/trade/price/" class="nav-dropdown-item" style="font-weight:700;">💰 계정 시세 보기</a>
+              <div style="height:1px;background:#eee;margin:4px 0;"></div>
+              <div class="nav-dropdown-loading">불러오는 중...</div>
+            </div>
+          </div>
           <a href="/contact/" class="muted">문의하기</a>
         </div>
         <div class="navbar-actions" id="navbar-actions">
@@ -70,7 +77,12 @@ function renderNavbar(activePage = '') {
         </div>
         <div id="mobile-guide-links" style="display:none;padding:4px 0 8px 12px;"></div>
         <div class="mobile-menu-divider"></div>
-        <a href="/trade/" class="mobile-menu-link">거래소</a>
+        <div class="mobile-menu-link mobile-guide-toggle" onclick="toggleMobileTrade()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+          <span>거래소</span><span id="mobile-trade-arrow">▾</span>
+        </div>
+        <div id="mobile-trade-links" style="display:none;padding:4px 0 8px 12px;">
+          <a href="/trade/price/" class="mobile-game-item" style="font-weight:700;">💰 계정 시세 보기</a>
+        </div>
         <div class="mobile-menu-divider"></div>
         <a href="/contact/" class="mobile-menu-link">문의하기</a>
         <div class="mobile-menu-divider"></div>
@@ -103,12 +115,28 @@ function toggleMobileGuide() {
   if (arrow) arrow.textContent = open ? '▴' : '▾'
 }
 
+function toggleTradeDropdown() {
+  const wrap = document.getElementById('nav-trade-dropdown-wrap')
+  if (wrap) wrap.classList.toggle('open')
+}
+
+function toggleMobileTrade() {
+  const el = document.getElementById('mobile-trade-links')
+  const arrow = document.getElementById('mobile-trade-arrow')
+  if (!el) return
+  const open = el.style.display === 'none'
+  el.style.display = open ? 'block' : 'none'
+  if (arrow) arrow.textContent = open ? '▴' : '▾'
+}
+
 // 드롭다운 외부 클릭 시 닫기
 document.addEventListener('click', e => {
   const wrap = document.getElementById('nav-dropdown-wrap')
   if (wrap && !wrap.contains(e.target)) wrap.classList.remove('open')
   const guideWrap = document.getElementById('nav-guide-dropdown-wrap')
   if (guideWrap && !guideWrap.contains(e.target)) guideWrap.classList.remove('open')
+  const tradeWrap = document.getElementById('nav-trade-dropdown-wrap')
+  if (tradeWrap && !tradeWrap.contains(e.target)) tradeWrap.classList.remove('open')
 })
 
 function toggleMobileMenu() {
@@ -244,6 +272,18 @@ async function loadAndRenderGameUI(activeSlug) {
       </a>
     `).join('')
   }
+  const tradeDropdown = document.getElementById('nav-trade-dropdown')
+  if (tradeDropdown) {
+    tradeDropdown.innerHTML = `
+      <a href="/trade/price/" class="nav-dropdown-item" style="font-weight:700;">💰 계정 시세 보기</a>
+      <div style="height:1px;background:#eee;margin:4px 0;"></div>
+      ${games.map(g => `
+        <a href="${gameSlugToPath(g.slug)}" class="nav-dropdown-item ${g.slug === activeSlug ? 'active' : ''}">
+          ${gameIcon(g, 20)} <span>${g.nameKo}</span>
+        </a>
+      `).join('')}
+    `
+  }
   const mobileGameLinks = document.getElementById('mobile-game-links')
   if (mobileGameLinks) {
     mobileGameLinks.innerHTML = games.map(g => `
@@ -251,6 +291,17 @@ async function loadAndRenderGameUI(activeSlug) {
         ${gameIcon(g, 22)} <span>${g.nameKo}</span>
       </a>
     `).join('')
+  }
+  const mobileTradeLinks = document.getElementById('mobile-trade-links')
+  if (mobileTradeLinks) {
+    mobileTradeLinks.innerHTML = `
+      <a href="/trade/price/" class="mobile-game-item" style="font-weight:700;">💰 계정 시세 보기</a>
+      ${games.map(g => `
+        <a href="${gameSlugToPath(g.slug)}" class="mobile-game-item">
+          ${gameIcon(g, 22)} <span>${g.nameKo}</span>
+        </a>
+      `).join('')}
+    `
   }
 
   // 게임 공략 드롭다운 업데이트
