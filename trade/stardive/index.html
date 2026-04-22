@@ -43,12 +43,6 @@
   <div class="layout-with-sidebar">
     <aside class="sidebar">
       <div id="sidebar-games"></div>
-      <div class="sidebar-section">
-        <div class="sidebar-label">서버</div>
-        <select class="form-select" id="server-filter">
-          <option value="">전체 서버</option>
-        </select>
-      </div>
     </aside>
     <div class="content-area">
       <div class="content-header">
@@ -56,6 +50,7 @@
         
       </div>
             <div class="char-filter-bar">
+        <select class="form-select" id="server-filter" style="width:auto;min-width:110px;"><option value="">전체 서버</option></select>
         <button class="char-filter-btn" id="char-filter-btn" onclick="openCharFilter()">캐릭터 선택 →</button>
         <span class="char-filter-hint" id="char-filter-hint">보유 캐릭터로 계정을 검색할 수 있어요</span>
         <div class="filter-tag-list" id="filter-tag-list"></div>
