@@ -1,11 +1,19 @@
 const SUPABASE_URL = 'https://ltcibadxwkupwjikqzik.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0Y2liYWR4d2t1cHdqaWtxemlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTQ5OTEsImV4cCI6MjA5MDY5MDk5MX0.KYrP2xopjSxBOee2KcS8tM89misAkyzfBvx0828t4No'
 
-export async function onRequest({ params }) {
+export async function onRequest({ params, env, request }) {
   const slug = params.slug
   if (!slug || !/^[a-z0-9_-]+$/.test(slug)) {
     return new Response('Not Found', { status: 404 })
   }
+
+  // 정적 파일이 있으면 그걸 먼저 반환 (기존 게임 페이지 우선)
+  try {
+    const url = new URL(request.url)
+    url.pathname = `/trade/${slug}/`
+    const asset = await env.ASSETS.fetch(new Request(url.toString(), request))
+    if (asset.status === 200) return asset
+  } catch {}
 
   // Supabase에서 게임 정보 조회
   const res = await fetch(
