@@ -50,7 +50,13 @@ function renderNavbar(activePage = '') {
               <div class="nav-dropdown-loading">불러오는 중...</div>
             </div>
           </div>
-          <a href="/trade/" class="muted">거래소</a>
+          <div class="nav-dropdown-wrap" id="nav-trade-dropdown-wrap" onclick="toggleTradeDropdown()">
+            <span class="muted" style="cursor:pointer;">거래소 ▾</span>
+            <div class="nav-dropdown" id="nav-trade-dropdown-static">
+              <a href="/trade/" class="nav-dropdown-item">🏪 거래소 바로가기</a>
+              <a href="/trade/register/" class="nav-dropdown-item">✏️ 판매 등록하기</a>
+            </div>
+          </div>
           <a href="/trade/price/" class="muted">시세</a>
           <a href="/contact/" class="muted">문의하기</a>
         </div>
@@ -69,7 +75,13 @@ function renderNavbar(activePage = '') {
         </div>
         <div id="mobile-guide-links" style="display:none;padding:4px 0 8px 12px;"></div>
         <div class="mobile-menu-divider"></div>
-        <a href="/trade/" class="mobile-menu-link">거래소</a>
+        <div class="mobile-menu-link mobile-guide-toggle" onclick="toggleMobileTrade()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+          <span>거래소</span><span id="mobile-trade-arrow">▾</span>
+        </div>
+        <div id="mobile-trade-links" style="display:none;padding:4px 0 8px 12px;">
+          <a href="/trade/" class="mobile-menu-link" style="font-size:14px;padding:8px 0;">🏪 거래소 바로가기</a>
+          <a href="/trade/register/" class="mobile-menu-link" style="font-size:14px;padding:8px 0;">✏️ 판매 등록하기</a>
+        </div>
         <div class="mobile-menu-divider"></div>
         <a href="/trade/price/" class="mobile-menu-link">시세</a>
         <div class="mobile-menu-divider"></div>
