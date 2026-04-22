@@ -317,7 +317,7 @@
 
     <!-- UID 자동 불러오기 (원신 선택 시에만 표시) -->
     <div id="uid-lookup-section" style="display:none;background:#f8f5ff;border:1.5px solid #e0d4ff;border-radius:12px;padding:14px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:#6c47ff;margin-bottom:10px;">✨ UID로 캐릭터 자동 불러오기 (원신 · ZZZ)</div>
+      <div style="font-size:13px;font-weight:700;color:#6c47ff;margin-bottom:10px;">✨ UID로 캐릭터 자동 불러오기 (원신 · ZZZ · 스타레일)</div>
       <div style="display:flex;gap:8px;">
         <input type="text" id="uid-input" placeholder="UID 입력 (예: 618285856)" inputmode="numeric"
           style="flex:1;padding:8px 12px;border:1.5px solid #d4c5ff;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"
@@ -471,7 +471,7 @@
       renderSelectedChars()
 
       const uidSection = document.getElementById('uid-lookup-section')
-      const isUidGameEdit = listing.game?.slug === 'genshin' || listing.game?.slug === 'zzz'
+      const isUidGameEdit = listing.game?.slug === 'genshin' || listing.game?.slug === 'zzz' || listing.game?.slug === 'starrail'
       if (uidSection) uidSection.style.display = isUidGameEdit ? 'block' : 'none'
 
       // 가격/설명/연락처
@@ -735,7 +735,7 @@
       selectedServerId = serverVal
 
       const uidSection = document.getElementById('uid-lookup-section')
-      const isUidGame = selectedGame?.slug === 'genshin' || selectedGame?.slug === 'zzz'
+      const isUidGame = selectedGame?.slug === 'genshin' || selectedGame?.slug === 'zzz' || selectedGame?.slug === 'starrail'
       if (uidSection) uidSection.style.display = isUidGame ? 'block' : 'none'
 
       loadChars()
@@ -785,7 +785,7 @@
     `
   }
 
-  // ===== UID 조회 (원신 / ZZZ) =====
+  // ===== UID 조회 (원신 / ZZZ / 스타레일) =====
   let genshinCharMap = null
   let zzzCharMap = null
 
@@ -829,60 +829,85 @@
     btn.disabled = true; btn.textContent = '조회 중...'
     showUidResult('loading', '계정 정보를 불러오는 중...')
 
-    const isZZZ = selectedGame?.slug === 'zzz'
-    const proxyUrl = isZZZ ? '/api/zzz/' + uid : '/api/enka/' + uid
+    const slug = selectedGame?.slug
+    const isZZZ = slug === 'zzz'
+    const isStarRail = slug === 'starrail'
+    const proxyUrl = isZZZ ? '/api/zzz/' + uid : isStarRail ? '/api/starrail/' + uid : '/api/enka/' + uid
 
     try {
-      const [charMap, enkaRes] = await Promise.all([
-        isZZZ ? buildZZZCharMap() : buildGenshinCharMap(),
-        fetch(proxyUrl)
-      ])
-
-      if (!enkaRes.ok) {
-        const msgs = { 400: 'UID를 찾을 수 없어요', 404: '존재하지 않는 UID예요', 429: '잠시 후 다시 시도해주세요' }
-        showUidResult('error', msgs[enkaRes.status] ?? '조회에 실패했어요')
-        return
-      }
-
-      const data = await enkaRes.json()
       const normalize = s => s.replace(/\s/g, '').toLowerCase()
       let matched = 0
       let nickname = '알 수 없음'
       let level = '?'
 
-      if (isZZZ) {
-        const pi = data.PlayerInfo ?? data.playerInfo ?? {}
-        nickname = pi.Nickname ?? pi.nickname ?? nickname
-        level = pi.Level ?? pi.level ?? level
-        const agents = (pi.ShowcaseDetail ?? pi.showcaseDetail ?? {}).AvatarList
-          ?? (pi.ShowcaseDetail ?? pi.showcaseDetail ?? {}).avatarList ?? []
-        for (const agent of agents) {
-          const id = String(agent.Id ?? agent.id ?? '')
-          const name = charMap[id]
+      if (isStarRail) {
+        const res = await fetch(proxyUrl)
+        if (!res.ok) {
+          const msgs = { 400: 'UID를 찾을 수 없어요 (9자리를 확인해주세요)', 404: '존재하지 않는 UID예요', 429: '잠시 후 다시 시도해주세요' }
+          showUidResult('error', msgs[res.status] ?? '조회에 실패했어요')
+          return
+        }
+        const data = await res.json()
+        const player = data.player ?? {}
+        nickname = player.nickname ?? nickname
+        level = player.level ?? level
+        const characters = data.characters ?? []
+        for (const c of characters) {
+          const name = c.name
           if (!name) continue
-          const dbChar = allChars.find(c => normalize(c.nameKo) === normalize(name))
+          const dbChar = allChars.find(ch => normalize(ch.nameKo) === normalize(name))
           if (dbChar && !selectedChars[dbChar.id]) {
             selectedChars[dbChar.id] = { char: dbChar, count: 1 }
             matched++
           }
         }
-        showUidResult('success', `${nickname} · Lv.${level} · 쇼케이스 ${matched}명이 자동 선택됐어요`)
+        showUidResult('success', `${nickname} · 개척 Lv.${level} · 쇼케이스 ${matched}명이 자동 선택됐어요`)
       } else {
-        const playerInfo = data.playerInfo
-        if (!playerInfo) { showUidResult('error', '계정 정보를 불러올 수 없어요'); return }
-        nickname = playerInfo.nickname ?? nickname
-        level = playerInfo.level ?? level
-        const showcaseChars = data.avatarInfoList ?? []
-        for (const avatar of showcaseChars) {
-          const name = charMap[String(avatar.avatarId)]
-          if (!name) continue
-          const dbChar = allChars.find(c => normalize(c.nameKo) === normalize(name))
-          if (dbChar && !selectedChars[dbChar.id]) {
-            selectedChars[dbChar.id] = { char: dbChar, count: 1 }
-            matched++
-          }
+        const [charMap, enkaRes] = await Promise.all([
+          isZZZ ? buildZZZCharMap() : buildGenshinCharMap(),
+          fetch(proxyUrl)
+        ])
+        if (!enkaRes.ok) {
+          const msgs = { 400: 'UID를 찾을 수 없어요', 404: '존재하지 않는 UID예요', 429: '잠시 후 다시 시도해주세요' }
+          showUidResult('error', msgs[enkaRes.status] ?? '조회에 실패했어요')
+          return
         }
-        showUidResult('success', `${nickname} · AR${level} · 쇼케이스 ${matched}명이 자동 선택됐어요`)
+        const data = await enkaRes.json()
+
+        if (isZZZ) {
+          const pi = data.PlayerInfo ?? data.playerInfo ?? {}
+          nickname = pi.Nickname ?? pi.nickname ?? nickname
+          level = pi.Level ?? pi.level ?? level
+          const agents = (pi.ShowcaseDetail ?? pi.showcaseDetail ?? {}).AvatarList
+            ?? (pi.ShowcaseDetail ?? pi.showcaseDetail ?? {}).avatarList ?? []
+          for (const agent of agents) {
+            const id = String(agent.Id ?? agent.id ?? '')
+            const name = charMap[id]
+            if (!name) continue
+            const dbChar = allChars.find(c => normalize(c.nameKo) === normalize(name))
+            if (dbChar && !selectedChars[dbChar.id]) {
+              selectedChars[dbChar.id] = { char: dbChar, count: 1 }
+              matched++
+            }
+          }
+          showUidResult('success', `${nickname} · Lv.${level} · 쇼케이스 ${matched}명이 자동 선택됐어요`)
+        } else {
+          const playerInfo = data.playerInfo
+          if (!playerInfo) { showUidResult('error', '계정 정보를 불러올 수 없어요'); return }
+          nickname = playerInfo.nickname ?? nickname
+          level = playerInfo.level ?? level
+          const showcaseChars = data.avatarInfoList ?? []
+          for (const avatar of showcaseChars) {
+            const name = charMap[String(avatar.avatarId)]
+            if (!name) continue
+            const dbChar = allChars.find(c => normalize(c.nameKo) === normalize(name))
+            if (dbChar && !selectedChars[dbChar.id]) {
+              selectedChars[dbChar.id] = { char: dbChar, count: 1 }
+              matched++
+            }
+          }
+          showUidResult('success', `${nickname} · AR${level} · 쇼케이스 ${matched}명이 자동 선택됐어요`)
+        }
       }
 
       renderCharGrid()

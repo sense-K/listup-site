@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>붕괴: 스타레일 UID 조회 - 플레이센스</title>
+  <meta name="description" content="붕괴: 스타레일 UID를 입력하면 쇼케이스 캐릭터를 확인할 수 있어요." />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+  <style>
+    /* .uid-wrap → style.css */
+    .uid-search-section {
+      text-align: center;
+      padding: 32px 16px 24px;
+    }
+    .uid-search-title { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
+    .uid-search-sub   { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+    .uid-search-row   { display: flex; gap: 10px; justify-content: center; max-width: 420px; margin: 0 auto; }
+    .uid-input {
+      flex: 1; padding: 11px 16px; border-radius: 12px;
+      border: 1.5px solid #e5e7eb; font-size: 15px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .uid-input:focus { border-color: #f59e0b; }
+    .uid-btn {
+      padding: 11px 22px; border-radius: 12px; border: none;
+      background: #f59e0b; color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+    }
+    .uid-btn:hover { opacity: 0.85; }
+    .uid-btn:disabled { opacity: 0.5; cursor: default; }
+
+    .uid-status {
+      text-align: center; padding: 32px 16px;
+      font-size: 14px; color: #64748b;
+    }
+    .uid-error { color: #ef4444; font-weight: 600; }
+
+    .uid-player-card {
+      background: linear-gradient(135deg, #1c1b3a, #2d1b69);
+      border-radius: 18px; padding: 20px 24px;
+      color: #fff; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 18px;
+    }
+    .uid-player-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(245,158,11,0.5);
+      overflow: hidden; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+    }
+    .uid-player-info { flex: 1; min-width: 0; }
+    .uid-player-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .uid-player-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .uid-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 999px; background: rgba(255,255,255,0.15);
+    }
+
+    .uid-section-title {
+      font-size: 13px; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 12px; padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .uid-chars-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .uid-char-card {
+      background: #fff;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px; text-align: center;
+      transition: box-shadow 0.15s;
+    }
+    .uid-char-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .uid-char-icon {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: #f1f5f9; overflow: hidden; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .uid-char-icon img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .uid-char-name { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .uid-char-tags { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+    .uid-char-tag {
+      font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+      background: #f1f5f9; color: #475569;
+    }
+    .uid-char-tag.lv { background: rgba(245,158,11,0.1); color: #d97706; }
+    .uid-char-tag.eidolon { background: rgba(139,92,246,0.1); color: #7c3aed; }
+  </style>
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <main class="uid-wrap">
+    <div class="uid-search-section">
+      <div class="uid-search-title">🚂 붕괴: 스타레일 UID 조회</div>
+      <div class="uid-search-sub">UID를 입력하면 쇼케이스 캐릭터를 확인할 수 있어요</div>
+      <div class="uid-search-row">
+        <input class="uid-input" id="uid-input" type="text" placeholder="UID 입력 (9자리)"
+          maxlength="9" inputmode="numeric" onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="uid-btn" id="uid-btn" onclick="doSearch()">조회</button>
+      </div>
+    </div>
+
+    <div id="result-area"></div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script>
+    const HSR_PROXY = '/api/starrail'
+    const STARRAIL_CDN = 'https://raw.githubusercontent.com/Mar-7th/StarRailRes/master'
+
+    async function doSearch() {
+      const uid = document.getElementById('uid-input').value.trim()
+      if (!uid) return
+      const btn = document.getElementById('uid-btn')
+      btn.disabled = true; btn.textContent = '조회 중...'
+      document.getElementById('result-area').innerHTML = `<div class="uid-status">불러오는 중...</div>`
+
+      try {
+        const res = await fetch(`${HSR_PROXY}/${uid}`)
+        if (!res.ok) {
+          const msg = res.status === 400 ? 'UID를 찾을 수 없어요 (9자리를 확인해주세요)' :
+                      res.status === 404 ? 'UID를 찾을 수 없어요' :
+                      res.status === 429 ? '요청이 너무 많아요. 잠시 후 다시 시도해주세요' :
+                      `오류 (${res.status})`
+          throw new Error(msg)
+        }
+        const data = await res.json()
+        render(data)
+      } catch(e) {
+        document.getElementById('result-area').innerHTML =
+          `<div class="uid-status uid-error">⚠️ ${e.message || '조회 실패'}</div>`
+      } finally {
+        btn.disabled = false; btn.textContent = '조회'
+      }
+    }
+
+    function render(data) {
+      const player = data.player ?? {}
+      const characters = data.characters ?? []
+
+      const playerHtml = `
+        <div class="uid-player-card">
+          <div class="uid-player-avatar">🚂</div>
+          <div class="uid-player-info">
+            <div class="uid-player-name">${escHtml(player.nickname ?? 'Unknown')}</div>
+            <div class="uid-player-badges">
+              <span class="uid-badge">개척 레벨 ${player.level ?? '?'}</span>
+              ${player.world_level != null ? `<span class="uid-badge">개척 등급 ${player.world_level}</span>` : ''}
+            </div>
+          </div>
+        </div>`
+
+      if (characters.length === 0) {
+        document.getElementById('result-area').innerHTML = playerHtml +
+          `<div class="uid-status">쇼케이스에 캐릭터가 없어요.<br>게임 내에서 캐릭터를 쇼케이스에 추가해주세요.</div>`
+        return
+      }
+
+      const charsHtml = characters.map(c => renderChar(c)).join('')
+      document.getElementById('result-area').innerHTML = playerHtml +
+        `<div class="uid-section-title">쇼케이스 캐릭터</div>
+         <div class="uid-chars-grid">${charsHtml}</div>`
+    }
+
+    function renderChar(c) {
+      const name = escHtml(c.name ?? `캐릭터 #${c.id}`)
+      const lv = c.level ?? '?'
+      const rank = c.rank ?? 0
+      const iconPath = c.icon ?? ''
+      const imgHtml = iconPath
+        ? `<img src="${STARRAIL_CDN}/${iconPath}" alt="${name}" onerror="this.style.display='none'">`
+        : '🚂'
+
+      return `
+        <div class="uid-char-card">
+          <div class="uid-char-icon">${imgHtml}</div>
+          <div class="uid-char-name">${name}</div>
+          <div class="uid-char-tags">
+            <span class="uid-char-tag lv">Lv.${lv}</span>
+            ${rank > 0 ? `<span class="uid-char-tag eidolon">${rank}성혼</span>` : ''}
+          </div>
+        </div>`
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    }
+
+    document.getElementById('navbar-container').innerHTML = renderNavbar('starrail')
+    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : ''
+    loadAndRenderGameUI(null)
+  </script>
+</body>
+</html>

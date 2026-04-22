@@ -28,6 +28,8 @@
     "/game/limbus/*",
     "/game/stardive",
     "/game/stardive/*",
+    "/game/starrail",
+    "/game/starrail/*",
     "/trade/genshin",
     "/trade/genshin/*",
     "/trade/bluearchive",
