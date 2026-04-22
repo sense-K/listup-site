@@ -392,19 +392,15 @@
       </div>
 
       <div class="mypage-tab-panel active" id="panel-sell">
-        ${sectionHtml('sale-ongoing', '판매 중', ongoingListings.map(renderListingItem),
-          ongoingListings.length === 0)}
-        ${sectionHtml('sale-done', '판매 완료', soldListings.map(renderListingItem),
-          soldListings.length === 0)}
+        ${sectionHtml('sale-ongoing', '판매 중', ongoingListings.map(renderListingItem), true)}
+        ${sectionHtml('sale-done', '판매 완료', soldListings.map(renderListingItem), true)}
         ${ongoingListings.length === 0 && soldListings.length === 0
           ? `<div class="empty-my" style="padding:60px 0;">아직 등록한 판매계정이 없어요<br><br><a href="/trade/register/">판매계정 올리기 →</a></div>` : ''}
       </div>
 
       <div class="mypage-tab-panel" id="panel-buy">
-        ${sectionHtml('buy-ongoing', '거래 진행중', activeTrades.map(renderTradeItem),
-          activeTrades.length === 0)}
-        ${sectionHtml('buy-done', '거래 완료', doneTrades.map(renderTradeItem),
-          doneTrades.length === 0)}
+        ${sectionHtml('buy-ongoing', '거래 진행중', activeTrades.map(renderTradeItem), true)}
+        ${sectionHtml('buy-done', '거래 완료', doneTrades.map(renderTradeItem), true)}
         ${cancelledTrades.length > 0
           ? sectionHtml('buy-cancelled', '취소된 거래', cancelledTrades.map(renderTradeItem), true) : ''}
       </div>
