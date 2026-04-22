@@ -185,6 +185,19 @@
     }
     .empty-my a { color: #111; font-weight: 700; }
 
+    .sec-pager {
+      display: flex; gap: 4px; justify-content: center;
+      padding: 12px 0 8px;
+    }
+    .sec-page-btn {
+      min-width: 32px; height: 32px; padding: 0 8px;
+      border-radius: 8px; border: 1.5px solid #e5e7eb;
+      background: #fff; font-size: 13px; font-weight: 600;
+      color: #64748b; cursor: pointer; transition: all 0.15s;
+    }
+    .sec-page-btn:hover { border-color: #111; color: #111; }
+    .sec-page-btn.active { background: #111; color: #fff; border-color: #111; }
+
     .logout-btn {
       width: 100%; margin-top: 24px; padding: 13px;
       background: none; border: 1.5px solid #e5e7eb;
@@ -343,10 +356,14 @@
       </div>`
   }
 
-  function sectionHtml(id, name, items, collapsed = false) {
+  const PER_PAGE = 10
+  const sectionData = {}
+
+  function sectionHtml(id, name, items) {
+    sectionData[id] = { items, page: 1 }
     const count = items.length
     return `
-      <div class="mypage-section ${collapsed ? 'collapsed' : ''}" id="sec-wrap-${id}">
+      <div class="mypage-section collapsed" id="sec-wrap-${id}">
         <div class="mypage-section-header" onclick="toggleSection('${id}')">
           <div class="mypage-section-header-left">
             <span class="mypage-section-name">${name}</span>
@@ -355,9 +372,39 @@
           <span class="mypage-section-arrow">▼</span>
         </div>
         <div class="mypage-section-body" id="sec-${id}">
-          ${items.length ? items.join('') : `<div class="empty-my">없어요</div>`}
+          <div id="sec-items-${id}"></div>
+          <div id="sec-pager-${id}"></div>
         </div>
       </div>`
+  }
+
+  function renderSectionPage(id) {
+    const d = sectionData[id]
+    if (!d) return
+    const { items, page } = d
+    const totalPages = Math.ceil(items.length / PER_PAGE)
+    const pageItems = items.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+
+    document.getElementById('sec-items-' + id).innerHTML =
+      pageItems.length ? pageItems.join('') : '<div class="empty-my">없어요</div>'
+
+    if (totalPages <= 1) {
+      document.getElementById('sec-pager-' + id).innerHTML = ''
+      return
+    }
+    let html = '<div class="sec-pager">'
+    if (page > 1) html += `<button class="sec-page-btn" onclick="goSectionPage('${id}',${page-1})">‹</button>`
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="sec-page-btn ${i===page?'active':''}" onclick="goSectionPage('${id}',${i})">${i}</button>`
+    }
+    if (page < totalPages) html += `<button class="sec-page-btn" onclick="goSectionPage('${id}',${page+1})">›</button>`
+    html += '</div>'
+    document.getElementById('sec-pager-' + id).innerHTML = html
+  }
+
+  function goSectionPage(id, page) {
+    sectionData[id].page = page
+    renderSectionPage(id)
   }
 
   function render(authUser, user, listings, myTrades) {
@@ -392,17 +439,17 @@
       </div>
 
       <div class="mypage-tab-panel active" id="panel-sell">
-        ${sectionHtml('sale-ongoing', '판매 중', ongoingListings.map(renderListingItem), true)}
-        ${sectionHtml('sale-done', '판매 완료', soldListings.map(renderListingItem), true)}
+        ${sectionHtml('sale-ongoing', '판매 중', ongoingListings.map(renderListingItem))}
+        ${sectionHtml('sale-done', '판매 완료', soldListings.map(renderListingItem))}
         ${ongoingListings.length === 0 && soldListings.length === 0
           ? `<div class="empty-my" style="padding:60px 0;">아직 등록한 판매계정이 없어요<br><br><a href="/trade/register/">판매계정 올리기 →</a></div>` : ''}
       </div>
 
       <div class="mypage-tab-panel" id="panel-buy">
-        ${sectionHtml('buy-ongoing', '거래 진행중', activeTrades.map(renderTradeItem), true)}
-        ${sectionHtml('buy-done', '거래 완료', doneTrades.map(renderTradeItem), true)}
+        ${sectionHtml('buy-ongoing', '거래 진행중', activeTrades.map(renderTradeItem))}
+        ${sectionHtml('buy-done', '거래 완료', doneTrades.map(renderTradeItem))}
         ${cancelledTrades.length > 0
-          ? sectionHtml('buy-cancelled', '취소된 거래', cancelledTrades.map(renderTradeItem), true) : ''}
+          ? sectionHtml('buy-cancelled', '취소된 거래', cancelledTrades.map(renderTradeItem)) : ''}
       </div>
 
       ${authUser.email === 'zzabhm@gmail.com' ? `<a href="/admin/" class="btn btn-primary" style="display:block;text-align:center;margin-top:16px;margin-bottom:8px;">관리자 페이지 →</a>` : ''}
@@ -420,7 +467,10 @@
 
   function toggleSection(id) {
     const wrap = document.getElementById('sec-wrap-' + id)
-    wrap?.classList.toggle('collapsed')
+    if (!wrap) return
+    const wasCollapsed = wrap.classList.contains('collapsed')
+    wrap.classList.toggle('collapsed')
+    if (wasCollapsed) renderSectionPage(id)
   }
 
   function toggleNicknameEdit() {
