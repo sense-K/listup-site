@@ -27,24 +27,37 @@ listup-site/
 ├── trickcal/               # 트릭컬 리바이브 리세계
 ├── limbus/                 # 림버스 컴퍼니 리세계
 ├── stardive/               # 몬길 스타다이브 리세계
-├── price/                  # 시세 조회 섹션
-│   ├── index.html          # 시세 인덱스 (게임별 시세 카드 목록)
-│   ├── genshin/            # 원신 시세 (실제 데이터 있음)
-│   ├── nikke/              # 니케 시세 (실제 데이터 있음)
-│   ├── cookierunkingdom/   # 쿠킹덤 시세 (실제 데이터 있음)
-│   ├── bluearchive/        # 블루아카이브 시세 (준비중)
-│   ├── zzz/                # 젠레스 시세 (준비중)
-│   ├── sevenknightsre/     # 세나리 시세 (준비중)
-│   ├── leehwan/            # 이환 시세 (준비중)
-│   ├── trickcal/           # 트릭컬 시세 (준비중)
-│   ├── limbus/             # 림버스 시세 (준비중)
-│   └── stardive/           # 몬길 시세 (준비중)
 ├── listing/                # 판매계정 상세 (/listing/?id=xxx)
 ├── functions/
 │   └── listing/index.js    # Cloudflare Pages Function (동적 OG 태그)
 ├── trade/
+│   ├── index.html          # 거래소 메인 (게임 탭 + 전체 최신 판매글)
 │   ├── register.html       # 판매계정 등록 (3단계: 게임→캐릭터→가격)
-│   └── bulk.html           # 일괄 등록
+│   ├── bulk.html           # 일괄 등록
+│   ├── genshin/            # 원신 거래소
+│   ├── bluearchive/        # 블루아카이브 거래소
+│   ├── nikke/              # 니케 거래소
+│   ├── cookierunkingdom/   # 쿠키런킹덤 거래소
+│   ├── zzz/                # 젠레스 존 제로 거래소
+│   ├── sevenknightsre/     # 세븐나이츠 리버스 거래소
+│   ├── leehwan/            # 이환 거래소
+│   ├── trickcal/           # 트릭컬 리바이브 거래소
+│   ├── limbus/             # 림버스 컴퍼니 거래소
+│   ├── stardive/           # 몬길 스타다이브 거래소
+│   ├── epic7/              # 에픽세븐 거래소
+│   └── price/              # 시세 섹션
+│       ├── index.html      # 시세 메인 (게임별 시세 카드)
+│       ├── genshin/        # 원신 시세 (실제 데이터 있음)
+│       ├── nikke/          # 니케 시세 (실제 데이터 있음)
+│       ├── cookierunkingdom/ # 쿠킹덤 시세 (실제 데이터 있음)
+│       ├── epic7/          # 에픽세븐 시세 (준비중)
+│       ├── bluearchive/    # 블루아카이브 시세 (준비중)
+│       ├── zzz/            # 젠레스 시세 (준비중)
+│       ├── sevenknightsre/ # 세나리 시세 (준비중)
+│       ├── leehwan/        # 이환 시세 (준비중)
+│       ├── trickcal/       # 트릭컬 시세 (준비중)
+│       ├── limbus/         # 림버스 시세 (준비중)
+│       └── stardive/       # 몬길 시세 (준비중)
 ├── auth/                   # 로그인/회원가입
 ├── mypage/                 # 마이페이지
 ├── user/                   # 판매자 프로필
@@ -60,6 +73,22 @@ listup-site/
 - 수정 후 항상 git push (자동 배포됨)
 - git config: user.email=zzabhm@gmail.com, user.name=sense-K
 - git 커밋 시 `git config windows.appendAtomically false` 필요 (Windows 이슈)
+
+## ⚠️ git 작업 방식 (OneDrive mmap 오류)
+- listup-site가 OneDrive 경로 안에 있어서 git CLI에서 `mmap failed: Invalid argument` 오류 발생
+- **해결책**: `c:\tmp\listup-temp`에 임시 클론해서 작업
+  ```
+  # 처음 한 번만
+  git clone https://github.com/sense-K/listup-site.git c:\tmp\listup-temp
+
+  # 매번 작업 시
+  cd c:\tmp\listup-temp
+  git pull
+  # 파일 수정 후 OneDrive 경로에서 c:\tmp\listup-temp로 복사
+  git add . && git commit -m "..." && git push
+  ```
+- 노트북에서도 동일하게 `c:\tmp\listup-temp`에 클론해서 쓸 것
+- VSCode 소스 제어 탭은 OneDrive 경로에서도 작동할 수 있으나 CLI는 위 방법 사용
 
 ## 용어 통일
 - 사이트명: **리세리스트** (로고/네비바), **리세 리스트** (본문/SEO)
@@ -190,27 +219,84 @@ const GRADE_ORDER_MAP = {
 - Edge Function이 발신자가 실제 판매자인지 검증 후 구매자 이메일 발송
 - 전송 후 30초간 버튼 비활성화 (스팸 방지)
 
-## 시세 페이지 (2026-04-16 완료)
-- `price/` 디렉토리 전체 신규 생성
-- 네비바에 "계정 시세" 메뉴 추가 → `/price/`
+## 시세 페이지 (2026-04-16 완료, 구조 개편 2026-04-22)
+- URL: `/trade/price/` (이전: `/price/` → 301 리다이렉트로 유지)
 - `price_data` Supabase 테이블 설계: `game_slug, account_type, price_min, price_max, description, sort_order, updated_at`
   - RLS: public read 정책 필요
   - 쿠킹덤 DB slug는 `cookie-run` (URL은 `/cookierunkingdom/`) → PRICE_PATH_MAP으로 처리
 - 실제 시세 데이터: 원신, 니케, 쿠킹덤 (헝그리앱 분석 완료, **Supabase INSERT 아직 미실행**)
-- 나머지 7개 게임 시세 페이지: "준비 중" 상태 (renderComingSoon() 패턴)
+- 나머지 게임 시세 페이지: "준비 중" 상태 (renderComingSoon() 패턴)
 - CTA 문구: "수수료 없는 직거래 계정 보러가기" / 버튼: "판매계정 보러가기 →"
 
-## 현재 상태 (2026-04-16)
+## 에픽세븐 공략 도구 (2026-04-21~22 완료)
+
+### 장비 주인 찾기 (`/epic7/gear-recommend/`)
+- 세트 선택 → 부위 선택 → 주옵션 → 보조옵션 순서
+- 매칭 로직: 완전일치 score >= min(3, validKeys), 일치 score >= min(2, validKeys)
+- 완전일치 카드: 보라색 테두리 + 그림자 강조 (모드 토글 버튼 없음, 항상 전체 표시)
+- 영웅 분석 API: `grade_code=emperor` 사용 (champion·warlord·emperor만 equip 데이터 있음, legend는 equip null)
+- 캐시 키: `e7-hero-data-v4-${currentSeason}`
+- 세트 이미지: `set_attack`은 CDN 403 → namu wiki URL 사용, 상처세트 키는 `set_scar`
+
+### 아티팩트 도감 (`/epic7/artifacts/`)
+- 도적 직업 필터: `data-job="assassin"` (JSON의 job_code가 "assassin"이므로 "thief" 쓰면 안 됨)
+
+### 영웅 도감 상세 (`/epic7/heroes/detail/`)
+- 유효스탯·착용세트 데이터: `grade_code=emperor`
+
+## 애널리틱스 (2026-04-22 완료)
+- GTM `GTM-N4LHKZKZ` + GA4 `G-SQDKTZQYCW` 연결
+- config.js 맨 앞에 삽입 → 전체 39개 페이지 자동 적용
+- GTM noscript는 DOMContentLoaded 시 body 최상단에 동적 삽입
+
+## 원신 UID 조회 (`/genshin/uid/`) — 2026-04-22 신규
+- Enka.Network API로 쇼케이스 캐릭터 빌드 조회 (성유물·무기·스탯)
+- 한국어 캐릭터 이름: `https://gi.yatta.moe/api/v2/KR/avatar` (언어코드 `KR` 또는 `kr`)
+- CORS 문제로 직접 호출 불가 → Cloudflare Pages Function 프록시 사용
+  - `functions/api/enka/[[uid]].js` → `/api/enka/{uid}` 경로
+- 캐릭터 데이터 sessionStorage 캐시: `gi-char-map-v1`
+
+## 네비바 구조 (2026-04-22 기준)
+```
+게임공략 ▾ | 거래소 | 시세 | 문의하기
+```
+- **게임공략 ▾** → 드롭다운: 각 게임 공략 허브 (`/game/[slug]/`)
+- **거래소** → `/trade/` (plain link)
+- **시세** → `/trade/price/` (plain link)
+- **문의하기** → `/contact/`
+
+### 주의사항
+- 모든 페이지 script에서 `loadAndRenderGameUI(null)` 또는 `loadAndRenderGameUI(GAME_SLUG)` 호출 필수
+- 빠뜨리면 게임공략 드롭다운이 "불러오는 중..." 상태로 멈춤
+- 새 페이지 만들 때 반드시 포함할 것
+
+## 거래소/시세 페이지 구조 (2026-04-22 개편)
+- `/trade/` — 거래소 메인: 상단 게임 탭(가로 스크롤 pill) + 전체 최신 판매글
+  - 게임 탭 클릭 → `/trade/[game]/` 이동
+  - "전체" 탭이 active인 상태가 이 페이지
+- `/trade/[game]/` — 게임별 거래소: 서버/캐릭터 필터 + 해당 게임 판매글
+- `/trade/price/` — 시세 메인: 게임별 시세 카드 그리드
+- `/trade/price/[game]/` — 게임별 상세 시세
+- `/game/[slug]/` — 게임 공략 허브 (에픽세븐 공략 도구 등) → 거래소/시세 버튼 연결
+
+### 페이지 간 연동 흐름
+```
+헤더 "거래소" → /trade/ → 게임 탭 → /trade/[game]/
+헤더 "시세"   → /trade/price/ → 게임 카드 → /trade/price/[game]/
+/trade/[game]/ 상단 → 시세 보기 링크
+/game/[slug]/ → 거래소 바로가기 + 시세 확인
+```
+
+## 현재 상태 (2026-04-22)
 - 핵심 기능 + 보안 + UX 개선 완료
 - resetlist.kr 도메인 연결 완료
-- SEO + Google Search Console 등록 완료 (zzz, sevenknightsre, leehwan, trickcal 포함)
-- 거래 전 플로우 (구매신청→전달완료→후기/수령확인→판매완료) 완성
-- 마이페이지: 판매완료 글에서 수정·삭제 버튼 제거, seller_confirmed 상태 auto-recovery
-- 캐릭터 필터 모달 완성 (실시간 검색 + 티어 그룹핑 + 보라색 사이드바 카드)
-- 캐릭터 다중 선택 + 개수 기반 필터링 완성 (×N 표시, N개 이상 보유 계정 필터)
-- 트릭컬 리바이브 페이지 + 캐릭터 104개 등록 완료
-- 이메일 알림 시스템 완성 (거래 단계별 + 연락 요청)
-- 시세 페이지 11개 생성 완료 (원신/니케/쿠킹덤 데이터 준비됨, 나머지 준비중)
+- SEO + Google Search Console 등록 완료
+- 거래 전 플로우 완성, 이메일 알림 시스템 완성
+- 시세 페이지 12개 생성 완료 (원신/니케/쿠킹덤 데이터 준비됨, 나머지 준비중)
+- GTM + GA4 연결 완료
+- 에픽세븐 공략 도구 4종 서비스 중 (RTA 드래프트, 영웅 도감, 아티팩트 도감, 장비 주인 찾기)
+- 원신 UID 조회 페이지 신규 오픈 (`/genshin/uid/`)
+- 거래소/시세 URL 구조 개편 완료 (`/trade/`, `/trade/price/` 분리)
 
 ## 남은 작업 목록
 ### 중요도 높음
@@ -219,7 +305,7 @@ const GRADE_ORDER_MAP = {
   - price_data 테이블 + RLS public read 정책 먼저 생성 필요
 - [ ] **비밀번호 재설정 이메일 Resend로 교체** — 현재 Supabase 기본 발송(시간당 4건 제한), 유저 생기기 전에 교체해야 함
   - Supabase → Authentication → SMTP Settings에서 Resend SMTP 연결
-- [ ] **서치콘솔 색인 요청** — 시세 페이지 우선순위: `/price/`, `/price/genshin/`, `/price/nikke/`, `/price/cookierunkingdom/`
+- [ ] **서치콘솔 색인 요청** — 시세 페이지 우선순위: `/trade/price/`, `/trade/price/genshin/`, `/trade/price/nikke/`, `/trade/price/cookierunkingdom/`
 - [ ] Supabase CASCADE FK 설정 (판매글 삭제 안정성):
   ```sql
   ALTER TABLE "Trade" DROP CONSTRAINT "Trade_listingId_fkey";
