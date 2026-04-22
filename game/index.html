@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>게임 공략 - 플레이센스</title>
+  <meta name="description" content="모바일 게임 공략 도구, 도감, 시뮬레이터 모음. 에픽세븐, 원신 등 다양한 게임의 공략을 플레이센스에서 확인하세요." />
+  <link rel="canonical" href="https://resetlist.kr/game/" />
+  <meta property="og:title" content="게임 공략 - 플레이센스" />
+  <meta property="og:url" content="https://resetlist.kr/game/" />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+  <style>
+    .game-index-wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+    .game-index-header { margin-bottom: 32px; }
+    .game-index-header h1 { font-size: 24px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
+    .game-index-header p { font-size: 14px; color: #64748b; }
+    .game-index-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 640px) {
+      .game-index-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+    .game-index-card {
+      position: relative;
+      aspect-ratio: 3/4;
+      border-radius: 20px;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+      background: linear-gradient(135deg, #1a1a2e, #2d2d4e);
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .game-index-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+    .game-index-card-bg {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .game-index-card:hover .game-index-card-bg { transform: scale(1.04); }
+    .game-index-card-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.75) 100%);
+    }
+    .game-index-card-info {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 16px;
+    }
+    .game-index-card-name {
+      font-size: 15px; font-weight: 800; color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      line-height: 1.3;
+    }
+    .game-index-card-badge {
+      display: inline-block; margin-top: 4px;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .badge-live { background: rgba(59,130,246,0.85); color: #fff; }
+    .badge-soon { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
+  </style>
+</head>
+<body>
+  <div id="navbar-container"></div>
+  <main class="game-index-wrap">
+    <div class="game-index-header">
+      <h1>🎮 게임 공략</h1>
+      <p>게임을 더 깊이 즐길 수 있도록 도와주는 공략 도구 모음이에요.</p>
+    </div>
+    <div class="game-index-grid" id="game-index-grid">
+      <div class="loading">불러오는 중...</div>
+    </div>
+  </main>
+  <div id="footer-container"></div>
+  <script>
+    const GUIDE_GAMES = ['epicseven', 'genshin']
+
+    document.getElementById('navbar-container').innerHTML = renderNavbar();
+    loadAndRenderGameUI(null);
+    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : '';
+
+    async function loadGameIndex() {
+      const { data: games } = await db.from('Game').select('id, nameKo, slug, emoji, imageUrl, artImageUrl').eq('isActive', true).order('sortOrder', { nullsFirst: false }).order('nameKo')
+      if (!games) return
+      document.getElementById('game-index-grid').innerHTML = games.map(g => {
+        const hasGuide = GUIDE_GAMES.includes(g.slug)
+        return `
+          <a href="${gameHubPath(g.slug)}" class="game-index-card">
+            ${g.artImageUrl
+              ? `<img class="game-index-card-bg" src="${g.artImageUrl}" alt="${g.nameKo}">`
+              : `<div class="game-index-card-bg" style="background:linear-gradient(135deg,#1a1a2e,#2d2d4e);"></div>`
+            }
+            <div class="game-index-card-overlay"></div>
+            <div class="game-index-card-info">
+              <div class="game-index-card-name">${g.nameKo}</div>
+              <span class="game-index-card-badge ${hasGuide ? 'badge-live' : 'badge-soon'}">${hasGuide ? '공략 있음' : '준비 중'}</span>
+            </div>
+          </a>
+        `
+      }).join('')
+    }
+    loadGameIndex()
+  </script>
+</body>
+</html>

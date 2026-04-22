@@ -290,46 +290,95 @@ a { text-decoration: none; color: inherit; }
   color: var(--black);
 }
 .game-cards-grid {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 .game-select-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  position: relative;
+  aspect-ratio: 3/4;
+  border-radius: 20px;
+  overflow: hidden;
   text-decoration: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 16px;
-  transition: transform 0.18s;
-  flex: 1;
-  min-width: 0;
+  display: block;
+  background: linear-gradient(135deg, #1a1a2e, #2d2d4e);
+  transition: transform 0.18s, box-shadow 0.18s;
 }
-.game-select-card:hover { transform: translateY(-3px); }
-.game-select-card-bg { display: none; }
-.game-select-card-overlay { display: none; }
+.game-select-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+.game-select-card-bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s;
+}
+.game-select-card:hover .game-select-card-bg { transform: scale(1.04); }
+.game-select-card-overlay {
+  position: absolute; inset: 0;
+  display: block;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.75) 100%);
+}
 .game-select-card-info {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
+  align-items: flex-start;
+  gap: 4px;
 }
 .game-select-card-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  object-fit: cover;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: none;
 }
 .game-select-card-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: #333;
-  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  text-align: left;
   word-break: keep-all;
   line-height: 1.3;
+}
+@media (max-width: 640px) {
+  .game-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .game-select-card {
+    aspect-ratio: unset;
+    background: transparent;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px;
+    gap: 6px;
+  }
+  .game-select-card:hover { transform: translateY(-2px); box-shadow: none; }
+  .game-select-card-bg { display: none; }
+  .game-select-card-overlay { display: none; }
+  .game-select-card-info {
+    position: static;
+    padding: 0;
+    align-items: center;
+    gap: 0;
+  }
+  .game-select-card-icon {
+    display: block;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin-bottom: 6px;
+  }
+  .game-select-card-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    text-shadow: none;
+  }
 }
 
 /* 최신 매물 헤더 */
@@ -1475,10 +1524,6 @@ a { text-decoration: none; color: inherit; }
   .hero-overlay { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
   .game-select-section { padding: 28px 16px; }
   .page-wrapper { padding: 28px 16px 60px; }
-  .game-cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .game-select-card { padding: 2px; }
-  .game-select-card-icon { width: 48px; height: 48px; border-radius: 12px; }
-  .game-select-card-name { font-size: 11px; }
   .tab-bar-inner { padding: 0 20px; }
   .layout-with-sidebar { flex-direction: column; align-items: stretch; }
   .content-area { width: 100%; }
