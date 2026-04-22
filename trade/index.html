@@ -27,34 +27,47 @@
     }
     @media (max-width: 768px) {
       .trade-main-wrap {
-        grid-template-columns: 1fr;
+        display: block;
         padding: 16px;
-        gap: 20px;
       }
-      .trade-game-col { position: static; }
+      .trade-game-col {
+        position: static;
+        margin-bottom: 24px;
+      }
       .trade-game-list {
-        flex-direction: row;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
         overflow-x: auto;
-        padding-bottom: 6px;
+        overflow-y: visible;
+        gap: 8px;
+        padding-bottom: 8px;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
       }
       .trade-game-list::-webkit-scrollbar { display: none; }
       .trade-game-item {
-        flex-direction: column;
-        align-items: center;
-        flex-shrink: 0;
-        width: 80px;
-        padding: 10px 8px;
-        gap: 6px;
+        flex-direction: column !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        width: 82px !important;
+        min-width: 82px !important;
+        padding: 10px 8px !important;
+        gap: 6px !important;
         text-align: center;
       }
-      .trade-game-item-icon { width: 36px; height: 36px; }
+      .trade-game-item-icon { width: 36px !important; height: 36px !important; }
       .trade-game-item-info { width: 100%; }
-      .trade-game-item-name { font-size: 11px; white-space: normal; word-break: keep-all; text-align: center; }
-      .trade-game-item-price { display: none; }
-      .trade-game-item-btns { flex-direction: row; justify-content: center; }
-      .trade-game-btn { font-size: 10px; padding: 4px 7px; }
+      .trade-game-item-name {
+        font-size: 11px !important;
+        white-space: normal !important;
+        word-break: keep-all;
+        text-align: center;
+      }
+      .trade-game-item-price { display: none !important; }
+      .trade-game-item-btns { justify-content: center; }
+      .trade-game-btn { font-size: 10px !important; padding: 4px 7px !important; }
+      .trade-listings-col { display: block; }
     }
 
     /* 좌측 게임 목록 */
