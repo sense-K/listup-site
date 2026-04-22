@@ -1,24 +1,16 @@
 User-agent: *
 Allow: /
-Allow: /genshin/
-Allow: /bluearchive/
-Allow: /nikke/
-Allow: /cookierunkingdom/
-Allow: /zzz/
-Allow: /sevenknightsre/
-Allow: /leehwan/
-Allow: /trickcal/
-Allow: /limbus/
-Allow: /stardive/
-Allow: /price/
+Allow: /game/
+Allow: /trade/
 Allow: /contact/
 
 Disallow: /admin/
 Disallow: /mypage/
 Disallow: /auth/
-Disallow: /trade/
 Disallow: /review/
 Disallow: /listing/
 Disallow: /user/
+Disallow: /trade/register/
+Disallow: /trade/bulk/
 
 Sitemap: https://resetlist.kr/sitemap.xml
