@@ -7,14 +7,6 @@ export async function onRequest({ params, env, request }) {
     return new Response('Not Found', { status: 404 })
   }
 
-  // 정적 파일이 있으면 그걸 먼저 반환 (기존 게임 페이지 우선)
-  try {
-    const url = new URL(request.url)
-    url.pathname = `/game/${slug}/`
-    const asset = await env.ASSETS.fetch(new Request(url.toString(), request))
-    if (asset.status === 200) return asset
-  } catch {}
-
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/Game?slug=eq.${slug}&select=id,nameKo,nameEn,slug,emoji,imageUrl,artImageUrl&limit=1`,
     { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
