@@ -540,9 +540,9 @@ a { text-decoration: none; color: inherit; }
 
 /* ===== 페이지 레이아웃 ===== */
 .page-wrapper {
-  max-width: 1300px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 48px 60px 80px;
+  padding: 36px 32px 80px;
   min-height: calc(100vh - 60px - 140px); /* 뷰포트 - 네비바 - 푸터 */
 }
 
@@ -641,6 +641,7 @@ a { text-decoration: none; color: inherit; }
 .content-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   justify-content: space-between;
   margin-bottom: 20px;
 }
