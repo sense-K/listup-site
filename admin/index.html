@@ -142,6 +142,55 @@
       border-color: #111;
     }
 
+    /* 일괄 등록 모달 */
+    .bulk-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .bulk-modal-overlay.open { display: flex; }
+    .bulk-modal {
+      background: #fff; border-radius: 16px;
+      padding: 28px 32px; width: 680px; max-width: 96vw;
+      max-height: 85vh; display: flex; flex-direction: column;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.2);
+    }
+    .bulk-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .bulk-modal-title { font-size: 18px; font-weight: 800; }
+    .bulk-modal-close {
+      font-size: 22px; cursor: pointer; color: #aaa; background: none;
+      border: none; line-height: 1; padding: 4px;
+    }
+    .bulk-modal-close:hover { color: #111; }
+    .bulk-preview-list {
+      flex: 1; overflow-y: auto; border: 1.5px solid #e5e7eb;
+      border-radius: 10px; margin-bottom: 16px;
+    }
+    .bulk-preview-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 9px 14px; border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+    }
+    .bulk-preview-item:last-child { border-bottom: none; }
+    .bulk-preview-item img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #f1f5f9; }
+    .bulk-preview-item .b-name { flex: 1; font-weight: 600; }
+    .bulk-preview-item .b-tier { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .bulk-preview-item .b-tier.s { background: #fef3c7; color: #92400e; }
+    .bulk-preview-item .b-tier.a { background: #ede9fe; color: #5b21b6; }
+    .bulk-preview-skip { color: #aaa; text-decoration: line-through; }
+    .bulk-modal-footer { display: flex; gap: 10px; align-items: center; }
+    .bulk-modal-status { flex: 1; font-size: 13px; color: #64748b; }
+    .btn-bulk-import {
+      padding: 10px 24px; border-radius: 10px; border: none;
+      background: #111; color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: opacity 0.15s;
+    }
+    .btn-bulk-import:hover { opacity: 0.8; }
+    .btn-bulk-import:disabled { opacity: 0.4; cursor: default; }
+
     /* 배지 */
     .badge {
       display: inline-block;
@@ -265,6 +314,11 @@
     <!-- 캐릭터 관리 -->
     <div class="admin-section" id="section-characters">
       <div class="section-title">캐릭터 관리</div>
+      <div class="admin-card" style="background:linear-gradient(135deg,#1c1b3a,#2d1b69);color:#fff;border:none;">
+        <div class="admin-card-title" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.1);">🚂 스타레일 캐릭터 일괄 등록</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.65);margin:0 0 14px;">StarRailRes 공식 데이터에서 한국어 이름·등급·이미지를 자동으로 가져와 Supabase에 등록합니다. 이미 등록된 캐릭터는 건너뜁니다.</p>
+        <button class="btn-bulk-import" onclick="openBulkImport()" style="background:rgba(245,158,11,0.9);">🔄 스타레일 캐릭터 불러오기</button>
+      </div>
       <div class="admin-card">
         <div class="admin-card-title">새 캐릭터 추가</div>
         <div class="inline-form" style="margin-bottom:8px;">
@@ -340,6 +394,24 @@
     </div>
 
   </main>
+</div>
+
+<!-- 스타레일 일괄 등록 모달 -->
+<div class="bulk-modal-overlay" id="bulk-modal-overlay" onclick="if(event.target===this)closeBulkModal()">
+  <div class="bulk-modal">
+    <div class="bulk-modal-header">
+      <div class="bulk-modal-title">🚂 스타레일 캐릭터 일괄 등록</div>
+      <button class="bulk-modal-close" onclick="closeBulkModal()">✕</button>
+    </div>
+    <div id="bulk-preview-list" class="bulk-preview-list">
+      <div style="text-align:center;padding:40px;color:#888;font-size:14px;">데이터를 불러오는 중...</div>
+    </div>
+    <div class="bulk-modal-footer">
+      <span class="bulk-modal-status" id="bulk-modal-status"></span>
+      <button class="btn-sm btn-gray" onclick="closeBulkModal()">취소</button>
+      <button class="btn-bulk-import" id="bulk-import-btn" onclick="runBulkImport()" disabled>등록하기</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -769,6 +841,140 @@
     const { error } = await db.from('Listing').delete().eq('id', id)
     if (error) { alert(`[Listing] 삭제 실패: ${error.message}\n코드: ${error.code}`); return }
     loadAdminListings()
+  }
+
+  // ===== 스타레일 일괄 등록 =====
+  const STARRAIL_CDN = 'https://raw.githubusercontent.com/Mar-7th/StarRailRes/master'
+  const STARRAIL_CHARS_JSON = `${STARRAIL_CDN}/index_min/kr/characters.json`
+
+  let bulkCharList = []   // 전체 캐릭터 목록
+  let bulkSkipSet  = new Set()  // 이미 등록된 이름 Set
+
+  async function openBulkImport() {
+    const overlay = document.getElementById('bulk-modal-overlay')
+    overlay.classList.add('open')
+    document.getElementById('bulk-import-btn').disabled = true
+    document.getElementById('bulk-modal-status').textContent = '데이터 불러오는 중...'
+    document.getElementById('bulk-preview-list').innerHTML =
+      '<div style="text-align:center;padding:40px;color:#888;font-size:14px;">데이터를 불러오는 중...</div>'
+
+    try {
+      // 1. StarRailRes에서 캐릭터 데이터 fetch
+      const res = await fetch(STARRAIL_CHARS_JSON)
+      if (!res.ok) throw new Error('GitHub 데이터 로드 실패')
+      const raw = await res.json()
+
+      // raw는 { "1001": { id, name, rarity, icon, ... }, ... } 구조
+      const entries = Object.values(raw).filter(c => c.id && c.name && c.rarity)
+
+      // 2. Supabase에서 starrail 게임 ID 조회
+      const { data: games } = await db.from('Game').select('id, slug').eq('slug', 'starrail')
+      if (!games || games.length === 0) {
+        throw new Error('Supabase에 starrail 게임이 없어요. 먼저 게임을 추가하세요.')
+      }
+      const starrailGameId = games[0].id
+
+      // 3. 이미 등록된 캐릭터 이름 조회
+      const { data: existing } = await db.from('Character').select('nameKo').eq('gameId', starrailGameId)
+      bulkSkipSet = new Set((existing ?? []).map(c => c.nameKo))
+
+      // 4. 목록 구성 (주인공 제외: id 8001~8008은 개척자)
+      const TRAVELER_IDS = new Set(['8001','8002','8003','8004','8005','8006','8007','8008'])
+      bulkCharList = entries
+        .filter(c => !TRAVELER_IDS.has(String(c.id)))
+        .map(c => ({
+          gameId: starrailGameId,
+          id: String(c.id),
+          nameKo: c.name,
+          tier: c.rarity >= 5 ? 'S' : 'A',
+          imageUrl: c.icon ? `${STARRAIL_CDN}/${c.icon}` : null,
+        }))
+        .sort((a, b) => {
+          if (a.tier !== b.tier) return a.tier === 'S' ? -1 : 1
+          return a.nameKo.localeCompare(b.nameKo, 'ko')
+        })
+
+      const newCount = bulkCharList.filter(c => !bulkSkipSet.has(c.nameKo)).length
+      renderBulkPreview()
+      document.getElementById('bulk-modal-status').textContent =
+        `총 ${bulkCharList.length}명 (신규 ${newCount}명, 이미 등록 ${bulkSkipSet.size}명 건너뜀)`
+      document.getElementById('bulk-import-btn').disabled = newCount === 0
+      if (newCount === 0) document.getElementById('bulk-import-btn').textContent = '모두 등록됨'
+      else document.getElementById('bulk-import-btn').textContent = `${newCount}명 등록하기`
+
+    } catch(e) {
+      document.getElementById('bulk-preview-list').innerHTML =
+        `<div style="text-align:center;padding:32px;color:#ef4444;font-size:14px;">⚠️ ${e.message}</div>`
+      document.getElementById('bulk-modal-status').textContent = ''
+    }
+  }
+
+  function renderBulkPreview() {
+    const list = document.getElementById('bulk-preview-list')
+    list.innerHTML = bulkCharList.map(c => {
+      const skip = bulkSkipSet.has(c.nameKo)
+      return `
+        <div class="bulk-preview-item ${skip ? 'bulk-preview-skip' : ''}">
+          ${c.imageUrl
+            ? `<img src="${c.imageUrl}" alt="${c.nameKo}" onerror="this.style.display='none'">`
+            : '<div style="width:36px;height:36px;border-radius:50%;background:#f1f5f9;flex-shrink:0;"></div>'
+          }
+          <span class="b-name">${c.nameKo}</span>
+          <span class="b-tier ${c.tier.toLowerCase()}">${c.tier} (${c.tier === 'S' ? '5성' : '4성'})</span>
+          ${skip ? '<span style="font-size:11px;color:#aaa;margin-left:4px;">이미 등록됨</span>' : ''}
+        </div>`
+    }).join('')
+  }
+
+  async function runBulkImport() {
+    const toInsert = bulkCharList.filter(c => !bulkSkipSet.has(c.nameKo))
+    if (toInsert.length === 0) return
+
+    const btn = document.getElementById('bulk-import-btn')
+    btn.disabled = true
+    btn.textContent = '등록 중...'
+
+    const rows = toInsert.map(c => ({
+      id: crypto.randomUUID(),
+      gameId: c.gameId,
+      nameKo: c.nameKo,
+      tier: c.tier,
+      imageUrl: c.imageUrl,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    }))
+
+    // 50개씩 나눠서 upsert (Supabase 요청 크기 제한)
+    const CHUNK = 50
+    let inserted = 0
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const chunk = rows.slice(i, i + CHUNK)
+      const { error } = await db.from('Character').insert(chunk)
+      if (error) {
+        alert(`등록 중 오류 (${inserted}명 완료 후): ${error.message}`)
+        btn.disabled = false
+        btn.textContent = '다시 시도'
+        document.getElementById('bulk-modal-status').textContent =
+          `⚠️ ${inserted}명 등록 완료 후 오류 발생`
+        return
+      }
+      inserted += chunk.length
+      document.getElementById('bulk-modal-status').textContent = `등록 중... ${inserted}/${rows.length}명`
+    }
+
+    document.getElementById('bulk-modal-status').textContent = `✅ ${inserted}명 등록 완료!`
+    btn.textContent = '등록 완료'
+
+    // skip set 업데이트 후 미리보기 갱신
+    toInsert.forEach(c => bulkSkipSet.add(c.nameKo))
+    renderBulkPreview()
+
+    // 캐릭터 목록 새로고침
+    if (selectedCharGameId) loadCharsForGame()
+  }
+
+  function closeBulkModal() {
+    document.getElementById('bulk-modal-overlay').classList.remove('open')
   }
 
   // ===== 초기화 =====
