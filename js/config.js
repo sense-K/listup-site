@@ -331,8 +331,9 @@ async function loadAndRenderGameUI(activeSlug) {
   // 게임 선택 카드
   const gameCardsEl = document.getElementById('game-cards-section')
   if (gameCardsEl) {
+    const tradeMode = gameCardsEl.dataset.trade === 'true'
     gameCardsEl.innerHTML = games.map(g => `
-      <a href="${gameHubPath(g.slug)}" class="game-select-card">
+      <a href="${tradeMode ? gameSlugToPath(g.slug) : gameHubPath(g.slug)}" class="game-select-card">
         ${g.artImageUrl
           ? `<img class="game-select-card-bg" src="${g.artImageUrl}" alt="${g.nameKo}">`
           : `<div class="game-select-card-bg" style="background:linear-gradient(135deg,#1a1a2e,#2d2d4e);"></div>`
