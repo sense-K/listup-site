@@ -394,7 +394,7 @@ a { text-decoration: none; color: inherit; }
   inset: -24px;
   background-size: cover;
   background-position: center;
-  filter: blur(3px);
+  filter: none;
 }
 .game-hub-hero-overlay {
   position: absolute;
