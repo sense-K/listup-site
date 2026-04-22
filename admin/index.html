@@ -680,8 +680,9 @@
     if (!nameKo) { alert('캐릭터 이름을 입력하세요'); return }
     const { error } = await db.from('Character').insert({
       id: crypto.randomUUID(),
-      gameId, nameKo, tier,
+      gameId, nameKo, nameEn: nameKo, tier,
       imageUrl: imageUrl || null,
+      basePrice: 0,
       isActive: true,
       createdAt: new Date().toISOString()
     })
@@ -945,6 +946,7 @@
       nameEn: c.nameEn,
       tier: c.tier,
       imageUrl: c.imageUrl,
+      basePrice: 0,
       isActive: true,
       createdAt: new Date().toISOString(),
     }))
