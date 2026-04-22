@@ -44,8 +44,13 @@ function renderNavbar(activePage = '') {
       <div class="navbar-inner">
         <a href="/" class="navbar-logo">플레이센스</a>
         <div class="navbar-menu">
+          <div class="nav-dropdown-wrap" id="nav-guide-dropdown-wrap" onclick="toggleGuideDropdown()">
+            <span class="muted" style="cursor:pointer;">게임 공략 ▾</span>
+            <div class="nav-dropdown" id="nav-guide-dropdown">
+              <div class="nav-dropdown-loading">불러오는 중...</div>
+            </div>
+          </div>
           <a href="/trade/" class="muted">거래소</a>
-          <a href="/trade/price/" class="muted">계정 시세</a>
           <a href="/contact/" class="muted">문의하기</a>
         </div>
         <div class="navbar-actions" id="navbar-actions">
@@ -60,9 +65,12 @@ function renderNavbar(activePage = '') {
     </nav>
     <div class="mobile-menu" id="mobile-menu">
       <div class="mobile-menu-inner">
-        <a href="/trade/" class="mobile-menu-link">거래소</a>
+        <div class="mobile-menu-link mobile-guide-toggle" onclick="toggleMobileGuide()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+          <span>게임 공략</span><span id="mobile-guide-arrow">▾</span>
+        </div>
+        <div id="mobile-guide-links" style="display:none;padding:4px 0 8px 12px;"></div>
         <div class="mobile-menu-divider"></div>
-        <a href="/trade/price/" class="mobile-menu-link">계정 시세</a>
+        <a href="/trade/" class="mobile-menu-link">거래소</a>
         <div class="mobile-menu-divider"></div>
         <a href="/contact/" class="mobile-menu-link">문의하기</a>
         <div class="mobile-menu-divider"></div>
@@ -78,13 +86,29 @@ function renderNavbar(activePage = '') {
 
 function toggleNavDropdown() {
   const wrap = document.getElementById('nav-dropdown-wrap')
-  wrap.classList.toggle('open')
+  if (wrap) wrap.classList.toggle('open')
+}
+
+function toggleGuideDropdown() {
+  const wrap = document.getElementById('nav-guide-dropdown-wrap')
+  if (wrap) wrap.classList.toggle('open')
+}
+
+function toggleMobileGuide() {
+  const el = document.getElementById('mobile-guide-links')
+  const arrow = document.getElementById('mobile-guide-arrow')
+  if (!el) return
+  const open = el.style.display === 'none'
+  el.style.display = open ? 'block' : 'none'
+  if (arrow) arrow.textContent = open ? '▴' : '▾'
 }
 
 // 드롭다운 외부 클릭 시 닫기
 document.addEventListener('click', e => {
   const wrap = document.getElementById('nav-dropdown-wrap')
   if (wrap && !wrap.contains(e.target)) wrap.classList.remove('open')
+  const guideWrap = document.getElementById('nav-guide-dropdown-wrap')
+  if (guideWrap && !guideWrap.contains(e.target)) guideWrap.classList.remove('open')
 })
 
 function toggleMobileMenu() {
@@ -224,6 +248,24 @@ async function loadAndRenderGameUI(activeSlug) {
   if (mobileGameLinks) {
     mobileGameLinks.innerHTML = games.map(g => `
       <a href="${gameSlugToPath(g.slug)}" class="mobile-game-item">
+        ${gameIcon(g, 22)} <span>${g.nameKo}</span>
+      </a>
+    `).join('')
+  }
+
+  // 게임 공략 드롭다운 업데이트
+  const guideDropdown = document.getElementById('nav-guide-dropdown')
+  if (guideDropdown) {
+    guideDropdown.innerHTML = games.map(g => `
+      <a href="${gameHubPath(g.slug)}" class="nav-dropdown-item">
+        ${gameIcon(g, 20)} <span>${g.nameKo}</span>
+      </a>
+    `).join('')
+  }
+  const mobileGuideLinks = document.getElementById('mobile-guide-links')
+  if (mobileGuideLinks) {
+    mobileGuideLinks.innerHTML = games.map(g => `
+      <a href="${gameHubPath(g.slug)}" class="mobile-game-item">
         ${gameIcon(g, 22)} <span>${g.nameKo}</span>
       </a>
     `).join('')
