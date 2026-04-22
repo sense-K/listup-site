@@ -64,11 +64,16 @@
   <div id="navbar-container"></div>
 
   <main class="game-hub-wrap">
-    <div class="game-hub-header">
-      <div class="game-hub-icon">⚔️</div>
-      <div>
-        <div class="game-hub-title">에픽세븐 (Epic Seven)</div>
+    <div class="game-hub-hero">
+      <div class="game-hub-hero-bg" id="game-hub-hero-bg"></div>
+      <div class="game-hub-hero-overlay"></div>
+      <div class="game-hub-hero-content">
+        <img class="game-hub-app-icon" id="game-hub-app-icon" src="" alt="" style="display:none;">
+        <span class="game-hub-icon" id="game-hub-emoji" style="font-size:48px;line-height:1;">⚔️</span>
+        <div>
+          <div class="game-hub-title">에픽세븐 (Epic Seven)</div>
         <div class="game-hub-sub">공략 도구 4종 서비스 중</div>
+        </div>
       </div>
     </div>
 
@@ -117,6 +122,23 @@
 
   <div id="footer-container"></div>
   <script>
+    const GAME_SLUG = 'epicseven'
+    async function loadGameHero() {
+      const { data: game } = await db.from('Game').select('imageUrl, artImageUrl').eq('slug', GAME_SLUG).single()
+      if (!game) return
+      if (game.artImageUrl) {
+        document.getElementById('game-hub-hero-bg').style.backgroundImage = `url('${game.artImageUrl}')`
+      }
+      if (game.imageUrl) {
+        const icon = document.getElementById('game-hub-app-icon')
+        const emoji = document.getElementById('game-hub-emoji')
+        icon.src = game.imageUrl
+        icon.alt = game.nameKo || ''
+        icon.style.display = 'block'
+        if (emoji) emoji.style.display = 'none'
+      }
+    }
+    loadGameHero()
     document.getElementById('navbar-container').innerHTML = renderNavbar();
     loadAndRenderGameUI(null);
     document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : '';

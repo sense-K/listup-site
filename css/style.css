@@ -381,6 +381,50 @@ a { text-decoration: none; color: inherit; }
   }
 }
 
+/* 게임 허브 히어로 배너 */
+.game-hub-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  margin-bottom: 32px;
+  min-height: 160px;
+}
+.game-hub-hero-bg {
+  position: absolute;
+  inset: -24px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(18px);
+}
+.game-hub-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.35) 100%);
+}
+.game-hub-hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 28px 24px;
+}
+.game-hub-app-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.game-hub-hero .game-hub-title {
+  color: #fff !important;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+}
+.game-hub-hero .game-hub-sub {
+  color: rgba(255,255,255,0.82) !important;
+}
+
 /* 최신 매물 헤더 */
 .listings-section-header {
   display: flex;
