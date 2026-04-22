@@ -1,0 +1,237 @@
+const SUPABASE_URL = 'https://ltcibadxwkupwjikqzik.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0Y2liYWR4d2t1cHdqaWtxemlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTQ5OTEsImV4cCI6MjA5MDY5MDk5MX0.KYrP2xopjSxBOee2KcS8tM89misAkyzfBvx0828t4No'
+
+export async function onRequest({ params }) {
+  const slug = params.slug
+  if (!slug || !/^[a-z0-9_-]+$/.test(slug)) {
+    return new Response('Not Found', { status: 404 })
+  }
+
+  // Supabase에서 게임 정보 조회
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/Game?slug=eq.${slug}&select=id,nameKo,nameEn,slug,emoji,imageUrl&limit=1`,
+    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+  )
+  const games = await res.json()
+  const game = games?.[0]
+  if (!game) return new Response('Not Found', { status: 404 })
+
+  const nameKo = game.nameKo ?? slug
+  const title = `${nameKo} 리세계 판매계정 | 플레이센스`
+  const desc = `${nameKo} 리세계 판매계정을 검색해보세요. 수수료 없는 직거래 플랫폼 플레이센스.`
+  const url = `https://resetlist.kr/trade/${slug}/`
+
+  const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <meta name="description" content="${desc}">
+  <link rel="canonical" href="${url}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${url}">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${desc}">
+  <meta property="og:site_name" content="플레이센스">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="page-wrapper">
+  <div class="layout-with-sidebar">
+    <aside class="sidebar">
+      <div id="sidebar-games"></div>
+    </aside>
+    <div class="content-area">
+      <div class="content-header">
+        <div class="content-title" id="game-page-title">${nameKo} 계정</div>
+        <a href="/trade/register.html" class="btn btn-primary" style="font-size:13px;padding:7px 16px;white-space:nowrap;flex-shrink:0;">판매 등록하기 ↗</a>
+      </div>
+      <div class="char-filter-bar">
+        <select class="form-select" id="server-filter" style="width:auto;min-width:110px;"><option value="">전체 서버</option></select>
+        <button class="char-filter-btn" id="char-filter-btn" onclick="openCharFilter()">캐릭터 선택 →</button>
+        <span class="char-filter-hint" id="char-filter-hint">보유 캐릭터로 계정을 검색할 수 있어요</span>
+        <div class="filter-tag-list" id="filter-tag-list"></div>
+        <button class="filter-clear-btn" id="filter-clear-btn" style="display:none;" onclick="clearAllFilter()">필터 초기화</button>
+      </div>
+      <div id="listings-container"><div class="loading">불러오는 중...</div></div>
+      <button class="btn-more" id="more-btn" style="display:none;" onclick="loadMore()">계정 더보기</button>
+    </div>
+  </div>
+</div>
+
+<a href="/trade/register.html" class="fab">판매하기 ↗</a>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script src="/js/listings.js"></script>
+<script>
+  const GAME_SLUG = '${slug}'
+  document.getElementById('navbar').innerHTML = renderNavbar()
+  document.getElementById('sidebar-games').innerHTML = renderSidebarGames(GAME_SLUG)
+
+  const GRADE_DOT_COLOR = {
+    'SSS':'#c026d3','SS':'#ea580c','S':'#d97706','A':'#7c3aed','B':'#3b82f6','C':'#9ca3af',
+    '5성':'#ea580c','4성':'#7c3aed',
+  }
+
+  let filterChars = {}
+  let allFilterChars = []
+  let filterCharStore = {}
+  let currentPage = 1
+
+  async function loadServers() {
+    const { data: game } = await db.from('Game').select('id').eq('slug', GAME_SLUG).single()
+    if (!game) return
+    const { data: servers } = await db.from('Server').select('id, nameKo').eq('gameId', game.id)
+    const sel = document.getElementById('server-filter')
+    servers?.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.nameKo; sel.appendChild(o) })
+    sel.addEventListener('change', () => loadPage(1))
+  }
+
+  async function loadFilterChars() {
+    const { data: game } = await db.from('Game').select('id').eq('slug', GAME_SLUG).single()
+    if (!game) return
+    const { data: chars } = await db.from('Character').select('id, nameKo, tier, imageUrl')
+      .eq('gameId', game.id).eq('isActive', true).order('sortOrder')
+    allFilterChars = chars ?? []
+    allFilterChars.forEach(c => { filterCharStore[c.id] = c })
+  }
+
+  function openCharFilter() {
+    renderCharFilterGrid()
+    document.getElementById('cf-modal').style.display = 'flex'
+    document.body.style.overflow = 'hidden'
+  }
+  function closeCharFilter() {
+    document.getElementById('cf-modal').style.display = 'none'
+    document.body.style.overflow = ''
+  }
+  function handleCfModalOverlay(e) {
+    if (e.target === document.getElementById('cf-modal')) closeCharFilter()
+  }
+  function filterCharsBySearch(term) {
+    const filtered = term.trim() ? allFilterChars.filter(c => c.nameKo.includes(term.trim())) : allFilterChars
+    renderCharFilterGrid(filtered)
+  }
+  function renderCharFilterGrid(chars) {
+    chars = chars ?? allFilterChars
+    const container = document.getElementById('cf-char-list')
+    if (!allFilterChars.length) { container.innerHTML = '<div style="text-align:center;padding:24px;color:#aaa;">불러오는 중...</div>'; return }
+    if (!chars.length) { container.innerHTML = '<div style="text-align:center;padding:24px;color:#aaa;">검색 결과가 없어요</div>'; return }
+
+    const groups = {}
+    chars.forEach(c => { const g = c.tier || '기타'; if (!groups[g]) groups[g] = []; groups[g].push(c) })
+    const grades = Object.keys(groups)
+    container.innerHTML = grades.map(grade => {
+      const dot = GRADE_DOT_COLOR[grade] || '#9ca3af'
+      const cards = groups[grade].map(c => {
+        const entry = filterChars[c.id]; const sel = !!entry; const cnt = entry?.count ?? 0
+        return \`<div class="char-item\${sel ? ' selected' : ''}" id="cfc-\${c.id}" onclick="clickFilterChar('\${c.id}')">
+          \${c.imageUrl ? \`<img src="\${c.imageUrl}" alt="\${c.nameKo}" loading="lazy">\` : '<div class="char-no-img">?</div>'}
+          <div class="char-name-label">\${c.nameKo}</div>
+          <div class="check-overlay" style="\${sel ? 'display:flex;' : 'display:none;'}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="char-count-badge" style="\${cnt > 1 ? '' : 'display:none;'}">\${cnt > 1 ? cnt : ''}</div>
+        </div>\`
+      }).join('')
+      return \`<div class="char-grade-section">
+        <div class="char-grade-header"><span class="grade-dot" style="background:\${dot};"></span><span>\${grade}</span><span style="color:#aaa;font-weight:400;">\${groups[grade].length}개</span></div>
+        <div class="char-grid">\${cards}</div>
+      </div>\`
+    }).join('')
+    renderCfSelectedBar()
+  }
+  function clickFilterChar(charId) {
+    const c = filterCharStore[charId]; if (!c) return
+    if (!filterChars[charId]) filterChars[charId] = { char: c, count: 1 }
+    else filterChars[charId].count++
+    const el = document.getElementById('cfc-' + charId); if (!el) return
+    const entry = filterChars[charId]
+    el.classList.add('selected')
+    const ov = el.querySelector('.check-overlay'); if (ov) ov.style.display = 'flex'
+    const bd = el.querySelector('.char-count-badge')
+    if (bd) { bd.style.display = entry.count > 1 ? 'flex' : 'none'; bd.textContent = entry.count > 1 ? entry.count : '' }
+    renderCfSelectedBar()
+  }
+  function renderCfSelectedBar() {
+    const bar = document.getElementById('cf-selected-bar')
+    const entries = Object.values(filterChars)
+    bar.innerHTML = entries.length === 0
+      ? '<span style="color:#aaa;font-size:13px;">캐릭터를 선택하면 여기 표시돼요</span>'
+      : entries.map(({ char: c, count }) => \`<span class="filter-tag">\${c.imageUrl ? \`<img src="\${c.imageUrl}" alt="\${c.nameKo}">\` : ''}\${c.nameKo}\${count > 1 ? \` ×\${count}\` : ''}</span>\`).join('')
+  }
+  function applyCharFilter() { closeCharFilter(); renderFilterTags(); currentPage = 1; loadPage(1) }
+  function resetCharFilter() { filterChars = {}; renderCharFilterGrid() }
+  function renderFilterTags() {
+    const btn = document.getElementById('char-filter-btn')
+    const tagList = document.getElementById('filter-tag-list')
+    const clearBtn = document.getElementById('filter-clear-btn')
+    const hint = document.getElementById('char-filter-hint')
+    const entries = Object.values(filterChars)
+    if (entries.length === 0) {
+      btn.textContent = '캐릭터 선택 →'; btn.classList.remove('has-filter')
+      tagList.innerHTML = ''; clearBtn.style.display = 'none'
+      if (hint) hint.style.display = ''
+    } else {
+      if (hint) hint.style.display = 'none'
+      btn.textContent = entries.length + '개 선택됨'; btn.classList.add('has-filter')
+      tagList.innerHTML = entries.map(({ char: c, count }) =>
+        \`<span class="filter-tag">\${c.imageUrl ? \`<img src="\${c.imageUrl}" alt="\${c.nameKo}">\` : ''}\${c.nameKo}\${count > 1 ? \` ×\${count}\` : ''}<button onclick="removeFilterChar('\${c.id}')">×</button></span>\`
+      ).join('')
+      clearBtn.style.display = 'block'
+    }
+  }
+  function removeFilterChar(charId) { delete filterChars[charId]; renderFilterTags(); loadPage(1) }
+  function clearAllFilter() { filterChars = {}; renderFilterTags(); loadPage(1) }
+
+  function loadPage(p = 1) {
+    currentPage = p
+    const charFilter = Object.keys(filterChars).length > 0 ? filterChars : null
+    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: p, moreBtn: 'more-btn', characterFilter: charFilter })
+  }
+  function loadMore() {
+    currentPage++
+    const charFilter = Object.keys(filterChars).length > 0 ? filterChars : null
+    loadListings({ container: 'listings-container', gameSlug: GAME_SLUG, serverId: document.getElementById('server-filter').value || undefined, page: currentPage, append: true, moreBtn: 'more-btn', characterFilter: charFilter })
+  }
+
+  loadAndRenderGameUI(GAME_SLUG); loadServers(); loadFilterChars(); loadPage(1)
+</script>
+
+<div class="cf-modal-overlay" id="cf-modal" style="display:none;" onclick="handleCfModalOverlay(event)">
+  <div class="cf-modal-sheet">
+    <div class="cf-modal-header">
+      <span class="cf-modal-title">캐릭터 선택</span>
+      <button class="cf-modal-close" onclick="closeCharFilter()">×</button>
+    </div>
+    <div class="cf-modal-search">
+      <input type="text" id="cf-search-input" class="cf-search-input" placeholder="캐릭터 이름 검색..." oninput="filterCharsBySearch(this.value)">
+    </div>
+    <div class="cf-modal-selected-bar" id="cf-selected-bar">
+      <span style="color:#aaa;font-size:13px;">캐릭터를 선택하면 여기 표시돼요</span>
+    </div>
+    <div class="cf-modal-body">
+      <div class="char-grade-list" id="cf-char-list"></div>
+    </div>
+    <div class="cf-modal-footer">
+      <button class="cf-modal-reset" onclick="resetCharFilter()">초기화</button>
+      <button class="cf-modal-apply" onclick="applyCharFilter()">적용하기</button>
+    </div>
+  </div>
+</div>
+
+<div id="footer"></div>
+</body>
+</html>`
+
+  return new Response(html, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=300',
+    },
+  })
+}
