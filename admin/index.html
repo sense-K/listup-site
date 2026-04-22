@@ -678,13 +678,17 @@
     const imageUrl = document.getElementById('new-char-image').value.trim()
     if (!gameId) { alert('게임을 선택하세요'); return }
     if (!nameKo) { alert('캐릭터 이름을 입력하세요'); return }
+    const now = new Date().toISOString()
     const { error } = await db.from('Character').insert({
       id: crypto.randomUUID(),
       gameId, nameKo, nameEn: nameKo, tier,
-      imageUrl: imageUrl || null,
+      isLimited: false,
       basePrice: 0,
+      imageUrl: imageUrl || null,
       isActive: true,
-      createdAt: new Date().toISOString()
+      sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
     })
     if (error) { alert('추가 실패: ' + error.message); return }
     document.getElementById('new-char-name').value = ''
@@ -939,16 +943,20 @@
     btn.disabled = true
     btn.textContent = '등록 중...'
 
+    const now = new Date().toISOString()
     const rows = toInsert.map(c => ({
       id: crypto.randomUUID(),
       gameId: c.gameId,
       nameKo: c.nameKo,
       nameEn: c.nameEn,
       tier: c.tier,
-      imageUrl: c.imageUrl,
+      isLimited: false,
       basePrice: 0,
+      imageUrl: c.imageUrl,
       isActive: true,
-      createdAt: new Date().toISOString(),
+      sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
     }))
 
     // 50개씩 나눠서 upsert (Supabase 요청 크기 제한)
