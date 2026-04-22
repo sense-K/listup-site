@@ -138,31 +138,43 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       }
     }
 
-    // limit+1 개 조회해서 다음 페이지 존재 여부 확인
-    let query = db
-      .from('Listing')
-      .select(`
-        id, price, discountAmount, description, createdAt, viewCount, status,
-        game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
-        server:Server(nameKo),
-        user:User(nickname),
-        characters:ListingCharacter(
-          count,
-          character:Character(nameKo, tier, imageUrl)
-        ),
-        currencies:ListingCurrency(amount, currency:Currency(nameKo, imageUrl, sortOrder))
-      `)
-      .in('status', ['active', 'trading', 'sold'])
-      .order(sort === 'price' ? 'price' : 'createdAt', { ascending: sort === 'price' })
-      .range((page - 1) * limit, page * limit)  // limit+1
+    // 판매중(active/trading) 먼저, 판매완료(sold) 나중 — 각 그룹 내에서 선택 정렬 적용
+    const SELECT_FIELDS = `
+      id, price, discountAmount, description, createdAt, viewCount, status,
+      game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
+      server:Server(nameKo),
+      user:User(nickname),
+      characters:ListingCharacter(
+        count,
+        character:Character(nameKo, tier, imageUrl)
+      ),
+      currencies:ListingCurrency(amount, currency:Currency(nameKo, imageUrl, sortOrder))
+    `
+    const orderCol = sort === 'price' ? 'price' : 'createdAt'
+    const orderAsc = sort === 'price'
 
-    if (gameId) query = query.eq('gameId', gameId)
-    if (serverId) query = query.eq('serverId', serverId)
-    if (filteredListingIds) query = query.in('id', filteredListingIds)
+    const buildBase = (statusList) => {
+      let q = db.from('Listing').select(SELECT_FIELDS)
+        .in('status', statusList)
+        .order(orderCol, { ascending: orderAsc })
+      if (gameId) q = q.eq('gameId', gameId)
+      if (serverId) q = q.eq('serverId', serverId)
+      if (filteredListingIds) q = q.in('id', filteredListingIds)
+      return q
+    }
 
-    const { data: listings, error } = await query
-
+    // 두 그룹을 병렬 fetch (각각 최대 200개)
+    const [{ data: activeData, error: e1 }, { data: soldData, error: e2 }] = await Promise.all([
+      buildBase(['active', 'trading']).limit(200),
+      buildBase(['sold']).limit(200),
+    ])
+    const error = e1 || e2
     if (error) throw error
+
+    // 판매중 → 판매완료 순으로 합치고 페이지네이션
+    const allListings = [...(activeData ?? []), ...(soldData ?? [])]
+    const start = (page - 1) * limit
+    const listings = allListings.slice(start, start + limit + 1)  // limit+1 for hasMore check
 
     if (!listings || listings.length === 0) {
       if (!append) {
