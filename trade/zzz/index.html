@@ -49,19 +49,18 @@
           <option value="">전체 서버</option>
         </select>
       </div>
-      <div class="sidebar-section char-filter-section">
-        <div class="sidebar-label char-filter-label">캐릭터 필터</div>
-        <button class="char-filter-btn" id="char-filter-btn" onclick="openCharFilter()">캐릭터 선택 →</button>
-        <div class="filter-tag-list" id="filter-tag-list"></div>
-        <button class="filter-clear-btn" id="filter-clear-btn" style="display:none;" onclick="clearAllFilter()">필터 초기화</button>
-      </div>
     </aside>
     <div class="content-area">
       <div class="content-header">
         <div class="content-title" id="game-page-title">젠레스 존 제로 계정</div>
         
       </div>
-<div id="listings-container"><div class="loading">불러오는 중...</div></div>
+      <div class="char-filter-bar">
+        <button class="char-filter-btn" id="char-filter-btn" onclick="openCharFilter()">캐릭터 선택 →</button>
+        <div class="filter-tag-list" id="filter-tag-list"></div>
+        <button class="filter-clear-btn" id="filter-clear-btn" style="display:none;" onclick="clearAllFilter()">필터 초기화</button>
+      </div>
+      <div id="listings-container"><div class="loading">불러오는 중...</div></div>
   <button class="btn-more" id="more-btn" style="display:none;" onclick="loadMore()">계정 더보기</button>
     </div>
   </div>
