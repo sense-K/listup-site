@@ -540,6 +540,8 @@ a { text-decoration: none; color: inherit; }
 
 /* ===== 페이지 레이아웃 ===== */
 .page-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 36px 48px 80px;
   min-height: calc(100vh - 60px - 140px);
 }
