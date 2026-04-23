@@ -52,6 +52,8 @@
     "/trade/stardive/*",
     "/trade/epic7",
     "/trade/epic7/*",
+    "/trade/starrail",
+    "/trade/starrail/*",
     "/trade/register",
     "/trade/register/*",
     "/trade/bulk",
