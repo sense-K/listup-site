@@ -224,7 +224,7 @@
     grid.innerHTML = list.map(c => {
       const borderClass = ['SSS','SS','S'].includes(c.tier) ? `tier-border-${c.tier}` : ''
       return `
-        <a class="n-card ${borderClass}" href="/game/nikke/characters/${c.slug}/" style="text-decoration:none;">
+        <div class="n-card ${borderClass}" onclick="openModal('${c.id}')" style="cursor:pointer;">
           <div class="n-card-img-wrap">
             ${c.imageUrl
               ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy" onerror="this.parentElement.style.background='#1e1e2e'">`
@@ -235,7 +235,7 @@
           <div class="n-card-body">
             <div class="n-card-name">${c.nameKo}</div>
           </div>
-        </a>`
+        </div>`
     }).join('')
   }
 
