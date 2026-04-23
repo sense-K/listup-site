@@ -332,6 +332,45 @@ const GRADE_ORDER_MAP = {
 - 연결 문자열은 Supabase 대시보드 → Settings → Database → Connection string에서 확인
 - 스타레일 더미 sold 글 30개 생성 완료 (userId: zzabhm, 서버 4개 순환)
 
+## 게임 도감 (2026-04-23 추가)
+
+### 블루아카이브 학생 도감 (`/game/bluearchive/students/`)
+- SchaleDB GitHub 공개 JSON 데이터 사용
+  - `https://raw.githubusercontent.com/SchaleDB/SchaleDB/main/data/kr/students.json`
+  - 이미지: `https://raw.githubusercontent.com/SchaleDB/SchaleDB/main/images/student/icon/{Id}.webp`
+  - 전신: `https://raw.githubusercontent.com/SchaleDB/SchaleDB/main/images/student/collection/{Id}.webp`
+- KR 서버 출시 학생만 표시 (`IsReleased[0] === true`)
+- 필터: 학교(15개) / 속성(폭발·관통·신비·진동) / 역할(딜러·탱커·힐러·서포터) / 등급(1~3성)
+- 카드 클릭 → 모달 (전신 이미지, 배치/무기/생일/신장/성우)
+- SchaleDB는 2025년 6월 아카이브됨 (데이터는 여전히 접근 가능, 신규 캐릭터 누락 가능)
+
+### 니케 캐릭터 도감 (`/game/nikke/characters/`)
+- Supabase `Character` 테이블 데이터 사용 (182개, 이미지 전원 포함)
+- 필터: 티어(SSS/SS/S/A/B/C) / 이름 검색
+- 카드 클릭 → 모달 (이미지, 등급, 제조사, 속성, 클래스, 버스트 타입, 무기)
+- **Character 테이블 추가 컬럼** (니케 전용):
+  - `rarity` TEXT — SSR/SR/R (prydwen 기준)
+  - `manufacturer` TEXT — Elysion/Missilis/Tetra/Pilgrim/Abnormal
+  - `weaponType` TEXT — Assault Rifle/SMG/Shotgun 등
+  - `element` TEXT — Fire/Water/Wind/Electric/Iron
+  - `classType` TEXT — Attacker/Defender/Supporter
+  - `burstType` TEXT — 1/2/3
+  - `slug` TEXT — 영문 URL slug (prydwen.gg 기준)
+  - `metadata` JSONB — 스킬 데이터 등 추가 정보
+- **prydwen.gg 데이터 import**: `https://www.prydwen.gg/page-data/nikke/characters/page-data.json`
+  - Gatsby SSG 정적 JSON → 203개 캐릭터 데이터
+  - Supabase nameEn으로 매칭 (182개 중 178개 자동 매칭)
+  - 스킬 설명은 Contentful Rich Text 형식 → parse_contentful() 함수로 파싱
+  - 스킬 데이터는 **영어만 제공** (한국어 소스 없음)
+- **매칭 방법**: `nameEn` ↔ prydwen `name` (직접 매칭 + 수동 보정)
+- 콜라보 캐릭터 일부 prydwen 미수록 → 기본 정보만 표시
+
+### 보안 수정 (2026-04-23)
+- `Report` 테이블 RLS 활성화 (psycopg2로 직접 실행)
+- DB 비밀번호 유출 사고: CLAUDE.md에 연결 문자열 포함했다가 GitHub에 노출됨
+  - 즉시 비밀번호 변경 + CLAUDE.md에서 제거
+  - 앞으로 DB 연결 문자열을 문서에 절대 기록하지 말 것
+
 ## 현재 상태 (2026-04-23)
 - 핵심 기능 + 보안 + UX 개선 완료
 - resetlist.kr 도메인 연결 완료
@@ -342,6 +381,8 @@ const GRADE_ORDER_MAP = {
 - 에픽세븐 공략 도구 4종 서비스 중
 - 원신/ZZZ/스타레일 UID 조회 서비스 중
 - 거래소 목록 판매중 우선 정렬 적용
+- 블루아카이브 학생 도감 서비스 중 (`/game/bluearchive/students/`)
+- 니케 캐릭터 도감 서비스 중 (`/game/nikke/characters/`)
 - 작업 폴더: OneDrive (`C:\Users\혁문\OneDrive\Desktop\vibe coding\리세계\listup-site`)
 
 ## 남은 작업 목록
