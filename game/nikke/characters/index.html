@@ -95,6 +95,38 @@
       .n-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
       .n-card-name { font-size: 11px; }
     }
+
+    /* 모달 */
+    .n-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 1000;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .n-modal-overlay.open { display: flex; }
+    .n-modal {
+      background: #fff; border-radius: 20px;
+      width: 340px; max-width: 100%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+      overflow: hidden; position: relative;
+    }
+    .n-modal-img-wrap {
+      width: 100%; aspect-ratio: 1;
+      background: #0f0f1a; overflow: hidden;
+    }
+    .n-modal-img-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .n-modal-body { padding: 18px 20px 22px; }
+    .n-modal-name { font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 2px; }
+    .n-modal-en { font-size: 12px; color: #94a3b8; margin-bottom: 12px; }
+    .n-modal-rarity { margin-bottom: 12px; }
+    .n-modal-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .m-tag { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+    .n-modal-close {
+      position: absolute; top: 10px; right: 10px;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: rgba(0,0,0,0.35); color: #fff;
+      border: none; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
   </style>
 </head>
 <body>
@@ -124,6 +156,22 @@
   <div class="n-grid" id="grid"><div class="n-empty">불러오는 중...</div></div>
 </div>
 
+<!-- 상세 모달 -->
+<div class="n-modal-overlay" id="n-modal" onclick="if(event.target===this)closeModal()">
+  <div class="n-modal">
+    <button class="n-modal-close" onclick="closeModal()">✕</button>
+    <div class="n-modal-img-wrap">
+      <img id="m-img" src="" alt="">
+    </div>
+    <div class="n-modal-body">
+      <div class="n-modal-name" id="m-name"></div>
+      <div class="n-modal-en" id="m-en"></div>
+      <div class="n-modal-rarity" id="m-rarity"></div>
+      <div class="n-modal-tags" id="m-tags"></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/config.js"></script>
 <script>
@@ -140,7 +188,7 @@
 
     const { data: chars } = await db
       .from('Character')
-      .select('id, nameKo, tier, imageUrl')
+      .select('id, nameKo, nameEn, tier, imageUrl, rarity, manufacturer, weaponType, element, classType, burstType')
       .eq('gameId', game.id)
       .eq('isActive', true)
       .order('tier')
@@ -176,7 +224,7 @@
     grid.innerHTML = list.map(c => {
       const borderClass = ['SSS','SS','S'].includes(c.tier) ? `tier-border-${c.tier}` : ''
       return `
-        <div class="n-card ${borderClass}">
+        <div class="n-card ${borderClass}" onclick="openModal('${c.id}')" style="cursor:pointer;">
           <div class="n-card-img-wrap">
             ${c.imageUrl
               ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy" onerror="this.parentElement.style.background='#1e1e2e'">`
@@ -189,6 +237,42 @@
           </div>
         </div>`
     }).join('')
+  }
+
+  const MANU_KO   = { Elysion:'엘리시온', Missilis:'미실리스', Tetra:'테트라', Pilgrim:'필그림', Abnormal:'애브노멀' }
+  const WEAPON_KO = { 'Assault Rifle':'돌격소총', 'Sniper Rifle':'저격소총', 'Rocket Launcher':'로켓런처', SMG:'기관단총', Shotgun:'산탄총', Minigun:'미니건' }
+  const ELEM_KO   = { Fire:'화염', Water:'수력', Wind:'풍력', Electric:'전력', Iron:'철력' }
+  const CLASS_KO  = { Attacker:'공격', Defender:'방어', Supporter:'지원' }
+  const ELEM_COLOR = { Fire:'#ef4444', Water:'#3b82f6', Wind:'#22c55e', Electric:'#f59e0b', Iron:'#94a3b8' }
+  const CLASS_COLOR = { Attacker:'#ef4444', Defender:'#3b82f6', Supporter:'#a855f7' }
+
+  function openModal(id) {
+    const c = allChars.find(c => c.id === id)
+    if (!c) return
+    const m = document.getElementById('n-modal')
+    m.querySelector('#m-img').src = c.imageUrl || ''
+    m.querySelector('#m-img').alt = c.nameKo
+    m.querySelector('#m-name').textContent = c.nameKo
+    m.querySelector('#m-en').textContent = c.nameEn || ''
+    m.querySelector('#m-rarity').textContent = c.rarity || c.tier
+    m.querySelector('#m-rarity').className = `n-card-tier tier-${c.tier}`
+
+    const tags = [
+      c.manufacturer ? `<span class="m-tag" style="background:#f1f5f9;color:#374151;">${MANU_KO[c.manufacturer]||c.manufacturer}</span>` : '',
+      c.element ? `<span class="m-tag" style="background:${ELEM_COLOR[c.element]}22;color:${ELEM_COLOR[c.element]};">${ELEM_KO[c.element]||c.element}</span>` : '',
+      c.classType ? `<span class="m-tag" style="background:${CLASS_COLOR[c.classType]}22;color:${CLASS_COLOR[c.classType]};">${CLASS_KO[c.classType]||c.classType}</span>` : '',
+      c.burstType ? `<span class="m-tag" style="background:#ede9fe;color:#5b21b6;">버스트 ${c.burstType}</span>` : '',
+      c.weaponType ? `<span class="m-tag" style="background:#f0fdf4;color:#166534;">${WEAPON_KO[c.weaponType]||c.weaponType}</span>` : '',
+    ].filter(Boolean).join('')
+    m.querySelector('#m-tags').innerHTML = tags
+
+    m.classList.add('open')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function closeModal() {
+    document.getElementById('n-modal').classList.remove('open')
+    document.body.style.overflow = ''
   }
 
   // 칩 클릭
