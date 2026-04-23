@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="shortcut icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>블루 아카이브 학생 도감 | 플레이센스</title>
+  <meta name="description" content="블루 아카이브 전체 학생 도감. 학교, 공격 속성, 역할별 필터와 이름 검색으로 원하는 학생을 빠르게 찾아보세요.">
+  <meta name="keywords" content="블루아카이브 학생 도감, 블루아카이브 캐릭터, 블루아카이브 학생 목록, 블루아카이브 게헨나, 블루아카이브 아비도스, 블루아카이브 밀레니엄">
+  <link rel="canonical" href="https://resetlist.kr/game/bluearchive/students/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://resetlist.kr/game/bluearchive/students/">
+  <meta property="og:title" content="블루 아카이브 학생 도감 | 플레이센스">
+  <meta property="og:description" content="블루 아카이브 전체 학생 도감. 학교, 공격 속성, 역할별 필터로 원하는 학생을 빠르게 찾아보세요.">
+  <meta property="og:site_name" content="플레이센스">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .s-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px; min-height: calc(100vh - 60px - 140px); }
+
+    /* 필터 */
+    .s-filter {
+      background: #fff; border: 1px solid var(--border, #e5e7eb);
+      border-radius: 16px; padding: 16px; margin-bottom: 20px;
+    }
+    .s-search {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid var(--border, #e5e7eb); border-radius: 10px;
+      font-size: 14px; outline: none; margin-bottom: 12px;
+      box-sizing: border-box; color: var(--text, #1e293b); background: #f8fafc;
+    }
+    .s-search:focus { border-color: #4f7cff; background: #fff; }
+    .s-filter-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .s-filter-row:last-child { margin-bottom: 0; }
+    .s-filter-label { font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase; margin-right: 2px; }
+    .s-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border, #e5e7eb);
+      background: transparent; color: var(--text-sub, #64748b);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .s-chip:hover { opacity: 0.8; }
+    .s-chip.active { color: #fff; border-color: transparent; }
+
+    /* 결과 */
+    .s-count { font-size: 13px; color: var(--text-sub, #64748b); margin-bottom: 14px; }
+    .s-count strong { color: var(--text, #1e293b); }
+
+    /* 그리드 */
+    .s-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    /* 카드 */
+    .s-card {
+      background: #fff; border: 1.5px solid var(--border, #e5e7eb);
+      border-radius: 14px; overflow: hidden;
+      cursor: pointer; transition: box-shadow 0.15s, transform 0.15s;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .s-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .s-card-img-wrap {
+      width: 100%; aspect-ratio: 1;
+      background: #f1f5f9; position: relative; overflow: hidden;
+    }
+    .s-card-img-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .s-card-stars {
+      position: absolute; bottom: 3px; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 1px;
+    }
+    .s-card-star { font-size: 9px; line-height: 1; filter: drop-shadow(0 0 2px rgba(0,0,0,0.5)); }
+    .s-card-body { padding: 6px 6px 8px; width: 100%; box-sizing: border-box; text-align: center; }
+    .s-card-name { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .s-card-tags { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; }
+    .s-card-tag {
+      font-size: 10px; font-weight: 600; padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    /* 속성 색상 */
+    .tag-Explosion { background: #fef3c7; color: #92400e; }
+    .tag-Pierce    { background: #dcfce7; color: #15803d; }
+    .tag-Mystic    { background: #ede9fe; color: #5b21b6; }
+    .tag-Sonic     { background: #dbeafe; color: #1d4ed8; }
+
+    /* 방어구 색상 */
+    .tag-LightArmor  { background: #f1f5f9; color: #475569; }
+    .tag-HeavyArmor  { background: #fce7f3; color: #9d174d; }
+    .tag-Unarmed     { background: #ecfdf5; color: #065f46; }
+    .tag-ElasticArmor{ background: #fff7ed; color: #c2410c; }
+
+    /* 역할 색상 */
+    .tag-DamageDealer { background: #fee2e2; color: #991b1b; }
+    .tag-Tanker       { background: #e0f2fe; color: #0369a1; }
+    .tag-Healer       { background: #dcfce7; color: #15803d; }
+    .tag-Supporter    { background: #f3e8ff; color: #6b21a8; }
+
+    .s-empty { text-align: center; padding: 60px 16px; color: #94a3b8; font-size: 15px; }
+
+    /* 상세 모달 */
+    .s-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .s-modal-overlay.open { display: flex; }
+    .s-modal {
+      background: #fff; border-radius: 20px;
+      width: 360px; max-width: 100%; max-height: 90vh;
+      overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    }
+    .s-modal-img { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: top; border-radius: 20px 20px 0 0; background: #f1f5f9; }
+    .s-modal-body { padding: 20px; }
+    .s-modal-name { font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+    .s-modal-school { font-size: 13px; color: #64748b; margin-bottom: 12px; }
+    .s-modal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .s-modal-tag {
+      font-size: 12px; font-weight: 700; padding: 3px 10px;
+      border-radius: 999px;
+    }
+    .s-modal-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .s-modal-info-item { background: #f8fafc; border-radius: 10px; padding: 10px 12px; }
+    .s-modal-info-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
+    .s-modal-info-value { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .s-modal-close {
+      position: absolute; top: 12px; right: 12px;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(0,0,0,0.3); color: #fff;
+      border: none; font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    @media (max-width: 640px) {
+      .s-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+      .s-card-name { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="s-wrap">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <a href="/game/bluearchive/" style="font-size:13px;color:#64748b;text-decoration:none;">← 블루 아카이브</a>
+    <h1 style="font-size:20px;font-weight:800;margin:0;">학생 도감</h1>
+    <span id="total-badge" style="font-size:12px;color:#94a3b8;"></span>
+  </div>
+
+  <div class="s-filter">
+    <input class="s-search" id="search" type="text" placeholder="학생 이름 검색...">
+
+    <div class="s-filter-row">
+      <span class="s-filter-label">학교</span>
+      <button class="s-chip active" data-group="school" data-val="" style="--chip-color:#4f7cff;">전체</button>
+      <button class="s-chip" data-group="school" data-val="Abydos" style="--chip-color:#f59e0b;">아비도스</button>
+      <button class="s-chip" data-group="school" data-val="Gehenna" style="--chip-color:#ef4444;">게헨나</button>
+      <button class="s-chip" data-group="school" data-val="Millennium" style="--chip-color:#3b82f6;">밀레니엄</button>
+      <button class="s-chip" data-group="school" data-val="Trinity" style="--chip-color:#8b5cf6;">트리니티</button>
+      <button class="s-chip" data-group="school" data-val="Hyakkiyako" style="--chip-color:#ec4899;">백귀야행</button>
+      <button class="s-chip" data-group="school" data-val="Shanhaijing" style="--chip-color:#10b981;">산해경</button>
+      <button class="s-chip" data-group="school" data-val="RedWinter" style="--chip-color:#dc2626;">붉은겨울</button>
+      <button class="s-chip" data-group="school" data-val="Valkyrie" style="--chip-color:#6366f1;">발키리</button>
+      <button class="s-chip" data-group="school" data-val="SRT" style="--chip-color:#0ea5e9;">SRT</button>
+      <button class="s-chip" data-group="school" data-val="Arius" style="--chip-color:#64748b;">아리우스</button>
+      <button class="s-chip" data-group="school" data-val="Highlander" style="--chip-color:#d97706;">하이랜더</button>
+      <button class="s-chip" data-group="school" data-val="WildHunt" style="--chip-color:#15803d;">와일드헌트</button>
+      <button class="s-chip" data-group="school" data-val="Tokiwadai" style="--chip-color:#7c3aed;">토키와다이</button>
+      <button class="s-chip" data-group="school" data-val="Sakugawa" style="--chip-color:#db2777;">사쿠가와</button>
+    </div>
+
+    <div class="s-filter-row">
+      <span class="s-filter-label">속성</span>
+      <button class="s-chip active" data-group="bullet" data-val="">전체</button>
+      <button class="s-chip" data-group="bullet" data-val="Explosion" style="--chip-color:#d97706;">💥 폭발</button>
+      <button class="s-chip" data-group="bullet" data-val="Pierce" style="--chip-color:#16a34a;">🟢 관통</button>
+      <button class="s-chip" data-group="bullet" data-val="Mystic" style="--chip-color:#7c3aed;">🔮 신비</button>
+      <button class="s-chip" data-group="bullet" data-val="Sonic" style="--chip-color:#2563eb;">🔵 진동</button>
+    </div>
+
+    <div class="s-filter-row">
+      <span class="s-filter-label">역할</span>
+      <button class="s-chip active" data-group="role" data-val="">전체</button>
+      <button class="s-chip" data-group="role" data-val="DamageDealer" style="--chip-color:#dc2626;">⚔️ 딜러</button>
+      <button class="s-chip" data-group="role" data-val="Tanker" style="--chip-color:#0284c7;">🛡️ 탱커</button>
+      <button class="s-chip" data-group="role" data-val="Healer" style="--chip-color:#16a34a;">💚 힐러</button>
+      <button class="s-chip" data-group="role" data-val="Supporter" style="--chip-color:#7c3aed;">✨ 서포터</button>
+    </div>
+
+    <div class="s-filter-row">
+      <span class="s-filter-label">등급</span>
+      <button class="s-chip active" data-group="star" data-val="">전체</button>
+      <button class="s-chip" data-group="star" data-val="3" style="--chip-color:#f59e0b;">⭐ 3성 (SSR)</button>
+      <button class="s-chip" data-group="star" data-val="2" style="--chip-color:#94a3b8;">⭐ 2성 (SR)</button>
+      <button class="s-chip" data-group="star" data-val="1" style="--chip-color:#64748b;">⭐ 1성 (R)</button>
+    </div>
+  </div>
+
+  <div class="s-count" id="count"></div>
+  <div class="s-grid" id="grid"><div class="s-empty">불러오는 중...</div></div>
+</div>
+
+<!-- 상세 모달 -->
+<div class="s-modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="s-modal" style="position:relative;">
+    <button class="s-modal-close" onclick="closeModal()">✕</button>
+    <img id="modal-img" class="s-modal-img" src="" alt="">
+    <div class="s-modal-body">
+      <div class="s-modal-name" id="modal-name"></div>
+      <div class="s-modal-school" id="modal-school"></div>
+      <div class="s-modal-tags" id="modal-tags"></div>
+      <div class="s-modal-info" id="modal-info"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script>
+  const CDN = 'https://raw.githubusercontent.com/SchaleDB/SchaleDB/main'
+  const DATA_URL = `${CDN}/data/kr/students.json`
+
+  const SCHOOL_KO = {
+    Abydos:'아비도스', Gehenna:'게헨나', Millennium:'밀레니엄', Trinity:'트리니티',
+    Hyakkiyako:'백귀야행', Shanhaijing:'산해경', RedWinter:'붉은겨울', Valkyrie:'발키리',
+    SRT:'SRT', Arius:'아리우스', Highlander:'하이랜더', WildHunt:'와일드헌트',
+    Tokiwadai:'토키와다이', Sakugawa:'사쿠가와', ETC:'기타',
+  }
+  const BULLET_KO = { Explosion:'폭발', Pierce:'관통', Mystic:'신비', Sonic:'진동' }
+  const ARMOR_KO  = { LightArmor:'경장갑', HeavyArmor:'중장갑', Unarmed:'특수장갑', ElasticArmor:'탄력장갑' }
+  const ROLE_KO   = { DamageDealer:'딜러', Tanker:'탱커', Healer:'힐러', Supporter:'서포터' }
+  const POS_KO    = { Front:'전열', Middle:'중열', Back:'후열' }
+  const WEAPON_KO = { SG:'산탄총', SMG:'기관단총', AR:'돌격소총', GL:'유탄발사기', HG:'권총', MG:'기관총', MT:'박격포', RF:'저격소총', RG:'레일건', SR:'저격소총', SHG:'산탄총', FT:'화염방사기' }
+
+  let allStudents = []
+  const filters = { school: '', bullet: '', role: '', star: '' }
+
+  async function init() {
+    document.getElementById('navbar').innerHTML = renderNavbar()
+    loadAndRenderGameUI(null)
+
+    const res = await fetch(DATA_URL)
+    const data = await res.json()
+    // KR 서버 출시된 학생만
+    allStudents = data.filter(s => s.IsReleased && s.IsReleased[0] === true)
+    document.getElementById('total-badge').textContent = `총 ${allStudents.length}명`
+    render()
+  }
+
+  function render() {
+    const q = document.getElementById('search').value.trim().toLowerCase()
+    let list = allStudents.filter(s => {
+      if (filters.school && s.School !== filters.school) return false
+      if (filters.bullet && s.BulletType !== filters.bullet) return false
+      if (filters.role  && s.TacticRole !== filters.role)  return false
+      if (filters.star  && String(s.StarGrade) !== filters.star) return false
+      if (q && !s.Name.toLowerCase().includes(q)) return false
+      return true
+    })
+
+    document.getElementById('count').innerHTML = `<strong>${list.length}명</strong> 표시 중`
+    const grid = document.getElementById('grid')
+    if (list.length === 0) {
+      grid.innerHTML = '<div class="s-empty">조건에 맞는 학생이 없어요</div>'
+      return
+    }
+
+    grid.innerHTML = list.map(s => {
+      const stars = '⭐'.repeat(s.StarGrade)
+      const iconUrl = `${CDN}/images/student/icon/${s.Id}.webp`
+      return `
+        <div class="s-card" onclick="openModal(${s.Id})">
+          <div class="s-card-img-wrap">
+            <img src="${iconUrl}" alt="${s.Name}" loading="lazy" onerror="this.style.display='none'">
+            <div class="s-card-stars">${'<span class=s-card-star>⭐</span>'.repeat(s.StarGrade)}</div>
+          </div>
+          <div class="s-card-body">
+            <div class="s-card-name">${s.Name}</div>
+            <div class="s-card-tags">
+              <span class="s-card-tag tag-${s.BulletType}">${BULLET_KO[s.BulletType]||s.BulletType}</span>
+            </div>
+          </div>
+        </div>`
+    }).join('')
+  }
+
+  function openModal(id) {
+    const s = allStudents.find(s => s.Id === id)
+    if (!s) return
+    document.getElementById('modal-img').src = `${CDN}/images/student/collection/${s.Id}.webp`
+    document.getElementById('modal-img').alt = s.Name
+    document.getElementById('modal-name').textContent = s.Name
+    document.getElementById('modal-school').textContent =
+      `${SCHOOL_KO[s.School] || s.School} · ${'⭐'.repeat(s.StarGrade)}`
+    document.getElementById('modal-tags').innerHTML = [
+      `<span class="s-modal-tag tag-${s.BulletType}">${BULLET_KO[s.BulletType]||s.BulletType}</span>`,
+      `<span class="s-modal-tag tag-${s.ArmorType}" style="background:#f1f5f9;color:#475569;">${ARMOR_KO[s.ArmorType]||s.ArmorType}</span>`,
+      `<span class="s-modal-tag tag-${s.TacticRole}">${ROLE_KO[s.TacticRole]||s.TacticRole}</span>`,
+    ].join('')
+    document.getElementById('modal-info').innerHTML = [
+      info('배치', POS_KO[s.Position] || s.Position),
+      info('무기', WEAPON_KO[s.WeaponType] || s.WeaponType),
+      info('생일', s.Birthday || '-'),
+      info('학년', s.SchoolYear || '-'),
+      info('신장', s.CharHeightMetric || '-'),
+      info('성우', s.CharacterVoice || '-'),
+    ].join('')
+    document.getElementById('modal').classList.add('open')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function info(label, value) {
+    return `<div class="s-modal-info-item">
+      <div class="s-modal-info-label">${label}</div>
+      <div class="s-modal-info-value">${value}</div>
+    </div>`
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open')
+    document.body.style.overflow = ''
+  }
+
+  // 필터 칩 클릭
+  document.querySelectorAll('.s-chip').forEach(btn => {
+    const color = btn.style.getPropertyValue('--chip-color') || '#4f7cff'
+    btn.addEventListener('click', () => {
+      const group = btn.dataset.group
+      const val = btn.dataset.val
+      filters[group] = val
+      document.querySelectorAll(`.s-chip[data-group="${group}"]`).forEach(b => {
+        b.classList.remove('active')
+        b.style.background = ''
+        b.style.borderColor = ''
+        b.style.color = ''
+      })
+      btn.classList.add('active')
+      const c = btn.style.getPropertyValue('--chip-color') || '#4f7cff'
+      btn.style.background = c
+      btn.style.borderColor = c
+      btn.style.color = '#fff'
+      render()
+    })
+    // 초기 active 스타일
+    if (btn.classList.contains('active') && btn.dataset.val === '') {
+      btn.style.background = color
+      btn.style.borderColor = color
+      btn.style.color = '#fff'
+    }
+  })
+
+  document.getElementById('search').addEventListener('input', render)
+
+  init()
+</script>
+
+<div id="footer"></div>
+</body>
+</html>
