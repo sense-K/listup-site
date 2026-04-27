@@ -330,6 +330,12 @@
         <button class="btn-bulk-import" onclick="syncGenshinImages()" id="genshin-sync-btn" style="background:rgba(99,179,237,0.9);">🖼️ 이미지 재동기화</button>
         <div id="genshin-sync-status" style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:10px;min-height:18px;"></div>
       </div>
+      <div class="admin-card" style="background:linear-gradient(135deg,#5a3d8a,#7d4fb8);color:#fff;border:none;">
+        <div class="admin-card-title" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.1);">📚 원신 캐릭터 상세정보 동기화</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.65);margin:0 0 14px;">스킬·별자리·생일·성우·소속 등 상세정보를 metadata 컬럼에 저장합니다. 캐릭터 상세 페이지용.</p>
+        <button class="btn-bulk-import" onclick="syncGenshinMetadata()" id="genshin-meta-btn" style="background:rgba(167,139,250,0.9);">📚 상세정보 동기화</button>
+        <div id="genshin-meta-status" style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:10px;min-height:18px;"></div>
+      </div>
       <div class="admin-card">
         <div class="admin-card-title">새 캐릭터 추가</div>
         <div class="inline-form" style="margin-bottom:8px;">
@@ -1058,8 +1064,8 @@
       const { data: existing } = await db.from('Character').select('nameKo').eq('gameId', genshinGameId)
       genshinBulkSkipSet = new Set((existing ?? []).map(c => c.nameKo))
 
-      // 4. 개별 캐릭터 상세 10개씩 배치 fetch
-      const BATCH = 10
+      // 4. 개별 캐릭터 상세 5개씩 배치 fetch (character × 2 + talents + constellations = 4 req/char)
+      const BATCH = 5
       const total = filteredNames.length
       const fetched = []
 
@@ -1069,13 +1075,18 @@
           `캐릭터 정보 가져오는 중... ${Math.min(i + BATCH, total)}/${total}`
 
         const results = await Promise.all(batch.map(async name => {
-          const [krRes, enRes] = await Promise.all([
-            fetch(`${GENSHIN_API_BASE}/characters?query=${encodeURIComponent(name)}&queryLanguages=Korean&resultLanguage=Korean`),
-            fetch(`${GENSHIN_API_BASE}/characters?query=${encodeURIComponent(name)}&queryLanguages=Korean&resultLanguage=English`),
+          const q = encodeURIComponent(name)
+          const [krRes, enRes, talRes, conRes] = await Promise.all([
+            fetch(`${GENSHIN_API_BASE}/characters?query=${q}&queryLanguages=Korean&resultLanguage=Korean`),
+            fetch(`${GENSHIN_API_BASE}/characters?query=${q}&queryLanguages=Korean&resultLanguage=English`),
+            fetch(`${GENSHIN_API_BASE}/talents?query=${q}&queryLanguages=Korean&resultLanguage=Korean`),
+            fetch(`${GENSHIN_API_BASE}/constellations?query=${q}&queryLanguages=Korean&resultLanguage=Korean`),
           ])
-          const kr = krRes.ok ? await krRes.json() : null
-          const en = enRes.ok ? await enRes.json() : null
-          return { name, kr, en }
+          const kr  = krRes.ok  ? await krRes.json()  : null
+          const en  = enRes.ok  ? await enRes.json()  : null
+          const tal = talRes.ok ? await talRes.json() : null
+          const con = conRes.ok ? await conRes.json() : null
+          return { name, kr, en, tal, con }
         }))
 
         fetched.push(...results)
@@ -1086,7 +1097,7 @@
 
       genshinBulkCharList = fetched
         .filter(({ kr }) => kr && kr.name && kr.rarity)
-        .map(({ kr, en }) => ({
+        .map(({ kr, en, tal, con }) => ({
           gameId: genshinGameId,
           nameKo: kr.name,
           nameEn: en?.name ?? kr.name,
@@ -1096,6 +1107,7 @@
           region: kr.region || null,
           imageUrl: kr.images?.cover1 ?? kr.images?.cover2 ?? kr.images?.['hoyolab-avatar'] ?? kr.images?.hoyowiki_icon ?? kr.images?.mihoyo_icon ?? null,
           slug: slugify(en?.name ?? kr.name),
+          metadata: buildGenshinMetadata(kr, tal, con),
         }))
         .sort((a, b) => {
           if (a.tier !== b.tier) return a.tier === 'S' ? -1 : 1
@@ -1154,6 +1166,7 @@
       region: c.region,
       imageUrl: c.imageUrl,
       slug: c.slug,
+      metadata: c.metadata ?? null,
       isLimited: false,
       basePrice: 0,
       isActive: true,
@@ -1190,6 +1203,39 @@
 
   function closeGenshinBulkModal() {
     document.getElementById('genshin-bulk-modal-overlay').classList.remove('open')
+  }
+
+  // talents/constellations 응답 → metadata 객체 조립 (공유 헬퍼)
+  function buildGenshinMetadata(charData, talData, conData) {
+    const pickSkill = (t, type) => (t?.name ? { type, name: t.name, desc: t.description ?? '' } : null)
+    const skills = [
+      pickSkill(talData?.combat1,  'normal'),
+      pickSkill(talData?.combat2,  'skill'),
+      pickSkill(talData?.combat3,  'burst'),
+      pickSkill(talData?.passive1, 'passive1'),
+      pickSkill(talData?.passive2, 'passive2'),
+      pickSkill(talData?.passive3, 'passive3'),
+    ].filter(Boolean)
+
+    const constellations = [1,2,3,4,5,6].map(n => {
+      const c = conData?.[`c${n}`]
+      return c?.name ? { rank: n, name: c.name, desc: c.description ?? '' } : null
+    }).filter(Boolean)
+
+    return {
+      title:         charData?.title         ?? null,
+      description:   charData?.description   ?? null,
+      birthday:      charData?.birthday      ?? null,
+      constellation: charData?.constellation ?? null,
+      affiliation:   charData?.affiliation   ?? null,
+      substat:       charData?.substatText   ?? null,
+      cv: charData?.cv ? {
+        korean:   charData.cv.korean   ?? null,
+        japanese: charData.cv.japanese ?? null,
+      } : null,
+      skills,
+      constellations,
+    }
   }
 
   // ===== 원신 이미지 재동기화 =====
@@ -1262,6 +1308,74 @@
       status.textContent = `⚠️ ${e.message}`
       btn.disabled = false
       btn.textContent = '🖼️ 이미지 재동기화'
+    }
+  }
+
+  // ===== 원신 상세정보(metadata) 동기화 =====
+  async function syncGenshinMetadata() {
+    const btn    = document.getElementById('genshin-meta-btn')
+    const status = document.getElementById('genshin-meta-status')
+    btn.disabled = true
+    status.textContent = 'Supabase에서 캐릭터 목록 불러오는 중...'
+
+    try {
+      const { data: game } = await db.from('Game').select('id').eq('slug', 'genshin').single()
+      if (!game) throw new Error('Supabase에 genshin 게임이 없어요.')
+
+      const { data: chars, error } = await db
+        .from('Character')
+        .select('id, nameKo, nameEn')
+        .eq('gameId', game.id)
+      if (error) throw error
+      if (!chars || chars.length === 0) throw new Error('등록된 원신 캐릭터가 없어요.')
+
+      const total = chars.length
+      status.textContent = `총 ${total}명 상세정보 동기화 시작...`
+
+      // 5개씩 배치 (character + talents + constellations = 3 req/char)
+      const BATCH = 5
+      const updates = []
+
+      for (let i = 0; i < chars.length; i += BATCH) {
+        const batch = chars.slice(i, i + BATCH)
+        status.textContent = `상세정보 동기화 중... ${Math.min(i + BATCH, total)}/${total}`
+
+        const results = await Promise.all(batch.map(async c => {
+          const q = encodeURIComponent(c.nameEn || c.nameKo)
+          const [charRes, talRes, conRes] = await Promise.all([
+            fetch(`${GENSHIN_API_BASE}/characters?query=${q}&resultLanguage=Korean`),
+            fetch(`${GENSHIN_API_BASE}/talents?query=${q}&resultLanguage=Korean`),
+            fetch(`${GENSHIN_API_BASE}/constellations?query=${q}&resultLanguage=Korean`),
+          ])
+          const charData = charRes.ok ? await charRes.json() : null
+          const talData  = talRes.ok  ? await talRes.json()  : null
+          const conData  = conRes.ok  ? await conRes.json()  : null
+          const metadata = buildGenshinMetadata(charData, talData, conData)
+          return { id: c.id, metadata }
+        }))
+
+        updates.push(...results)
+      }
+
+      // 50개씩 청크로 UPDATE
+      const CHUNK = 50
+      let updated = 0
+      for (let i = 0; i < updates.length; i += CHUNK) {
+        const chunk = updates.slice(i, i + CHUNK)
+        await Promise.all(chunk.map(u =>
+          db.from('Character').update({ metadata: u.metadata }).eq('id', u.id)
+        ))
+        updated += chunk.length
+        status.textContent = `DB 업데이트 중... ${updated}/${updates.length}명`
+      }
+
+      status.textContent = `✅ ${updated}명 상세정보 업데이트 완료!`
+      btn.textContent = '✅ 완료'
+
+    } catch(e) {
+      status.textContent = `⚠️ ${e.message}`
+      btn.disabled = false
+      btn.textContent = '📚 상세정보 동기화'
     }
   }
 
