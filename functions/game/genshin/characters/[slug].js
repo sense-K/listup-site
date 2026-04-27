@@ -80,16 +80,37 @@ export async function onRequest({ params }) {
     related = (relRows || []).sort(() => Math.random() - 0.5).slice(0, 4)
   }
 
-  // SEO
+  // 거래 통계 (직접 쿼리 - RPC 없음)
+  const lcRows = await supaGet(
+    `ListingCharacter?characterId=eq.${c.id}&select=listing:Listing!inner(id,price,status)&limit=200`
+  )
+  const activePrices = (lcRows || [])
+    .map(lc => lc.listing)
+    .filter(l => l?.status === 'active')
+    .map(l => Number(l.price))
+  const tradeStats = {
+    active_count: activePrices.length,
+    min_price: activePrices.length ? Math.min(...activePrices) : null,
+    max_price: activePrices.length ? Math.max(...activePrices) : null,
+  }
+  const fmt = n => n != null ? Number(n).toLocaleString('ko-KR') : ''
+
+  // SEO (거래 데이터 반영)
   const nameDisplay = c.nameEn ? `${c.nameKo} (${c.nameEn})` : c.nameKo
   const attrStr = [c.element ? `${c.element}속성` : '', c.weaponType].filter(Boolean).join(' ')
-  const title = `${nameDisplay} — 원신 ${tierLabel} ${attrStr} 정보 | 플레이센스`
+  const tradePrefix = tradeStats.active_count > 0
+    ? `보유 계정 ${tradeStats.active_count}개 거래중 · `
+    : ''
+  const tradeSuffix = tradeStats.active_count > 0
+    ? ` ${c.nameKo} 보유 계정 ${tradeStats.active_count}개가 ${fmt(tradeStats.min_price)}원~${fmt(tradeStats.max_price)}원에 판매 중.`
+    : ''
+  const title = `${nameDisplay} — ${tradePrefix}원신 ${tierLabel} ${attrStr} 정보 | 플레이센스`
   const desc = [
     `${c.nameKo} 캐릭터 정보, 스킬 효과, 별자리 6개 효과.`,
     c.region ? ` ${c.region} 출신` : '',
     ` 원신 ${tierLabel} ${attrStr}.`,
     meta.title ? ` ${meta.title}.` : '',
-  ].join('')
+  ].join('') + tradeSuffix
   const keywords = `${c.nameKo}, 원신 ${c.nameKo}, 원신 ${c.nameKo} 정보, 원신 ${c.nameKo} 스킬, 원신 ${c.nameKo} 별자리, 원신 ${tierLabel} ${c.element || ''}속성, ${c.nameEn || ''}`
 
   const jsonLdArr = [
@@ -254,6 +275,10 @@ export async function onRequest({ params }) {
     .gc-link-sec { background:#f1f5f9; color:#1e293b; border:1px solid #e5e7eb; }
 
     .gc-empty { color:#94a3b8; font-size:14px; padding:20px 0; margin:0; }
+
+    /* trade widget */
+    .tw-stats { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:4px; }
+    @media(max-width:600px){ .tw-stats { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -286,7 +311,39 @@ export async function onRequest({ params }) {
     </div>
   </section>
 
-  <div id="trade-widget-placeholder" style="margin:24px 0;"></div>
+  ${tradeStats.active_count > 0 ? `
+  <section class="trade-widget" style="margin:32px 0;padding:28px;background:linear-gradient(135deg,#1e293b,#334155);color:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <span style="font-size:28px;">💰</span>
+      <h2 style="margin:0;font-size:22px;font-weight:700;">${esc(c.nameKo)} 보유 계정 거래</h2>
+    </div>
+    <div class="tw-stats">
+      <div style="background:rgba(255,255,255,0.08);padding:16px;border-radius:10px;">
+        <div style="font-size:13px;opacity:0.7;margin-bottom:6px;">현재 판매중</div>
+        <div style="font-size:28px;font-weight:800;">${tradeStats.active_count}<span style="font-size:16px;opacity:0.7;"> 개</span></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.08);padding:16px;border-radius:10px;">
+        <div style="font-size:13px;opacity:0.7;margin-bottom:6px;">가격대</div>
+        <div style="font-size:18px;font-weight:700;">${fmt(tradeStats.min_price)}원${tradeStats.min_price !== tradeStats.max_price ? ` ~ ${fmt(tradeStats.max_price)}원` : ''}</div>
+      </div>
+    </div>
+    <a href="/trade/genshin/?character=${esc(slug)}"
+       style="display:block;text-align:center;padding:14px;background:#f59e0b;color:#1e293b;font-weight:700;font-size:16px;border-radius:10px;text-decoration:none;margin-top:20px;">
+      → ${esc(c.nameKo)} 보유 계정 보러가기
+    </a>
+    <p style="margin:12px 0 0;font-size:12px;opacity:0.6;text-align:center;">※ 가격은 ${esc(c.nameKo)}을(를) 보유한 전체 계정 기준입니다</p>
+  </section>` : `
+  <section style="margin:32px 0;padding:28px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:16px;border:1px dashed #f59e0b;">
+    <div style="text-align:center;">
+      <div style="font-size:40px;margin-bottom:12px;">🌟</div>
+      <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#78350f;">${esc(c.nameKo)} 보유 계정이 아직 없어요</h2>
+      <p style="margin:0 0 20px;font-size:14px;color:#92400e;">${esc(c.nameKo)}을(를) 가진 계정의 첫 판매자가 되어보세요</p>
+      <a href="/trade/register/?game=genshin"
+         style="display:inline-block;padding:12px 28px;background:#f59e0b;color:#fff;font-weight:700;border-radius:10px;text-decoration:none;">
+        판매계정 등록하기
+      </a>
+    </div>
+  </section>`}
 
   <h2 class="gc-h2">⚔️ 스킬</h2>
   ${skillsHtml}
