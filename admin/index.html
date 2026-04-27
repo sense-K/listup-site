@@ -1094,7 +1094,7 @@
           element: kr.elementText ?? null,
           weaponType: kr.weaponText ?? null,
           region: kr.region || null,
-          imageUrl: kr.images?.cover1 ?? kr.images?.cover2 ?? kr.images?.['hoyolab-avatar'] ?? kr.images?.mihoyo_icon ?? null,
+          imageUrl: kr.images?.cover1 ?? kr.images?.cover2 ?? kr.images?.['hoyolab-avatar'] ?? kr.images?.hoyowiki_icon ?? kr.images?.mihoyo_icon ?? null,
           slug: slugify(en?.name ?? kr.name),
         }))
         .sort((a, b) => {
@@ -1233,6 +1233,7 @@
             data.images?.cover1 ??
             data.images?.cover2 ??
             data.images?.['hoyolab-avatar'] ??
+            data.images?.hoyowiki_icon ??
             data.images?.mihoyo_icon ??
             null
           return imageUrl ? { id: c.id, imageUrl } : null
