@@ -1031,6 +1031,19 @@
   const GENSHIN_API_BASE = 'https://genshin-db-api.vercel.app/api/v5'
   const GENSHIN_TRAVELER_NAMES = new Set(['아이테르', '루미네'])
 
+  async function safeFetchJson(url) {
+    try {
+      const res = await fetch(url)
+      if (!res.ok) return null
+      const text = await res.text()
+      if (!text || !text.trim()) return null
+      return JSON.parse(text)
+    } catch(e) {
+      console.warn('safeFetchJson failed:', url, e.message)
+      return null
+    }
+  }
+
   let genshinBulkCharList = []
   let genshinBulkSkipSet  = new Set()
 
@@ -1076,16 +1089,12 @@
 
         const results = await Promise.all(batch.map(async name => {
           const q = encodeURIComponent(name)
-          const [krRes, enRes, talRes, conRes] = await Promise.all([
-            fetch(`${GENSHIN_API_BASE}/characters?query=${q}&queryLanguages=Korean&resultLanguage=Korean`),
-            fetch(`${GENSHIN_API_BASE}/characters?query=${q}&queryLanguages=Korean&resultLanguage=English`),
-            fetch(`${GENSHIN_API_BASE}/talents?query=${q}&queryLanguages=Korean&resultLanguage=Korean`),
-            fetch(`${GENSHIN_API_BASE}/constellations?query=${q}&queryLanguages=Korean&resultLanguage=Korean`),
+          const [kr, en, tal, con] = await Promise.all([
+            safeFetchJson(`${GENSHIN_API_BASE}/characters?query=${q}&queryLanguages=Korean&resultLanguage=Korean`),
+            safeFetchJson(`${GENSHIN_API_BASE}/characters?query=${q}&queryLanguages=Korean&resultLanguage=English`),
+            safeFetchJson(`${GENSHIN_API_BASE}/talents?query=${q}&queryLanguages=Korean&resultLanguage=Korean`),
+            safeFetchJson(`${GENSHIN_API_BASE}/constellations?query=${q}&queryLanguages=Korean&resultLanguage=Korean`),
           ])
-          const kr  = krRes.ok  ? await krRes.json()  : null
-          const en  = enRes.ok  ? await enRes.json()  : null
-          const tal = talRes.ok ? await talRes.json() : null
-          const con = conRes.ok ? await conRes.json() : null
           return { name, kr, en, tal, con }
         }))
 
@@ -1335,26 +1344,30 @@
       // 5개씩 배치 (character + talents + constellations = 3 req/char)
       const BATCH = 5
       const updates = []
+      let skipCount = 0
 
       for (let i = 0; i < chars.length; i += BATCH) {
         const batch = chars.slice(i, i + BATCH)
-        status.textContent = `상세정보 동기화 중... ${Math.min(i + BATCH, total)}/${total}`
+        status.textContent = `상세정보 동기화 중... ${Math.min(i + BATCH, total)}/${total} (성공 ${updates.length}, 실패 ${skipCount})`
 
         const results = await Promise.all(batch.map(async c => {
           const q = encodeURIComponent(c.nameEn || c.nameKo)
-          const [charRes, talRes, conRes] = await Promise.all([
-            fetch(`${GENSHIN_API_BASE}/characters?query=${q}&resultLanguage=Korean`),
-            fetch(`${GENSHIN_API_BASE}/talents?query=${q}&resultLanguage=Korean`),
-            fetch(`${GENSHIN_API_BASE}/constellations?query=${q}&resultLanguage=Korean`),
+          const [charData, talData, conData] = await Promise.all([
+            safeFetchJson(`${GENSHIN_API_BASE}/characters?query=${q}&resultLanguage=Korean`),
+            safeFetchJson(`${GENSHIN_API_BASE}/talents?query=${q}&resultLanguage=Korean`),
+            safeFetchJson(`${GENSHIN_API_BASE}/constellations?query=${q}&resultLanguage=Korean`),
           ])
-          const charData = charRes.ok ? await charRes.json() : null
-          const talData  = talRes.ok  ? await talRes.json()  : null
-          const conData  = conRes.ok  ? await conRes.json()  : null
-          const metadata = buildGenshinMetadata(charData, talData, conData)
-          return { id: c.id, metadata }
+          if (!charData) {
+            console.warn('character API 응답 없음:', c.nameEn || c.nameKo)
+            return null
+          }
+          return { id: c.id, metadata: buildGenshinMetadata(charData, talData, conData) }
         }))
 
-        updates.push(...results)
+        for (const r of results) {
+          if (r) updates.push(r)
+          else skipCount++
+        }
       }
 
       // 50개씩 청크로 UPDATE
@@ -1369,7 +1382,10 @@
         status.textContent = `DB 업데이트 중... ${updated}/${updates.length}명`
       }
 
-      status.textContent = `✅ ${updated}명 상세정보 업데이트 완료!`
+      const msg = skipCount > 0
+        ? `✅ ${total}명 중 ${updated}명 성공, ${skipCount}명 실패 (콘솔 확인)`
+        : `✅ ${updated}명 상세정보 업데이트 완료!`
+      status.textContent = msg
       btn.textContent = '✅ 완료'
 
     } catch(e) {
