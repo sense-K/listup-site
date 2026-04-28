@@ -276,7 +276,7 @@
 
       const { data: chars, error } = await db
         .from('Character')
-        .select('id, nameKo, nameEn, rarity, element, weaponType, burstType, manufacturer, slug, imageUrl')
+        .select('id, nameKo, nameEn, rarity, element, weaponType, burstType, manufacturer, slug, imageUrl, metadata')
         .eq('gameId', game.id)
         .eq('isActive', true)
         .order('nameKo')
@@ -328,6 +328,7 @@
     }
 
     grid.innerHTML = list.map(c => {
+      const cardImg = c.metadata?.cardImageUrl || c.imageUrl
       const elemClass = c.element ? `elem-${c.element}` : ''
       const isTreasure = c.slug?.endsWith('-treasure')
       const treasureClass = isTreasure ? 'treasure-card' : ''
@@ -337,8 +338,8 @@
       return `
         <a class="g-card ${elemClass} ${treasureClass}" href="${href}" title="${c.nameKo}${c.nameEn ? ' ('+c.nameEn+')' : ''}">
           <div class="g-card-img-wrap">
-            ${c.imageUrl
-              ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy" onerror="this.parentElement.style.background='#1e1e2e'">`
+            ${cardImg
+              ? `<img src="${cardImg}" alt="${c.nameKo}" loading="lazy" onerror="this.parentElement.style.background='#1e1e2e'">`
               : ''
             }
             ${rarityBadge ? `<span class="g-tier-badge ${rarityBadge}">${c.rarity}</span>` : ''}

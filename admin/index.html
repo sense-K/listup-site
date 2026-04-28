@@ -2201,10 +2201,10 @@
       const prydwenMap = {}
       apiList.forEach(c => { prydwenMap[c.slug] = c })
 
-      // 2. DB 니케 캐릭터 전체 조회
+      // 2. DB 니케 캐릭터 전체 조회 (metadata 포함 — cardImageUrl 머지용)
       const { data: game } = await db.from('Game').select('id').eq('slug', 'nikke').single()
       if (!game) throw new Error('nikke 게임 없음')
-      const { data: dbChars } = await db.from('Character').select('id, nameKo, slug, nameEn').eq('gameId', game.id)
+      const { data: dbChars } = await db.from('Character').select('id, nameKo, slug, nameEn, metadata').eq('gameId', game.id)
       if (!dbChars?.length) throw new Error('DB 캐릭터 없음')
 
       // 3. slug 기준 매칭
@@ -2213,7 +2213,12 @@
       unmatched.forEach(c => console.warn('[니케 동기화] 매칭 실패:', c.nameKo, c.slug))
       status.textContent = `매칭 ${matched.length}명 / 건너뜀 ${unmatched.length}명 — 개별 fetch 중...`
 
-      // 4. 5명씩 배치 fetch → fullImage + 속성 추출
+      // 4. 5명씩 배치 fetch → fullImage + cardImage + 속성 추출
+      const toAbsolute = src => src ? (src.startsWith('http') ? src : `https://www.prydwen.gg${src}`) : null
+      const extractImg = (node, field) => toAbsolute(
+        node?.[field]?.localFile?.childImageSharp?.gatsbyImageData?.images?.fallback?.src ?? null
+      )
+
       const FETCH_CHUNK = 5
       const updates = []
       let fetched = 0
@@ -2227,11 +2232,18 @@
             console.warn('[니케 동기화] 개별 fetch 실패:', dbChar.nameKo, dbChar.slug)
             return
           }
-          const imgSrc  = node?.fullImage?.localFile?.childImageSharp?.gatsbyImageData?.images?.fallback?.src
-          const imageUrl = imgSrc ? (imgSrc.startsWith('http') ? imgSrc : `https://www.prydwen.gg${imgSrc}`) : null
+          const fullUrl = extractImg(node, 'fullImage')
+          const cardUrl = extractImg(node, 'cardImage')
+
+          // metadata 머지: 기존 필드 보존 + cardImageUrl만 추가
+          const existingMeta = (typeof dbChar.metadata === 'object' && dbChar.metadata) ? dbChar.metadata : {}
+          const newMeta = { ...existingMeta }
+          if (cardUrl) newMeta.cardImageUrl = cardUrl
+
           updates.push({
             id:           dbChar.id,
-            imageUrl,
+            imageUrl:     fullUrl || cardUrl || null,  // fullImage 우선, 없으면 cardImage
+            metadata:     newMeta,
             element:      node.element      ?? null,
             weaponType:   node.weapon       ?? null,
             rarity:       node.rarity       ?? null,
