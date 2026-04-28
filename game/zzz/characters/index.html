@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="shortcut icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>젠레스 존 제로 캐릭터 도감 — 한국어 전체 캐릭터 정보 | 플레이센스</title>
+  <meta name="description" content="젠레스 존 제로 전체 캐릭터 한국어 도감. 등급, 원소, 전문분야별로 캐릭터를 찾고 거래소에서 보유 계정을 확인하세요. 엔비, 네코마타, 미야비 등 53명 수록.">
+  <meta name="keywords" content="젠레스, 젠레스 존 제로, ZZZ, 젠레스 캐릭터, 젠레스 도감, 젠레스 시세, 젠레스 S급">
+  <link rel="canonical" href="https://resetlist.kr/game/zzz/characters/">
+  <meta property="og:title" content="젠레스 존 제로 캐릭터 도감 — 플레이센스">
+  <meta property="og:description" content="젠레스 존 제로 전체 캐릭터 한국어 정보 + 보유 계정 거래소 연동">
+  <meta property="og:url" content="https://resetlist.kr/game/zzz/characters/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="플레이센스">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "젠레스 존 제로 캐릭터 도감",
+    "description": "젠레스 존 제로 전체 캐릭터 한국어 정보",
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "홈", "item": "https://resetlist.kr/" },
+        { "@type": "ListItem", "position": 2, "name": "젠레스 존 제로", "item": "https://resetlist.kr/game/zzz/" },
+        { "@type": "ListItem", "position": 3, "name": "캐릭터 도감" }
+      ]
+    }
+  }
+  </script>
+  <style>
+    .g-wrap {
+      max-width: 1100px; margin: 0 auto;
+      padding: 20px 16px; min-height: calc(100vh - 60px - 140px);
+    }
+
+    .g-breadcrumb {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: #94a3b8; margin-bottom: 16px;
+    }
+    .g-breadcrumb a { color: #64748b; text-decoration: none; }
+    .g-breadcrumb a:hover { color: #6c47ff; }
+    .g-breadcrumb span { color: #cbd5e1; }
+
+    .g-header { margin-bottom: 20px; }
+    .g-header h1 { font-size: 22px; font-weight: 800; color: var(--text,#1e293b); margin: 0 0 4px; }
+    .g-header p  { font-size: 14px; color: var(--text-sub,#64748b); margin: 0; }
+
+    .g-filter {
+      background: #fff; border: 1px solid var(--border,#e5e7eb);
+      border-radius: 16px; padding: 16px; margin-bottom: 16px;
+    }
+    .g-search {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid var(--border,#e5e7eb); border-radius: 10px;
+      font-size: 14px; outline: none; margin-bottom: 12px;
+      box-sizing: border-box; background: #f8fafc; color: var(--text,#1e293b);
+    }
+    .g-search:focus { border-color: #6c47ff; background: #fff; }
+
+    .g-filter-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      align-items: center; margin-bottom: 8px;
+    }
+    .g-filter-row:last-child { margin-bottom: 0; }
+    .g-filter-label {
+      font-size: 11px; font-weight: 700; color: #94a3b8;
+      letter-spacing: 0.05em; text-transform: uppercase; margin-right: 2px;
+      white-space: nowrap;
+    }
+    .g-chip {
+      display: inline-flex; align-items: center;
+      padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border,#e5e7eb);
+      background: transparent; color: var(--text-sub,#64748b);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .g-chip:hover { opacity: 0.8; }
+    .g-chip.active { color: #fff; border-color: transparent; }
+
+    .g-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; gap: 8px; flex-wrap: wrap;
+    }
+    .g-count { font-size: 13px; color: var(--text-sub,#64748b); }
+    .g-count strong { color: var(--text,#1e293b); }
+    .g-sort {
+      padding: 7px 12px; border: 1px solid var(--border,#e5e7eb);
+      border-radius: 10px; font-size: 13px; font-family: inherit;
+      background: #fff; color: var(--text,#1e293b); cursor: pointer; outline: none;
+    }
+
+    .g-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 900px) { .g-grid { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 560px) { .g-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+
+    .g-card {
+      background: #fff; border: 1.5px solid var(--border,#e5e7eb);
+      border-radius: 14px; overflow: hidden; cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.15s;
+      display: flex; flex-direction: column; align-items: center;
+      text-decoration: none; color: inherit;
+    }
+    .g-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-2px); }
+
+    .g-card-img-wrap {
+      width: 100%; aspect-ratio: 1;
+      position: relative; overflow: hidden;
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%);
+    }
+    .g-card-img-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: top center;
+    }
+
+    /* 젠레스 원소 테두리 */
+    .elem-물리 { border-color: #a8a8a8; }
+    .elem-화염 { border-color: #ed7d31; }
+    .elem-얼음 { border-color: #5dc1f4; }
+    .elem-전기 { border-color: #fbbf24; }
+    .elem-에테르 { border-color: #c084fc; }
+
+    .g-tier-badge {
+      position: absolute; top: 5px; left: 5px;
+      font-size: 10px; font-weight: 800; padding: 2px 6px;
+      border-radius: 5px; letter-spacing: 0.03em;
+    }
+    .badge-S { background: linear-gradient(135deg,#fbbf24,#f59e0b); color: #78350f; }
+    .badge-A { background: linear-gradient(135deg,#a78bfa,#8b5cf6); color: #fff; }
+
+    .g-card-body {
+      padding: 6px 6px 8px; width: 100%;
+      box-sizing: border-box; text-align: center;
+    }
+    .g-card-name {
+      font-size: 12px; font-weight: 700; color: #1e293b;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    @media (max-width: 560px) { .g-card-name { font-size: 11px; } }
+
+    .g-elem-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; margin-right: 2px; vertical-align: middle;
+      flex-shrink: 0;
+    }
+
+    .g-empty { text-align: center; padding: 60px 16px; color: #94a3b8; font-size: 15px; }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="g-wrap">
+
+  <nav class="g-breadcrumb" aria-label="breadcrumb">
+    <a href="/">홈</a>
+    <span>›</span>
+    <a href="/game/zzz/">젠레스 존 제로</a>
+    <span>›</span>
+    <span style="color:#1e293b;font-weight:600;">캐릭터 도감</span>
+  </nav>
+
+  <div class="g-header">
+    <h1>젠레스 존 제로 캐릭터 도감</h1>
+    <p>젠레스 존 제로 전체 캐릭터를 등급, 원소, 전문분야별로 찾아보세요</p>
+  </div>
+
+  <div class="g-filter">
+    <input class="g-search" id="search" type="text" placeholder="캐릭터 이름 검색...">
+
+    <!-- 등급 -->
+    <div class="g-filter-row">
+      <span class="g-filter-label">등급</span>
+      <button class="g-chip active" data-group="tier" data-val="" style="--c:#6c47ff;">전체</button>
+      <button class="g-chip" data-group="tier" data-val="S" style="--c:#f59e0b;">S등급</button>
+      <button class="g-chip" data-group="tier" data-val="A" style="--c:#8b5cf6;">A등급</button>
+    </div>
+
+    <!-- 원소 -->
+    <div class="g-filter-row">
+      <span class="g-filter-label">원소</span>
+      <button class="g-chip active" data-group="element" data-val="" style="--c:#6c47ff;">전체</button>
+      <button class="g-chip" data-group="element" data-val="물리"  style="--c:#a8a8a8;">⚫ 물리</button>
+      <button class="g-chip" data-group="element" data-val="화염"  style="--c:#ed7d31;">🔥 화염</button>
+      <button class="g-chip" data-group="element" data-val="얼음"  style="--c:#5dc1f4;">❄️ 얼음</button>
+      <button class="g-chip" data-group="element" data-val="전기"  style="--c:#fbbf24;">⚡ 전기</button>
+      <button class="g-chip" data-group="element" data-val="에테르" style="--c:#c084fc;">✨ 에테르</button>
+    </div>
+
+    <!-- 전문분야 -->
+    <div class="g-filter-row">
+      <span class="g-filter-label">전문분야</span>
+      <button class="g-chip active" data-group="weapon" data-val="" style="--c:#6c47ff;">전체</button>
+      <button class="g-chip" data-group="weapon" data-val="공격" style="--c:#ef4444;">⚔️ 공격</button>
+      <button class="g-chip" data-group="weapon" data-val="격파" style="--c:#f59e0b;">💥 격파</button>
+      <button class="g-chip" data-group="weapon" data-val="이상" style="--c:#a855f7;">🌀 이상</button>
+      <button class="g-chip" data-group="weapon" data-val="지원" style="--c:#22c55e;">💚 지원</button>
+      <button class="g-chip" data-group="weapon" data-val="방어" style="--c:#0ea5e9;">🛡️ 방어</button>
+      <button class="g-chip" data-group="weapon" data-val="강탈" style="--c:#64748b;">🎯 강탈</button>
+    </div>
+  </div>
+
+  <div class="g-toolbar">
+    <div class="g-count" id="count"></div>
+    <select class="g-sort" id="sort">
+      <option value="tier">등급순</option>
+      <option value="name">이름순</option>
+    </select>
+  </div>
+
+  <div class="g-grid" id="grid">
+    <div class="g-empty" style="grid-column:1/-1;">불러오는 중...</div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script>
+  const ELEM_COLOR = {
+    '물리':'#a8a8a8', '화염':'#ed7d31', '얼음':'#5dc1f4',
+    '전기':'#fbbf24', '에테르':'#c084fc',
+  }
+
+  let allChars = []
+  const filters = { tier: '', element: '', weapon: '' }
+
+  async function init() {
+    document.getElementById('navbar').innerHTML = renderNavbar()
+    loadAndRenderGameUI('zzz')
+
+    try {
+      const { data: game } = await db.from('Game').select('id').eq('slug','zzz').single()
+      if (!game) throw new Error('젠레스 존 제로 게임 정보를 찾을 수 없어요.')
+
+      const { data: chars, error } = await db
+        .from('Character')
+        .select('id, nameKo, nameEn, tier, element, weaponType, slug, imageUrl')
+        .eq('gameId', game.id)
+        .eq('isActive', true)
+        .order('tier')
+        .order('nameKo')
+
+      if (error) throw error
+
+      allChars = chars ?? []
+      document.querySelector('.g-header p').textContent =
+        `젠레스 존 제로 전체 ${allChars.length}명의 캐릭터를 등급, 원소, 전문분야별로 찾아보세요`
+
+      render()
+    } catch(e) {
+      document.getElementById('grid').innerHTML =
+        `<div class="g-empty" style="grid-column:1/-1;color:#ef4444;">⚠️ ${e.message}</div>`
+    }
+  }
+
+  function render() {
+    const q    = document.getElementById('search').value.trim()
+    const sort = document.getElementById('sort').value
+
+    let list = allChars.filter(c => {
+      if (filters.tier    && c.tier       !== filters.tier)    return false
+      if (filters.element && c.element    !== filters.element) return false
+      if (filters.weapon  && c.weaponType !== filters.weapon)  return false
+      if (q && !c.nameKo.includes(q))                          return false
+      return true
+    })
+
+    if (sort === 'name') {
+      list = list.slice().sort((a,b) => a.nameKo.localeCompare(b.nameKo,'ko'))
+    } else {
+      list = list.slice().sort((a,b) => {
+        if (a.tier !== b.tier) return a.tier === 'S' ? -1 : 1
+        return a.nameKo.localeCompare(b.nameKo,'ko')
+      })
+    }
+
+    document.getElementById('count').innerHTML = `<strong>${list.length}명</strong> 표시 중`
+    const grid = document.getElementById('grid')
+
+    if (list.length === 0) {
+      grid.innerHTML = '<div class="g-empty" style="grid-column:1/-1;">조건에 맞는 캐릭터가 없어요</div>'
+      return
+    }
+
+    grid.innerHTML = list.map(c => {
+      const elemClass = c.element ? `elem-${c.element}` : ''
+      const href = c.slug ? `/game/zzz/characters/${c.slug}/` : '#'
+      const dotColor = ELEM_COLOR[c.element] || '#999'
+      return `
+        <a class="g-card ${elemClass}" href="${href}" title="${c.nameKo}${c.nameEn ? ' ('+c.nameEn+')' : ''}">
+          <div class="g-card-img-wrap">
+            ${c.imageUrl
+              ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy" onerror="this.parentElement.style.background='#1e1e2e'">`
+              : ''
+            }
+            <span class="g-tier-badge badge-${c.tier}">${c.tier}</span>
+          </div>
+          <div class="g-card-body">
+            <div class="g-card-name">
+              ${c.element ? `<span class="g-elem-dot" style="background:${dotColor};"></span>` : ''}${c.nameKo}
+            </div>
+          </div>
+        </a>`
+    }).join('')
+  }
+
+  function bindChip(btn) {
+    btn.addEventListener('click', () => {
+      const group = btn.dataset.group
+      const val   = btn.dataset.val
+      filters[group] = val
+      document.querySelectorAll(`.g-chip[data-group="${group}"]`).forEach(b => {
+        b.classList.remove('active')
+        b.style.background  = ''
+        b.style.borderColor = ''
+        b.style.color       = ''
+      })
+      btn.classList.add('active')
+      const c = btn.style.getPropertyValue('--c') || '#6c47ff'
+      btn.style.background  = c
+      btn.style.borderColor = c
+      btn.style.color       = '#fff'
+      render()
+    })
+    if (btn.classList.contains('active')) {
+      const c = btn.style.getPropertyValue('--c') || '#6c47ff'
+      btn.style.background  = c
+      btn.style.borderColor = c
+      btn.style.color       = '#fff'
+    }
+  }
+
+  document.querySelectorAll('.g-chip').forEach(bindChip)
+  document.getElementById('search').addEventListener('input', render)
+  document.getElementById('sort').addEventListener('change', render)
+
+  init()
+</script>
+
+<div id="footer"></div>
+</body>
+</html>
