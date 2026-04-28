@@ -540,6 +540,11 @@ Normal→일반 공격, BPSkill→전투 스킬, Ultra→궁극기, Talent→천
 
 기존 **"🔄 스타레일 캐릭터 불러오기"** (legacy) — element/path/slug/metadata 없이 기본 필드만. 보존 중.
 
+### 이미지 전략 (2026-04-28 갱신)
+- **DB imageUrl**: `character_preview/{id}.png` (얼굴 부각 이미지) → 도감 카드/추천 카드에 사용
+- **상세 페이지 hero**: `character_portrait/{id}.png` (전신샷) → `imageUrl.replace('character_preview', 'character_portrait')` 변환
+- portrait 없을 시 preview로 fallback (onerror 처리)
+
 ### 라우팅 (_routes.json)
 ```
 /game/starrail/, /game/starrail/uid/*, /game/starrail/characters/  → 정적 파일
@@ -558,7 +563,7 @@ Normal→일반 공격, BPSkill→전투 스킬, Ultra→궁극기, Talent→천
 - 캐릭터 목록: `https://static.nanoka.cc/zzz/{version}/character.json`
   - 객체 (ID키), ko/en 이름 직접 포함, 총 53명
 - 캐릭터 상세: `https://static.nanoka.cc/zzz/{version}/ko/character/{id}.json`
-- 이미지: `https://enka.network/ui/zzz/{icon}.webp` (CORS 허용)
+- 이미지: `https://enka.network/ui/zzz/` (CORS 허용)
 
 ### 매핑 테이블
 
@@ -596,8 +601,35 @@ Normal→일반 공격, BPSkill→전투 스킬, Ultra→궁극기, Talent→천
 1. admin → **"🔄 캐릭터 등록"** (ZZZ 카드) → metadata 포함 일괄 INSERT
 2. admin → **"🖼️ 이미지 동기화"** → nameEn 매핑으로 enka.network URL 갱신
 
+### 이미지 전략
+- **DB imageUrl**: `IconRoleSelect{N}.png` (얼굴 부각) → 도감 카드/추천 카드
+- **상세 페이지 hero**: `IconRole{N}.webp` (전신샷) → `imageUrl.replace('IconRoleSelect', 'IconRole').replace('.png', '.webp')` 변환
+- 신캐릭터(61번대 등)는 enka.network 미등록 → 404 → fallback으로 `IconRoleSelect` → 그것도 없으면 `display:none`
+- 도감 카드 404 시: `.no-img` 클래스 + `?` 표시 (CSS `::after`)
+
 ### 라우팅 (_routes.json)
 ```
 /game/zzz/, /game/zzz/uid/*, /game/zzz/characters/  → 정적 파일
 /game/zzz/characters/[slug]/                          → Function 실행
 ```
+
+## admin 캐릭터 관리 UI (2026-04-28 리팩터)
+
+### 게임별 통합 카드 패턴
+각 게임마다 `.game-import-card[data-game="{slug}"]` 1개, 액션 버튼 2~3개:
+- 🔄 캐릭터 등록 (bulk import modal)
+- 🖼️ 이미지 동기화 (inline status)
+- 📚 상세정보 동기화 (inline status, 스타레일만)
+
+구현 파일: `admin/index.html` (CSS `.game-import-card` + `.action-btn` 패턴)
+
+새 게임 추가 시: 카드 HTML 1블록 + JS 함수 3~4개 추가로 확장.
+
+## sitemap.xml 동적 생성 (2026-04-28 추가)
+
+- 파일: `functions/sitemap.xml.js` (Cloudflare Function)
+- `_routes.json` include에 `/sitemap.xml` 추가
+- 정적 52개 URL 하드코딩 + Supabase에서 캐릭터 slug 동적 조회
+- 대상 게임: genshin, starrail, zzz (상세 페이지 Function 있는 게임만)
+- **캐릭터 등록 시 sitemap 자동 반영** (하루 캐시 후 Google에 노출)
+- Cache-Control: `public, max-age=86400`
