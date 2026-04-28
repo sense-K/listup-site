@@ -231,6 +231,7 @@
   .game-import-card[data-game="genshin"]  { border-left:4px solid #3b82f6; }
   .game-import-card[data-game="starrail"] { border-left:4px solid #8b5cf6; }
   .game-import-card[data-game="zzz"]      { border-left:4px solid #f59e0b; }
+  .game-import-card[data-game="wuwa"]     { border-left:4px solid #06b6d4; }
   .game-import-card[data-game="nikke"]   { border-left:4px solid #ec4899; }
   .game-import-header { margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #f3f4f6; }
   .game-import-title  { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:700; }
@@ -428,6 +429,33 @@
         </div>
       </div>
 
+      <!-- 명조 워더링 웨이브 통합 관리 카드 -->
+      <div class="game-import-card" data-game="wuwa">
+        <div class="game-import-header">
+          <div class="game-import-title">
+            <span class="game-emoji">🌊</span>
+            <span>명조 워더링 웨이브</span>
+            <span class="game-source">nanoka.cc (Hakushin)</span>
+          </div>
+        </div>
+        <div class="game-import-actions" style="grid-template-columns:repeat(2,1fr);">
+          <button class="action-btn action-import" onclick="openWuwaBulkImport()">
+            <span class="action-icon">🔄</span>
+            <span class="action-label">캐릭터 등록</span>
+            <span class="action-desc">53명 일괄 등록 (한국어 자동)</span>
+          </button>
+          <button class="action-btn action-image" id="wuwa-sync-btn" onclick="syncWuwaImages()">
+            <span class="action-icon">🖼️</span>
+            <span class="action-label">이미지 동기화</span>
+            <span class="action-desc">아이콘/전신 URL 갱신</span>
+          </button>
+        </div>
+        <div class="game-import-status-row" style="grid-template-columns:repeat(2,1fr);">
+          <div></div>
+          <div class="action-status" id="wuwa-sync-status"></div>
+        </div>
+      </div>
+
       <!-- 니케 통합 관리 카드 -->
       <div class="game-import-card" data-game="nikke">
         <div class="game-import-header">
@@ -552,6 +580,24 @@
       <span class="bulk-modal-status" id="sr-bulk-status-v2"></span>
       <button class="btn-sm btn-gray" onclick="closeSrBulkModalV2()">취소</button>
       <button class="btn-bulk-import" id="sr-bulk-btn-v2" onclick="runStarrailBulkImportV2()" disabled>등록하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 명조 일괄 등록 모달 -->
+<div class="bulk-modal-overlay" id="wuwa-bulk-modal-overlay" onclick="if(event.target===this)closeWuwaBulkModal()">
+  <div class="bulk-modal">
+    <div class="bulk-modal-header">
+      <div class="bulk-modal-title">🌊 명조 워더링 웨이브 캐릭터 일괄 등록</div>
+      <button class="bulk-modal-close" onclick="closeWuwaBulkModal()">✕</button>
+    </div>
+    <div id="wuwa-bulk-preview" class="bulk-preview-list">
+      <div style="text-align:center;padding:40px;color:#888;font-size:14px;">데이터를 불러오는 중...</div>
+    </div>
+    <div class="bulk-modal-footer">
+      <span class="bulk-modal-status" id="wuwa-bulk-status"></span>
+      <button class="btn-sm btn-gray" onclick="closeWuwaBulkModal()">취소</button>
+      <button class="btn-bulk-import" id="wuwa-bulk-btn" onclick="runWuwaBulkImport()" disabled>등록하기</button>
     </div>
   </div>
 </div>
@@ -2333,6 +2379,244 @@
     if (failures.length > 0) console.warn('[애장품 복사 실패/skip]', failures)
     if (selectedCharGameId) loadCharsForGame()
     alert(`✅ ${success}명 복사 완료, ${skipped}명 skip (콘솔 확인)\n총 애장품: ${treasures.length}명`)
+  }
+
+  // ===== 명조 워더링 웨이브 일괄 등록 =====
+  const WUWA_CDN_BASE = 'https://static.nanoka.cc/ww'
+  const WUWA_GAME_ID  = '902fe427-47d2-4a3c-88e5-04218bad66c6'
+  const WUWA_ELEMENT_MAP = { 1:'응결', 2:'융해', 3:'전도', 4:'기류', 5:'회절', 6:'인멸' }
+  const WUWA_WEAPON_MAP  = { 1:'대검', 2:'쌍검', 3:'피스톨', 4:'권투', 5:'회수기' }
+  // 방랑자(Rover) ID 제외 — 남/여 2쌍씩 slug 중복 문제
+  const WUWA_ROVER_IDS = new Set(['1406','1408','1501','1502','1604','1605'])
+
+  function shouldExcludeWuwaChar(id, char) {
+    if (WUWA_ROVER_IDS.has(String(id))) return true
+    if (!char.ko || char.ko.trim() === '') return true
+    if (char.rank === null || char.rank === undefined || char.rank < 4) return true
+    return false
+  }
+
+  function wuwaIconUrl(char) {
+    const path = char.icon?.split('/Game/Aki/UI/')[1]
+    if (!path) return null
+    return `https://static.nanoka.cc/assets/ww/${path.split('.')[0]}.webp`
+  }
+  function wuwaFullUrl(char) {
+    const path = char.background?.split('/Game/Aki/UI/')[1]
+    if (!path) return null
+    return `https://static.nanoka.cc/assets/ww/${path.split('.')[0]}.webp`
+  }
+
+  let wuwaBulkCharList = []
+  let wuwaBulkSkipSet  = new Set()
+  let wuwaVersion      = null
+
+  async function openWuwaBulkImport() {
+    const overlay = document.getElementById('wuwa-bulk-modal-overlay')
+    overlay.classList.add('open')
+    document.getElementById('wuwa-bulk-btn').disabled = true
+    document.getElementById('wuwa-bulk-status').textContent = '버전 정보 조회 중...'
+    document.getElementById('wuwa-bulk-preview').innerHTML =
+      '<div style="text-align:center;padding:40px;color:#888;font-size:14px;">데이터를 불러오는 중...</div>'
+
+    try {
+      const manifest = await safeFetchJson('https://static.nanoka.cc/manifest.json')
+      if (!manifest?.ww?.latest) throw new Error('버전 정보 조회 실패')
+      wuwaVersion = manifest.ww.latest
+
+      document.getElementById('wuwa-bulk-status').textContent = `v${wuwaVersion} 캐릭터 목록 불러오는 중...`
+      const rawChars = await safeFetchJson(`${WUWA_CDN_BASE}/${wuwaVersion}/character.json`)
+      if (!rawChars) throw new Error('캐릭터 목록 로드 실패')
+
+      const { data: games } = await db.from('Game').select('id').eq('slug', 'wuwa')
+      if (!games?.length) throw new Error('Supabase에 wuwa 게임이 없어요.')
+      const wuwaGameId = games[0].id
+
+      const { data: existing } = await db.from('Character').select('nameKo').eq('gameId', wuwaGameId)
+      wuwaBulkSkipSet = new Set((existing ?? []).map(c => c.nameKo))
+
+      const slugify = s => (s || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+
+      wuwaBulkCharList = Object.entries(rawChars)
+        .filter(([id, char]) => !shouldExcludeWuwaChar(id, char))
+        .map(([, char]) => {
+          const nameEn = char.en || ''
+          return {
+            gameId:     wuwaGameId,
+            nameKo:     char.ko,
+            nameEn,
+            tier:       char.rank === 5 ? 'S' : 'A',
+            element:    WUWA_ELEMENT_MAP[char.element] || null,
+            weaponType: WUWA_WEAPON_MAP[char.weapon]  || null,
+            region:     null,
+            imageUrl:   wuwaIconUrl(char),
+            slug:       slugify(nameEn),
+            _fullUrl:   wuwaFullUrl(char),
+            _nickname:  char.nickname || null,
+            _desc:      char.desc     || null,
+          }
+        })
+        .sort((a, b) => {
+          if (a.tier !== b.tier) return a.tier === 'S' ? -1 : 1
+          return a.nameKo.localeCompare(b.nameKo, 'ko')
+        })
+
+      const newCount = wuwaBulkCharList.filter(c => !wuwaBulkSkipSet.has(c.nameKo)).length
+      renderWuwaBulkPreview()
+      document.getElementById('wuwa-bulk-status').textContent =
+        `총 ${wuwaBulkCharList.length}명 (신규 ${newCount}명, 이미 등록 ${wuwaBulkSkipSet.size}명 건너뜀)`
+      const btn = document.getElementById('wuwa-bulk-btn')
+      btn.disabled = newCount === 0
+      btn.textContent = newCount === 0 ? '모두 등록됨' : `${newCount}명 등록하기`
+    } catch(e) {
+      document.getElementById('wuwa-bulk-preview').innerHTML =
+        `<div style="text-align:center;padding:32px;color:#ef4444;font-size:14px;">⚠️ ${e.message}</div>`
+      document.getElementById('wuwa-bulk-status').textContent = ''
+    }
+  }
+
+  function renderWuwaBulkPreview() {
+    const list = document.getElementById('wuwa-bulk-preview')
+    list.innerHTML = wuwaBulkCharList.map(c => {
+      const skip = wuwaBulkSkipSet.has(c.nameKo)
+      return `
+        <div class="bulk-preview-item ${skip ? 'bulk-preview-skip' : ''}">
+          ${c.imageUrl
+            ? `<img src="${c.imageUrl}" alt="${c.nameKo}" onerror="this.style.display='none'">`
+            : '<div style="width:36px;height:36px;border-radius:50%;background:#f1f5f9;flex-shrink:0;"></div>'
+          }
+          <span class="b-name">${c.nameKo}</span>
+          <span class="b-tier ${c.tier.toLowerCase()}">${c.tier} (${c.tier === 'S' ? '5성' : '4성'})</span>
+          ${c.element    ? `<span style="font-size:11px;color:#94a3b8;margin-left:4px;">${c.element}</span>` : ''}
+          ${c.weaponType ? `<span style="font-size:11px;color:#94a3b8;margin-left:2px;">/ ${c.weaponType}</span>` : ''}
+          ${skip ? '<span style="font-size:11px;color:#aaa;margin-left:4px;">이미 등록됨</span>' : ''}
+        </div>`
+    }).join('')
+  }
+
+  async function runWuwaBulkImport() {
+    const toInsert = wuwaBulkCharList.filter(c => !wuwaBulkSkipSet.has(c.nameKo))
+    if (toInsert.length === 0) return
+
+    const btn    = document.getElementById('wuwa-bulk-btn')
+    const status = document.getElementById('wuwa-bulk-status')
+    btn.disabled = true
+    btn.textContent = '등록 중...'
+
+    try {
+      const now = new Date().toISOString()
+      const rows = toInsert.map(c => ({
+        id:         crypto.randomUUID(),
+        gameId:     c.gameId,
+        nameKo:     c.nameKo,
+        nameEn:     c.nameEn,
+        tier:       c.tier,
+        element:    c.element,
+        weaponType: c.weaponType,
+        region:     null,
+        imageUrl:   c.imageUrl,
+        slug:       c.slug,
+        metadata:   { fullImageUrl: c._fullUrl, nickname: c._nickname, desc: c._desc },
+        isLimited:  false,
+        basePrice:  0,
+        isActive:   true,
+        sortOrder:  0,
+        createdAt:  now,
+        updatedAt:  now,
+      }))
+
+      const CHUNK = 50
+      let inserted = 0
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        const chunk = rows.slice(i, i + CHUNK)
+        const { error } = await db.from('Character').insert(chunk)
+        if (error) {
+          alert(`등록 중 오류 (${inserted}명 완료 후): ${error.message}`)
+          btn.disabled = false; btn.textContent = '다시 시도'
+          status.textContent = `⚠️ ${inserted}명 등록 완료 후 오류 발생`
+          return
+        }
+        inserted += chunk.length
+        status.textContent = `등록 중... ${inserted}/${rows.length}명`
+      }
+
+      status.textContent = `✅ ${inserted}명 등록 완료!`
+      btn.textContent = '등록 완료'
+      toInsert.forEach(c => wuwaBulkSkipSet.add(c.nameKo))
+      renderWuwaBulkPreview()
+      if (selectedCharGameId) loadCharsForGame()
+    } catch(e) {
+      status.textContent = `⚠️ ${e.message}`
+      btn.disabled = false; btn.textContent = '다시 시도'
+    }
+  }
+
+  function closeWuwaBulkModal() {
+    document.getElementById('wuwa-bulk-modal-overlay').classList.remove('open')
+  }
+
+  // ===== 명조 이미지 재동기화 =====
+  async function syncWuwaImages() {
+    const btn    = document.getElementById('wuwa-sync-btn')
+    const status = document.getElementById('wuwa-sync-status')
+    btn.disabled = true
+    status.textContent = 'Supabase에서 캐릭터 목록 불러오는 중...'
+
+    try {
+      const { data: game } = await db.from('Game').select('id').eq('slug', 'wuwa').single()
+      if (!game) throw new Error('Supabase에 wuwa 게임이 없어요.')
+
+      const { data: chars, error } = await db.from('Character').select('id, nameEn, metadata').eq('gameId', game.id)
+      if (error) throw error
+      if (!chars?.length) throw new Error('등록된 명조 캐릭터가 없어요.')
+
+      const manifest = await safeFetchJson('https://static.nanoka.cc/manifest.json')
+      const version  = manifest?.ww?.latest
+      if (!version) throw new Error('버전 정보 조회 실패')
+
+      const rawChars = await safeFetchJson(`${WUWA_CDN_BASE}/${version}/character.json`)
+      if (!rawChars) throw new Error('캐릭터 목록 로드 실패')
+
+      // nameEn → {iconUrl, fullUrl} 맵
+      const imgMap = {}
+      Object.entries(rawChars).forEach(([id, char]) => {
+        if (!shouldExcludeWuwaChar(id, char) && char.en) {
+          imgMap[char.en] = { iconUrl: wuwaIconUrl(char), fullUrl: wuwaFullUrl(char) }
+        }
+      })
+
+      const updates = chars
+        .filter(c => c.nameEn && imgMap[c.nameEn])
+        .map(c => {
+          const { iconUrl, fullUrl } = imgMap[c.nameEn]
+          const existingMeta = (typeof c.metadata === 'object' && c.metadata) ? c.metadata : {}
+          return {
+            id: c.id,
+            imageUrl: iconUrl,
+            metadata: { ...existingMeta, fullImageUrl: fullUrl },
+          }
+        })
+
+      status.textContent = `총 ${chars.length}명 중 ${updates.length}명 업데이트 시작...`
+
+      const CHUNK = 50
+      let updated = 0
+      for (let i = 0; i < updates.length; i += CHUNK) {
+        const chunk = updates.slice(i, i + CHUNK)
+        await Promise.all(chunk.map(u =>
+          db.from('Character').update({ imageUrl: u.imageUrl, metadata: u.metadata }).eq('id', u.id)
+        ))
+        updated += chunk.length
+        status.textContent = `DB 업데이트 중... ${updated}/${updates.length}명`
+      }
+
+      status.textContent = `✅ ${updated}명 이미지 업데이트 완료! (매핑 없음 ${chars.length - updates.length}명 건너뜀)`
+      btn.textContent = '✅ 완료'
+      if (selectedCharGameId) loadCharsForGame()
+    } catch(e) {
+      status.textContent = `⚠️ ${e.message}`
+      btn.disabled = false; btn.textContent = '🖼️ 이미지 동기화'
+    }
   }
 
   // ===== 초기화 =====
