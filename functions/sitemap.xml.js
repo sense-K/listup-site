@@ -57,6 +57,10 @@ const STATIC_URLS = [
   { loc: '/trade/price/limbus/',          priority: '0.7', changefreq: 'weekly'  },
   { loc: '/trade/price/stardive/',        priority: '0.7', changefreq: 'weekly'  },
   { loc: '/trade/price/epic7/',           priority: '0.7', changefreq: 'weekly'  },
+  { loc: '/game/wuwa/',                   priority: '0.8', changefreq: 'weekly'  },
+  { loc: '/game/wuwa/characters/',        priority: '0.8', changefreq: 'weekly'  },
+  { loc: '/trade/wuwa/',                  priority: '0.9', changefreq: 'daily'   },
+  { loc: '/trade/price/wuwa/',            priority: '0.7', changefreq: 'weekly'  },
   { loc: '/contact/',                     priority: '0.4', changefreq: 'monthly' },
 ]
 
@@ -65,6 +69,8 @@ const CHAR_DETAIL_GAMES = {
   genshin:  '/game/genshin/characters/',
   starrail: '/game/starrail/characters/',
   zzz:      '/game/zzz/characters/',
+  wuwa:     '/game/wuwa/characters/',
+  nikke:    '/game/nikke/characters/',
 }
 
 async function supaGet(path) {
