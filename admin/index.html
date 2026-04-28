@@ -1146,7 +1146,7 @@
             tier:       c.rarity >= 5 ? 'S' : 'A',
             element:    SR_ELEM_MAP[c.element]  || null,
             weaponType: SR_PATH_MAP[c.path]     || null,
-            imageUrl:   `${STARRAIL_CDN}/${c.portrait || c.preview || c.icon}`,
+            imageUrl:   `${STARRAIL_CDN}/${c.preview || c.portrait || c.icon}`,
             slug:       slugify(nameEn),
           }
         })
@@ -1280,7 +1280,7 @@
       const imgMap = {}
       Object.values(rawKr).forEach(c => {
         if (!shouldExcludeStarrailChar(c)) {
-          imgMap[c.name] = `${STARRAIL_CDN}/${c.portrait || c.preview || c.icon}`
+          imgMap[c.name] = `${STARRAIL_CDN}/${c.preview || c.portrait || c.icon}`
         }
       })
 
