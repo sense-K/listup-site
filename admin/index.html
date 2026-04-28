@@ -1971,7 +1971,7 @@
   }
 
   // ===== 니케 신규 캐릭터 감지 =====
-  const NIKKE_PRYDWEN_URL = 'https://www.prydwen.gg/page-data/nikke/characters/page-data.json'
+  const NIKKE_PRYDWEN_URL = '/api/prydwen-nikke'
   let nikkeNewCharList = []
 
   function normalizeNikke(str) {
@@ -1989,7 +1989,7 @@
     btn.disabled = true
     btn.textContent = '등록하기'
     try {
-      const data = await safeFetchJson(NIKKE_PRYDWEN_URL)
+      const data = await safeFetchJson('/api/prydwen-nikke')
       const apiChars = data?.result?.data?.allCharacters?.nodes
       if (!apiChars?.length) throw new Error('prydwen에서 캐릭터 데이터를 가져올 수 없어요.')
 
