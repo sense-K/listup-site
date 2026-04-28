@@ -545,3 +545,59 @@ Normal→일반 공격, BPSkill→전투 스킬, Ultra→궁극기, Talent→천
 /game/starrail/, /game/starrail/uid/*, /game/starrail/characters/  → 정적 파일
 /game/starrail/characters/[slug]/                                   → Function 실행
 ```
+
+## 젠레스 존 제로 캐릭터 도감 (2026-04-28 추가)
+
+### 페이지 구조
+- `/game/zzz/characters/` — 도감 메인 (정적 HTML)
+- `/game/zzz/characters/[slug]/` — 캐릭터 상세 (Cloudflare Function SSR)
+
+### 데이터 소스
+- Hakushin API (실제 호스트: `static.nanoka.cc`)
+- 버전 동적 조회: `https://static.nanoka.cc/manifest.json` → `zzz.latest`
+- 캐릭터 목록: `https://static.nanoka.cc/zzz/{version}/character.json`
+  - 객체 (ID키), ko/en 이름 직접 포함, 총 53명
+- 캐릭터 상세: `https://static.nanoka.cc/zzz/{version}/ko/character/{id}.json`
+- 이미지: `https://enka.network/ui/zzz/{icon}.webp` (CORS 허용)
+
+### 매핑 테이블
+
+**원소 (element):** 정수 코드 → 한국어 (5개)
+```
+200→물리, 201→화염, 202→얼음, 203→전기, 205→에테르
+```
+
+**전문분야 (type → weaponType 컬럼):** 정수 코드 → 한국어 (6개)
+```
+1→공격, 2→격파, 3→이상, 4→지원, 5→방어, 6→강탈
+```
+
+**등급 (rank → tier):** `3→A`, `4→S`
+
+### 원신/스타레일과의 차이점
+- 등급 표기: "S급" / "A급" (5성/4성 표기 없음)
+- 별자리/성흔 → **마인드스케이프** (`meta.mindscapes`), rank label: "N성"
+- 추가 정보: `meta.camp`(소속), `meta.hitType`(공격 타입) — birthday/cv 없음
+- region 없음
+- 주인공(2011/2021): character.json에 이미 없음 (사전 제외)
+- character.json 1회 fetch로 충분 (ko 이름 + en 이름 모두 포함)
+
+### metadata 구조
+```json
+{
+  "skills": [{"type":"기본 공격","name":"...","desc":"..."}],
+  "mindscapes": [{"rank":1,"name":"...","desc":"..."}],
+  "camp": "교활한 토끼굴",
+  "hitType": "베기"
+}
+```
+
+### admin 운영 워크플로우
+1. admin → **"🔄 캐릭터 등록"** (ZZZ 카드) → metadata 포함 일괄 INSERT
+2. admin → **"🖼️ 이미지 동기화"** → nameEn 매핑으로 enka.network URL 갱신
+
+### 라우팅 (_routes.json)
+```
+/game/zzz/, /game/zzz/uid/*, /game/zzz/characters/  → 정적 파일
+/game/zzz/characters/[slug]/                          → Function 실행
+```
