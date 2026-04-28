@@ -613,6 +613,46 @@ Normal→일반 공격, BPSkill→전투 스킬, Ultra→궁극기, Talent→천
 /game/zzz/characters/[slug]/                          → Function 실행
 ```
 
+## 니케 캐릭터 도감 (2026-04-28 추가)
+
+### 페이지 구조
+- `/game/nikke/characters/` — 도감 메인 (정적 HTML, 기존 모달 방식 → legacy.html 백업)
+- `/game/nikke/characters/[slug]/` — 캐릭터 상세 (Cloudflare Function SSR)
+
+### 주요 필터 (5개 — 원신/스타레일/젠레스와 다름)
+- **등급(rarity)**: SSR / SR / R
+- **속성(element)**: Fire/Water/Wind/Electric/Iron (영문 DB 값, UI는 한국어 라벨)
+- **무기(weaponType)**: Shotgun/SMG/Assault Rifle/Minigun/Rocket Launcher/Sniper Rifle
+- **버스트(burstType)**: "1"/"2"/"3"/"All"
+- **제조사(manufacturer)**: Elysion/Missilis/Tetra/Pilgrim/Abnormal
+
+### 한국어 라벨 매핑 (상세 페이지, 도감 필터 표시용)
+```javascript
+ELEM_KO:   { Fire:'화염', Water:'수속', Wind:'풍속', Electric:'전기', Iron:'철갑' }
+WEAPON_KO: { Shotgun:'샷건', SMG:'SMG', 'Assault Rifle':'어설트 라이플', ... }
+MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트라', Pilgrim:'필그림', Abnormal:'콜라보' }
+```
+
+### 애장품 캐릭터 처리
+- `slug`가 `-treasure`로 끝나는 캐릭터
+- 도감 카드: 보라 테두리(`#c084fc`) + 💎 뱃지
+- 상세 페이지: "💎 애장품" 뱃지
+- 애장품 이미지: admin에서 "🔗 애장품 이미지 복사" 버튼으로 기본 캐릭터에서 복사
+
+### 원신/스타레일/젠레스와의 차이점
+- 이미지: prydwen `fullImage` URL 그대로 사용 (변환 불필요)
+- 필터: 5개 (tier 대신 rarity, + burst + manufacturer 추가)
+- 스킬 섹션: metadata가 대부분 비어있어 "준비 중" 표시
+- 성흔/마인드스케이프 섹션 없음
+- `rarity` 컬럼 사용 (SSR/SR/R), `tier` 컬럼은 별도(SSS~C)
+
+### 라우팅 (_routes.json)
+```
+/game/nikke/, /game/nikke/characters/  → 정적 파일
+/game/nikke/characters/[slug]/          → Function 실행
+```
+(nikke는 uid 페이지 없음)
+
 ## admin 캐릭터 관리 UI (2026-04-28 리팩터)
 
 ### 게임별 통합 카드 패턴
