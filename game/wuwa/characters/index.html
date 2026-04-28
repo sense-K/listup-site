@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="shortcut icon" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>명조 워더링 웨이브 캐릭터 도감 — 한국어 전체 캐릭터 정보 | 플레이센스</title>
+  <meta name="description" content="명조 워더링 웨이브 전체 캐릭터 한국어 도감. 등급, 속성, 무기별로 캐릭터를 찾고 거래소에서 보유 계정을 확인하세요. 53명 수록.">
+  <meta name="keywords" content="명조, 워더링웨이브, 명조 캐릭터, 명조 도감, 명조 시세, 명조 5성">
+  <link rel="canonical" href="https://resetlist.kr/game/wuwa/characters/">
+  <meta property="og:title" content="명조 워더링 웨이브 캐릭터 도감 — 플레이센스">
+  <meta property="og:description" content="명조 워더링 웨이브 전체 캐릭터 한국어 정보 + 보유 계정 거래소 연동">
+  <meta property="og:url" content="https://resetlist.kr/game/wuwa/characters/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="플레이센스">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "명조 워더링 웨이브 캐릭터 도감",
+    "description": "명조 워더링 웨이브 전체 캐릭터 한국어 정보",
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "홈", "item": "https://resetlist.kr/" },
+        { "@type": "ListItem", "position": 2, "name": "명조 워더링 웨이브", "item": "https://resetlist.kr/game/wuwa/" },
+        { "@type": "ListItem", "position": 3, "name": "캐릭터 도감" }
+      ]
+    }
+  }
+  </script>
+  <style>
+    .g-wrap { max-width:1100px; margin:0 auto; padding:20px 16px; min-height:calc(100vh - 60px - 140px); }
+    .g-breadcrumb { display:flex; align-items:center; gap:6px; font-size:13px; color:#94a3b8; margin-bottom:16px; }
+    .g-breadcrumb a { color:#64748b; text-decoration:none; }
+    .g-breadcrumb a:hover { color:#06b6d4; }
+    .g-breadcrumb span { color:#cbd5e1; }
+    .g-header { margin-bottom:20px; }
+    .g-header h1 { font-size:22px; font-weight:800; color:var(--text,#1e293b); margin:0 0 4px; }
+    .g-header p  { font-size:14px; color:var(--text-sub,#64748b); margin:0; }
+    .g-filter { background:#fff; border:1px solid var(--border,#e5e7eb); border-radius:16px; padding:16px; margin-bottom:16px; }
+    .g-search { width:100%; padding:10px 14px; border:1px solid var(--border,#e5e7eb); border-radius:10px; font-size:14px; outline:none; margin-bottom:12px; box-sizing:border-box; background:#f8fafc; color:var(--text,#1e293b); }
+    .g-search:focus { border-color:#06b6d4; background:#fff; }
+    .g-filter-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px; }
+    .g-filter-row:last-child { margin-bottom:0; }
+    .g-filter-label { font-size:11px; font-weight:700; color:#94a3b8; letter-spacing:0.05em; text-transform:uppercase; margin-right:2px; white-space:nowrap; }
+    .g-chip { display:inline-flex; align-items:center; padding:5px 12px; border-radius:999px; font-size:12px; font-weight:600; border:1px solid var(--border,#e5e7eb); background:transparent; color:var(--text-sub,#64748b); cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+    .g-chip:hover { opacity:0.8; }
+    .g-chip.active { color:#fff; border-color:transparent; }
+    .g-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:8px; flex-wrap:wrap; }
+    .g-count { font-size:13px; color:var(--text-sub,#64748b); }
+    .g-count strong { color:var(--text,#1e293b); }
+    .g-sort { padding:7px 12px; border:1px solid var(--border,#e5e7eb); border-radius:10px; font-size:13px; font-family:inherit; background:#fff; color:var(--text,#1e293b); cursor:pointer; outline:none; }
+    .g-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
+    @media(max-width:900px){ .g-grid { grid-template-columns:repeat(4,1fr); } }
+    @media(max-width:560px){ .g-grid { grid-template-columns:repeat(3,1fr); gap:8px; } }
+    .g-card { background:#fff; border:1.5px solid var(--border,#e5e7eb); border-radius:14px; overflow:hidden; cursor:pointer; transition:box-shadow 0.15s,transform 0.15s; display:flex; flex-direction:column; align-items:center; text-decoration:none; color:inherit; }
+    .g-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.1); transform:translateY(-2px); }
+    .g-card-img-wrap { width:100%; aspect-ratio:1; position:relative; overflow:hidden; background:linear-gradient(160deg,#1a1a2e 0%,#16213e 100%); }
+    .g-card-img-wrap img { width:100%; height:100%; object-fit:cover; object-position:top center; }
+    /* 명조 속성 테두리 */
+    .elem-응결 { border-color:#3b82f6; }
+    .elem-융해 { border-color:#ef4444; }
+    .elem-전도 { border-color:#9333ea; }
+    .elem-기류 { border-color:#10b981; }
+    .elem-회절 { border-color:#f59e0b; }
+    .elem-인멸 { border-color:#9c27b0; }
+    .g-tier-badge { position:absolute; top:5px; left:5px; font-size:10px; font-weight:800; padding:2px 6px; border-radius:5px; letter-spacing:0.03em; }
+    .badge-S { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#78350f; }
+    .badge-A { background:linear-gradient(135deg,#a78bfa,#8b5cf6); color:#fff; }
+    .g-card-body { padding:6px 6px 8px; width:100%; box-sizing:border-box; text-align:center; }
+    .g-card-name { font-size:12px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    @media(max-width:560px){ .g-card-name { font-size:11px; } }
+    .g-elem-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:2px; vertical-align:middle; flex-shrink:0; }
+    .g-empty { text-align:center; padding:60px 16px; color:#94a3b8; font-size:15px; }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="g-wrap">
+  <nav class="g-breadcrumb" aria-label="breadcrumb">
+    <a href="/">홈</a><span>›</span>
+    <a href="/game/wuwa/">명조 워더링 웨이브</a><span>›</span>
+    <span style="color:#1e293b;font-weight:600;">캐릭터 도감</span>
+  </nav>
+  <div class="g-header">
+    <h1>명조 워더링 웨이브 캐릭터 도감</h1>
+    <p>명조 워더링 웨이브 전체 캐릭터를 등급, 속성, 무기별로 찾아보세요</p>
+  </div>
+
+  <div class="g-filter">
+    <input class="g-search" id="search" type="text" placeholder="캐릭터 이름 검색...">
+    <div class="g-filter-row">
+      <span class="g-filter-label">등급</span>
+      <button class="g-chip active" data-group="tier" data-val="" style="--c:#06b6d4;">전체</button>
+      <button class="g-chip" data-group="tier" data-val="S" style="--c:#f59e0b;">⭐ S (5성)</button>
+      <button class="g-chip" data-group="tier" data-val="A" style="--c:#8b5cf6;">✦ A (4성)</button>
+    </div>
+    <div class="g-filter-row">
+      <span class="g-filter-label">속성</span>
+      <button class="g-chip active" data-group="element" data-val="" style="--c:#06b6d4;">전체</button>
+      <button class="g-chip" data-group="element" data-val="응결" style="--c:#3b82f6;">❄️ 응결</button>
+      <button class="g-chip" data-group="element" data-val="융해" style="--c:#ef4444;">🔥 융해</button>
+      <button class="g-chip" data-group="element" data-val="전도" style="--c:#9333ea;">⚡ 전도</button>
+      <button class="g-chip" data-group="element" data-val="기류" style="--c:#10b981;">🌿 기류</button>
+      <button class="g-chip" data-group="element" data-val="회절" style="--c:#f59e0b;">✨ 회절</button>
+      <button class="g-chip" data-group="element" data-val="인멸" style="--c:#9c27b0;">🌑 인멸</button>
+    </div>
+    <div class="g-filter-row">
+      <span class="g-filter-label">무기</span>
+      <button class="g-chip active" data-group="weapon" data-val="" style="--c:#06b6d4;">전체</button>
+      <button class="g-chip" data-group="weapon" data-val="대검"   style="--c:#64748b;">⚔️ 대검</button>
+      <button class="g-chip" data-group="weapon" data-val="쌍검"   style="--c:#64748b;">🗡️ 쌍검</button>
+      <button class="g-chip" data-group="weapon" data-val="피스톨" style="--c:#64748b;">🔫 피스톨</button>
+      <button class="g-chip" data-group="weapon" data-val="권투"   style="--c:#64748b;">🥊 권투</button>
+      <button class="g-chip" data-group="weapon" data-val="회수기" style="--c:#64748b;">🔮 회수기</button>
+    </div>
+  </div>
+
+  <div class="g-toolbar">
+    <div class="g-count" id="count"></div>
+    <select class="g-sort" id="sort">
+      <option value="tier">등급순</option>
+      <option value="name">이름순</option>
+    </select>
+  </div>
+  <div class="g-grid" id="grid">
+    <div class="g-empty" style="grid-column:1/-1;">불러오는 중...</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script>
+  const ELEM_COLOR = {
+    '응결':'#3b82f6','융해':'#ef4444','전도':'#9333ea',
+    '기류':'#10b981','회절':'#f59e0b','인멸':'#9c27b0',
+  }
+  let allChars = []
+  const filters = { tier:'', element:'', weapon:'' }
+
+  async function init() {
+    document.getElementById('navbar').innerHTML = renderNavbar()
+    loadAndRenderGameUI('wuwa')
+    try {
+      const { data: game } = await db.from('Game').select('id').eq('slug','wuwa').single()
+      if (!game) throw new Error('명조 워더링 웨이브 게임 정보를 찾을 수 없어요.')
+      const { data: chars, error } = await db.from('Character')
+        .select('id, nameKo, nameEn, tier, element, weaponType, slug, imageUrl')
+        .eq('gameId', game.id).eq('isActive', true).order('tier').order('nameKo')
+      if (error) throw error
+      allChars = chars ?? []
+      document.querySelector('.g-header p').textContent =
+        `명조 워더링 웨이브 전체 ${allChars.length}명의 캐릭터를 등급, 속성, 무기별로 찾아보세요`
+      render()
+    } catch(e) {
+      document.getElementById('grid').innerHTML =
+        `<div class="g-empty" style="grid-column:1/-1;color:#ef4444;">⚠️ ${e.message}</div>`
+    }
+  }
+
+  function render() {
+    const q = document.getElementById('search').value.trim()
+    const sort = document.getElementById('sort').value
+    let list = allChars.filter(c => {
+      if (filters.tier    && c.tier       !== filters.tier)    return false
+      if (filters.element && c.element    !== filters.element) return false
+      if (filters.weapon  && c.weaponType !== filters.weapon)  return false
+      if (q && !c.nameKo.includes(q)) return false
+      return true
+    })
+    if (sort === 'name') {
+      list = list.slice().sort((a,b) => a.nameKo.localeCompare(b.nameKo,'ko'))
+    } else {
+      list = list.slice().sort((a,b) => {
+        if (a.tier !== b.tier) return a.tier === 'S' ? -1 : 1
+        return a.nameKo.localeCompare(b.nameKo,'ko')
+      })
+    }
+    document.getElementById('count').innerHTML = `<strong>${list.length}명</strong> 표시 중`
+    const grid = document.getElementById('grid')
+    if (list.length === 0) { grid.innerHTML = '<div class="g-empty" style="grid-column:1/-1;">조건에 맞는 캐릭터가 없어요</div>'; return }
+    grid.innerHTML = list.map(c => {
+      const elemClass = c.element ? `elem-${c.element}` : ''
+      const href = c.slug ? `/game/wuwa/characters/${c.slug}/` : '#'
+      const dotColor = ELEM_COLOR[c.element] || '#999'
+      return `
+        <a class="g-card ${elemClass}" href="${href}" title="${c.nameKo}${c.nameEn ? ' ('+c.nameEn+')' : ''}">
+          <div class="g-card-img-wrap">
+            ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy" onerror="this.parentElement.style.background='#1e1e2e'">` : ''}
+            <span class="g-tier-badge badge-${c.tier}">${c.tier}</span>
+          </div>
+          <div class="g-card-body">
+            <div class="g-card-name">
+              ${c.element ? `<span class="g-elem-dot" style="background:${dotColor};"></span>` : ''}${c.nameKo}
+            </div>
+          </div>
+        </a>`
+    }).join('')
+  }
+
+  function bindChip(btn) {
+    btn.addEventListener('click', () => {
+      const group = btn.dataset.group, val = btn.dataset.val
+      filters[group] = val
+      document.querySelectorAll(`.g-chip[data-group="${group}"]`).forEach(b => {
+        b.classList.remove('active'); b.style.background=''; b.style.borderColor=''; b.style.color=''
+      })
+      btn.classList.add('active')
+      const c = btn.style.getPropertyValue('--c') || '#06b6d4'
+      btn.style.background=c; btn.style.borderColor=c; btn.style.color='#fff'
+      render()
+    })
+    if (btn.classList.contains('active')) {
+      const c = btn.style.getPropertyValue('--c') || '#06b6d4'
+      btn.style.background=c; btn.style.borderColor=c; btn.style.color='#fff'
+    }
+  }
+  document.querySelectorAll('.g-chip').forEach(bindChip)
+  document.getElementById('search').addEventListener('input', render)
+  document.getElementById('sort').addEventListener('change', render)
+  init()
+</script>
+<div id="footer"></div>
+</body>
+</html>
