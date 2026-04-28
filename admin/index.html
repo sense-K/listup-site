@@ -231,6 +231,7 @@
   .game-import-card[data-game="genshin"]  { border-left:4px solid #3b82f6; }
   .game-import-card[data-game="starrail"] { border-left:4px solid #8b5cf6; }
   .game-import-card[data-game="zzz"]      { border-left:4px solid #f59e0b; }
+  .game-import-card[data-game="nikke"]   { border-left:4px solid #ec4899; }
   .game-import-header { margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #f3f4f6; }
   .game-import-title  { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:700; }
   .game-emoji  { font-size:24px; }
@@ -427,6 +428,24 @@
         </div>
       </div>
 
+      <!-- 니케 통합 관리 카드 -->
+      <div class="game-import-card" data-game="nikke">
+        <div class="game-import-header">
+          <div class="game-import-title">
+            <span class="game-emoji">🛡️</span>
+            <span>니케</span>
+            <span class="game-source">NikkeAPI (prydwen)</span>
+          </div>
+        </div>
+        <div class="game-import-actions" style="grid-template-columns:1fr;">
+          <button class="action-btn action-import" onclick="openNikkeNewDetect()">
+            <span class="action-icon">🔍</span>
+            <span class="action-label">신규 캐릭터 감지</span>
+            <span class="action-desc">NikkeAPI에서 신규만 찾아 한국어 이름 입력 후 등록</span>
+          </button>
+        </div>
+      </div>
+
       <div class="admin-card">
         <div class="admin-card-title">새 캐릭터 추가</div>
         <div class="inline-form" style="margin-bottom:8px;">
@@ -554,6 +573,24 @@
       <span class="bulk-modal-status" id="genshin-bulk-modal-status"></span>
       <button class="btn-sm btn-gray" onclick="closeGenshinBulkModal()">취소</button>
       <button class="btn-bulk-import" id="genshin-bulk-import-btn" onclick="runGenshinBulkImport()" disabled>등록하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 니케 신규 캐릭터 감지 모달 -->
+<div class="bulk-modal-overlay" id="nikke-detect-modal" onclick="if(event.target===this)closeNikkeNewModal()">
+  <div class="bulk-modal" style="width:760px;">
+    <div class="bulk-modal-header">
+      <div class="bulk-modal-title">🛡️ 니케 신규 캐릭터 감지</div>
+      <button class="bulk-modal-close" onclick="closeNikkeNewModal()">✕</button>
+    </div>
+    <div id="nikke-detect-preview" class="bulk-preview-list">
+      <div style="text-align:center;padding:40px;color:#888;font-size:14px;">데이터를 불러오는 중...</div>
+    </div>
+    <div class="bulk-modal-footer">
+      <span class="bulk-modal-status" id="nikke-detect-status"></span>
+      <button class="btn-sm btn-gray" onclick="closeNikkeNewModal()">취소</button>
+      <button class="btn-bulk-import" id="nikke-detect-btn" onclick="runNikkeNewImport()" disabled>등록하기</button>
     </div>
   </div>
 </div>
@@ -1931,6 +1968,169 @@
       btn.disabled = false
       btn.textContent = '🖼️ 이미지 동기화'
     }
+  }
+
+  // ===== 니케 신규 캐릭터 감지 =====
+  const NIKKE_PRYDWEN_URL = 'https://www.prydwen.gg/page-data/nikke/characters/page-data.json'
+  let nikkeNewCharList = []
+
+  function normalizeNikke(str) {
+    return (str || '').toLowerCase().replace(/[\s_:.\-,]+/g, '').trim()
+  }
+
+  async function openNikkeNewDetect() {
+    const modal  = document.getElementById('nikke-detect-modal')
+    const list   = document.getElementById('nikke-detect-preview')
+    const status = document.getElementById('nikke-detect-status')
+    const btn    = document.getElementById('nikke-detect-btn')
+    modal.classList.add('open')
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#888;font-size:14px;">데이터를 불러오는 중...</div>'
+    status.textContent = ''
+    btn.disabled = true
+    btn.textContent = '등록하기'
+    try {
+      const data = await safeFetchJson(NIKKE_PRYDWEN_URL)
+      const apiChars = data?.result?.data?.allCharacters?.nodes
+      if (!apiChars?.length) throw new Error('prydwen에서 캐릭터 데이터를 가져올 수 없어요.')
+
+      const { data: game } = await db.from('Game').select('id').eq('slug', 'nikke').single()
+      if (!game) throw new Error('Supabase에 nikke 게임이 없어요.')
+      const { data: existing } = await db.from('Character').select('nameEn').eq('gameId', game.id)
+      const existingNorm = new Set((existing ?? []).map(c => normalizeNikke(c.nameEn)))
+
+      nikkeNewCharList = apiChars
+        .filter(c => c.name && !existingNorm.has(normalizeNikke(c.name)))
+        .map(c => ({ ...c, _gameId: game.id }))
+
+      if (nikkeNewCharList.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:60px;color:#64748b;font-size:15px;">✅ 신규 니케가 없어요<br><span style="font-size:13px;color:#aaa;margin-top:8px;display:block;">DB와 prydwen이 모두 최신 상태예요.</span></div>'
+        status.textContent = `전체 ${apiChars.length}명 확인 완료 — 신규 없음`
+        return
+      }
+
+      status.textContent = `신규 ${nikkeNewCharList.length}명 발견 (전체 ${apiChars.length}명 중)`
+      renderNikkeNewPreview()
+    } catch(e) {
+      list.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;font-size:14px;">⚠️ ${e.message}</div>`
+      status.textContent = ''
+    }
+  }
+
+  function renderNikkeNewPreview() {
+    const list = document.getElementById('nikke-detect-preview')
+    list.innerHTML = nikkeNewCharList.map((c, idx) => {
+      const tier      = c.rarity === 'SSR' ? 'S' : (c.rarity === 'SR' ? 'A' : 'B')
+      const tierClass = tier === 'S' ? 's' : 'a'
+      return `
+      <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:5px;">${c.name}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <span class="b-tier ${tierClass}">${c.rarity}</span>
+            <span style="font-size:11px;background:#fce7f3;color:#9d174d;padding:2px 7px;border-radius:4px;">${c.manufacturer}</span>
+            <span style="font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:4px;">${c.element}</span>
+            <span style="font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:4px;">${c.weapon}</span>
+            <span style="font-size:11px;background:#ede9fe;color:#5b21b6;padding:2px 7px;border-radius:4px;">버스트 ${c.burstType}</span>
+            ${c.isLimited ? '<span style="font-size:11px;background:#fee2e2;color:#991b1b;padding:2px 7px;border-radius:4px;">한정</span>' : ''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <input type="text"
+                 class="nikke-ko-input"
+                 data-idx="${idx}"
+                 placeholder="한국어 이름"
+                 style="width:120px;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"
+                 oninput="updateNikkeImportBtn()"
+                 onfocus="this.style.borderColor='#ec4899'"
+                 onblur="this.style.borderColor='#e5e7eb'">
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#6b7280;cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" class="nikke-skip-chk" data-idx="${idx}" onchange="updateNikkeImportBtn()">
+            건너뛰기
+          </label>
+        </div>
+      </div>`
+    }).join('')
+    updateNikkeImportBtn()
+  }
+
+  function updateNikkeImportBtn() {
+    const inputs = document.querySelectorAll('.nikke-ko-input')
+    const skips  = document.querySelectorAll('.nikke-skip-chk')
+    let count = 0
+    inputs.forEach((inp, i) => {
+      if (!skips[i]?.checked && inp.value.trim()) count++
+    })
+    const btn = document.getElementById('nikke-detect-btn')
+    btn.disabled = count === 0
+    btn.textContent = count > 0 ? `${count}명 등록하기` : '등록하기'
+  }
+
+  async function runNikkeNewImport() {
+    const inputs = document.querySelectorAll('.nikke-ko-input')
+    const skips  = document.querySelectorAll('.nikke-skip-chk')
+    const toInsert = []
+    inputs.forEach((inp, i) => {
+      const nameKo = inp.value.trim()
+      if (!nameKo || skips[i]?.checked) return
+      const c = nikkeNewCharList[i]
+      if (!c) return
+      toInsert.push({ c, nameKo })
+    })
+    if (toInsert.length === 0) return
+
+    const btn    = document.getElementById('nikke-detect-btn')
+    const status = document.getElementById('nikke-detect-status')
+    btn.disabled = true
+    btn.textContent = '등록 중...'
+
+    const now = new Date().toISOString()
+    const rows = toInsert.map(({ c, nameKo }) => ({
+      id:           crypto.randomUUID(),
+      gameId:       c._gameId,
+      nameKo,
+      nameEn:       c.name,
+      tier:         c.rarity === 'SSR' ? 'S' : (c.rarity === 'SR' ? 'A' : 'B'),
+      element:      c.element,
+      weaponType:   c.weapon,
+      rarity:       c.rarity,
+      manufacturer: c.manufacturer,
+      burstType:    c.burstType,
+      classType:    c.class,
+      slug:         c.slug,
+      imageUrl:     null,
+      isLimited:    c.isLimited ?? false,
+      basePrice:    0,
+      isActive:     true,
+      sortOrder:    0,
+      createdAt:    now,
+      updatedAt:    now,
+      metadata:     {},
+    }))
+
+    const CHUNK = 50
+    let inserted = 0
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const chunk = rows.slice(i, i + CHUNK)
+      const { error } = await db.from('Character').insert(chunk)
+      if (error) {
+        alert(`등록 중 오류 (${inserted}명 완료 후): ${error.message}`)
+        btn.disabled = false
+        btn.textContent = '다시 시도'
+        status.textContent = `⚠️ ${inserted}명 등록 후 오류`
+        return
+      }
+      inserted += chunk.length
+      status.textContent = `등록 중... ${inserted}/${rows.length}명`
+    }
+
+    status.textContent = `✅ ${inserted}명 등록 완료!`
+    btn.textContent = '등록 완료'
+    if (selectedCharGameId) loadCharsForGame()
+  }
+
+  function closeNikkeNewModal() {
+    document.getElementById('nikke-detect-modal').classList.remove('open')
+    nikkeNewCharList = []
   }
 
   // ===== 초기화 =====
