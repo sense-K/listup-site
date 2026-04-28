@@ -5,301 +5,383 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="shortcut icon" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>니케 캐릭터 도감 | 플레이센스</title>
-  <meta name="description" content="승리의 여신 니케 전체 캐릭터 도감. SSS~C 티어별 필터와 이름 검색으로 원하는 니케를 빠르게 찾아보세요.">
-  <meta name="keywords" content="니케 캐릭터 도감, 니케 캐릭터 목록, 니케 티어표, 니케 SSR, 니케 캐릭터 이미지, NIKKE characters">
+  <title>니케 캐릭터 도감 — 한국어 전체 캐릭터 정보 | 플레이센스</title>
+  <meta name="description" content="니케 (NIKKE) 전체 캐릭터 한국어 도감. 등급, 속성, 무기, 제조사, 버스트별로 캐릭터를 찾고 거래소에서 보유 계정을 확인하세요. 207명 수록.">
+  <meta name="keywords" content="니케, NIKKE, 니케 캐릭터, 니케 도감, 니케 SSR, 니케 시세, 니케 캐릭터 정보">
   <link rel="canonical" href="https://resetlist.kr/game/nikke/characters/">
-  <meta property="og:type" content="website">
+  <meta property="og:title" content="니케 캐릭터 도감 — 플레이센스">
+  <meta property="og:description" content="니케 전체 캐릭터 한국어 정보 + 보유 계정 거래소 연동">
   <meta property="og:url" content="https://resetlist.kr/game/nikke/characters/">
-  <meta property="og:title" content="니케 캐릭터 도감 | 플레이센스">
-  <meta property="og:description" content="승리의 여신 니케 전체 캐릭터 도감. SSS~C 티어별 필터로 원하는 니케를 빠르게 찾아보세요.">
+  <meta property="og:type" content="website">
   <meta property="og:site_name" content="플레이센스">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/css/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "니케 캐릭터 도감",
+    "description": "니케 (NIKKE) 전체 캐릭터 한국어 정보",
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "홈", "item": "https://resetlist.kr/" },
+        { "@type": "ListItem", "position": 2, "name": "니케", "item": "https://resetlist.kr/game/nikke/" },
+        { "@type": "ListItem", "position": 3, "name": "캐릭터 도감" }
+      ]
+    }
+  }
+  </script>
   <style>
-    .n-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px; min-height: calc(100vh - 60px - 140px); }
-
-    .n-filter {
-      background: #fff; border: 1px solid var(--border, #e5e7eb);
-      border-radius: 16px; padding: 16px; margin-bottom: 20px;
+    .g-wrap {
+      max-width: 1100px; margin: 0 auto;
+      padding: 20px 16px; min-height: calc(100vh - 60px - 140px);
     }
-    .n-search {
+
+    .g-breadcrumb {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: #94a3b8; margin-bottom: 16px;
+    }
+    .g-breadcrumb a { color: #64748b; text-decoration: none; }
+    .g-breadcrumb a:hover { color: #6c47ff; }
+    .g-breadcrumb span { color: #cbd5e1; }
+
+    .g-header { margin-bottom: 20px; }
+    .g-header h1 { font-size: 22px; font-weight: 800; color: var(--text,#1e293b); margin: 0 0 4px; }
+    .g-header p  { font-size: 14px; color: var(--text-sub,#64748b); margin: 0; }
+
+    .g-filter {
+      background: #fff; border: 1px solid var(--border,#e5e7eb);
+      border-radius: 16px; padding: 16px; margin-bottom: 16px;
+    }
+    .g-search {
       width: 100%; padding: 10px 14px;
-      border: 1px solid var(--border, #e5e7eb); border-radius: 10px;
+      border: 1px solid var(--border,#e5e7eb); border-radius: 10px;
       font-size: 14px; outline: none; margin-bottom: 12px;
-      box-sizing: border-box; background: #f8fafc; color: var(--text, #1e293b);
+      box-sizing: border-box; background: #f8fafc; color: var(--text,#1e293b);
     }
-    .n-search:focus { border-color: #c026d3; background: #fff; }
-    .n-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-    .n-chip {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
-      border: 1.5px solid var(--border, #e5e7eb);
-      background: transparent; color: var(--text-sub, #64748b);
-      cursor: pointer; transition: all 0.15s;
+    .g-search:focus { border-color: #c026d3; background: #fff; }
+
+    .g-filter-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      align-items: center; margin-bottom: 8px;
     }
-    .n-chip:hover { opacity: 0.8; }
-    .n-chip.active { color: #fff; border-color: transparent; }
+    .g-filter-row:last-child { margin-bottom: 0; }
+    .g-filter-label {
+      font-size: 11px; font-weight: 700; color: #94a3b8;
+      letter-spacing: 0.05em; text-transform: uppercase; margin-right: 2px;
+      white-space: nowrap;
+    }
+    .g-chip {
+      display: inline-flex; align-items: center;
+      padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border,#e5e7eb);
+      background: transparent; color: var(--text-sub,#64748b);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .g-chip:hover { opacity: 0.8; }
+    .g-chip.active { color: #fff; border-color: transparent; }
 
-    .n-count { font-size: 13px; color: var(--text-sub, #64748b); margin-bottom: 14px; }
-    .n-count strong { color: var(--text, #1e293b); }
+    .g-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; gap: 8px; flex-wrap: wrap;
+    }
+    .g-count { font-size: 13px; color: var(--text-sub,#64748b); }
+    .g-count strong { color: var(--text,#1e293b); }
+    .g-sort {
+      padding: 7px 12px; border: 1px solid var(--border,#e5e7eb);
+      border-radius: 10px; font-size: 13px; font-family: inherit;
+      background: #fff; color: var(--text,#1e293b); cursor: pointer; outline: none;
+    }
 
-    .n-grid {
+    .g-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      grid-template-columns: repeat(6, 1fr);
       gap: 10px;
     }
+    @media (max-width: 900px) { .g-grid { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 560px) { .g-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
 
-    .n-card {
-      background: #fff; border: 1.5px solid var(--border, #e5e7eb);
-      border-radius: 14px; overflow: hidden;
-      cursor: default; transition: box-shadow 0.15s, transform 0.15s;
+    .g-card {
+      background: #fff; border: 1.5px solid var(--border,#e5e7eb);
+      border-radius: 14px; overflow: hidden; cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.15s;
       display: flex; flex-direction: column; align-items: center;
+      text-decoration: none; color: inherit;
     }
-    .n-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .g-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .g-card.treasure-card { border-color: #c084fc; border-width: 2px; }
 
-    .n-card-img-wrap {
+    .g-card-img-wrap {
       width: 100%; aspect-ratio: 1;
-      background: #0f0f1a; position: relative; overflow: hidden;
+      position: relative; overflow: hidden;
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%);
     }
-    .n-card-img-wrap img {
-      width: 100%; height: 100%; object-fit: cover; object-position: top center;
+    .g-card-img-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: top center;
     }
-    .n-card-tier {
+
+    /* 니케 속성 테두리 */
+    .elem-Fire     { border-color: #ef4444; }
+    .elem-Water    { border-color: #3b82f6; }
+    .elem-Wind     { border-color: #10b981; }
+    .elem-Electric { border-color: #fbbf24; }
+    .elem-Iron     { border-color: #6b7280; }
+
+    /* 등급 뱃지 */
+    .g-tier-badge {
       position: absolute; top: 5px; left: 5px;
       font-size: 10px; font-weight: 800; padding: 2px 6px;
       border-radius: 5px; letter-spacing: 0.03em;
     }
+    .badge-SSR { background: linear-gradient(135deg,#fbbf24,#f59e0b); color: #78350f; }
+    .badge-SR  { background: linear-gradient(135deg,#a78bfa,#8b5cf6); color: #fff; }
+    .badge-R   { background: #e5e7eb; color: #6b7280; }
 
-    .n-card-body { padding: 6px 6px 8px; width: 100%; box-sizing: border-box; text-align: center; }
-    .n-card-name {
+    /* 애장품 뱃지 */
+    .treasure-badge {
+      position: absolute; top: 5px; right: 5px;
+      font-size: 9px; font-weight: 700; padding: 2px 5px;
+      border-radius: 4px; background: #7c3aed; color: #fff; white-space: nowrap;
+    }
+
+    .g-card-body {
+      padding: 6px 6px 8px; width: 100%;
+      box-sizing: border-box; text-align: center;
+    }
+    .g-card-name {
       font-size: 12px; font-weight: 700; color: #1e293b;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    @media (max-width: 560px) { .g-card-name { font-size: 11px; } }
 
-    /* 티어 색상 */
-    .tier-SSS { background: #fef3c7; color: #78350f; }
-    .tier-SS  { background: #fce7f3; color: #9d174d; }
-    .tier-S   { background: #ede9fe; color: #5b21b6; }
-    .tier-A   { background: #dbeafe; color: #1e40af; }
-    .tier-B   { background: #dcfce7; color: #166534; }
-    .tier-C   { background: #f1f5f9; color: #475569; }
-
-    /* 카드 테두리 티어별 */
-    .n-card.tier-border-SSS { border-color: #f59e0b; }
-    .n-card.tier-border-SS  { border-color: #ec4899; }
-    .n-card.tier-border-S   { border-color: #8b5cf6; }
-
-    .n-empty { text-align: center; padding: 60px 16px; color: #94a3b8; font-size: 15px; }
-
-    @media (max-width: 640px) {
-      .n-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
-      .n-card-name { font-size: 11px; }
+    .g-elem-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; margin-right: 2px; vertical-align: middle;
+      flex-shrink: 0;
     }
 
-    /* 모달 */
-    .n-modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.55); z-index: 1000;
-      align-items: center; justify-content: center; padding: 16px;
-    }
-    .n-modal-overlay.open { display: flex; }
-    .n-modal {
-      background: #fff; border-radius: 20px;
-      width: 340px; max-width: 100%;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
-      overflow: hidden; position: relative;
-    }
-    .n-modal-img-wrap {
-      width: 100%; aspect-ratio: 1;
-      background: #0f0f1a; overflow: hidden;
-    }
-    .n-modal-img-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
-    .n-modal-body { padding: 18px 20px 22px; }
-    .n-modal-name { font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 2px; }
-    .n-modal-en { font-size: 12px; color: #94a3b8; margin-bottom: 12px; }
-    .n-modal-rarity { margin-bottom: 12px; }
-    .n-modal-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .m-tag { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
-    .n-modal-close {
-      position: absolute; top: 10px; right: 10px;
-      width: 30px; height: 30px; border-radius: 50%;
-      background: rgba(0,0,0,0.35); color: #fff;
-      border: none; font-size: 16px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .g-empty { text-align: center; padding: 60px 16px; color: #94a3b8; font-size: 15px; }
   </style>
 </head>
 <body>
 <div id="navbar"></div>
 
-<div class="n-wrap">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-    <a href="/game/nikke/" style="font-size:13px;color:#64748b;text-decoration:none;">← 니케</a>
-    <h1 style="font-size:20px;font-weight:800;margin:0;">캐릭터 도감</h1>
-    <span id="total-badge" style="font-size:12px;color:#94a3b8;"></span>
+<div class="g-wrap">
+
+  <nav class="g-breadcrumb" aria-label="breadcrumb">
+    <a href="/">홈</a>
+    <span>›</span>
+    <a href="/game/nikke/">니케</a>
+    <span>›</span>
+    <span style="color:#1e293b;font-weight:600;">캐릭터 도감</span>
+  </nav>
+
+  <div class="g-header">
+    <h1>니케 캐릭터 도감</h1>
+    <p>니케 (NIKKE) 전체 캐릭터를 등급, 속성, 무기, 제조사, 버스트별로 찾아보세요</p>
   </div>
 
-  <div class="n-filter">
-    <input class="n-search" id="search" type="text" placeholder="캐릭터 이름 검색...">
-    <div class="n-chips">
-      <button class="n-chip active" data-tier="" style="--c:#c026d3;">전체</button>
-      <button class="n-chip" data-tier="SSS" style="--c:#f59e0b;">SSS</button>
-      <button class="n-chip" data-tier="SS"  style="--c:#ec4899;">SS</button>
-      <button class="n-chip" data-tier="S"   style="--c:#8b5cf6;">S</button>
-      <button class="n-chip" data-tier="A"   style="--c:#3b82f6;">A</button>
-      <button class="n-chip" data-tier="B"   style="--c:#22c55e;">B</button>
-      <button class="n-chip" data-tier="C"   style="--c:#94a3b8;">C</button>
+  <div class="g-filter">
+    <input class="g-search" id="search" type="text" placeholder="캐릭터 이름 검색...">
+
+    <!-- 등급 -->
+    <div class="g-filter-row">
+      <span class="g-filter-label">등급</span>
+      <button class="g-chip active" data-group="rarity" data-val="" style="--c:#c026d3;">전체</button>
+      <button class="g-chip" data-group="rarity" data-val="SSR" style="--c:#f59e0b;">SSR</button>
+      <button class="g-chip" data-group="rarity" data-val="SR"  style="--c:#8b5cf6;">SR</button>
+      <button class="g-chip" data-group="rarity" data-val="R"   style="--c:#9ca3af;">R</button>
+    </div>
+
+    <!-- 속성 -->
+    <div class="g-filter-row">
+      <span class="g-filter-label">속성</span>
+      <button class="g-chip active" data-group="element" data-val="" style="--c:#c026d3;">전체</button>
+      <button class="g-chip" data-group="element" data-val="Fire"     style="--c:#ef4444;">🔥 화염</button>
+      <button class="g-chip" data-group="element" data-val="Water"    style="--c:#3b82f6;">💧 수속</button>
+      <button class="g-chip" data-group="element" data-val="Wind"     style="--c:#10b981;">🌿 풍속</button>
+      <button class="g-chip" data-group="element" data-val="Electric" style="--c:#fbbf24;">⚡ 전기</button>
+      <button class="g-chip" data-group="element" data-val="Iron"     style="--c:#6b7280;">🔩 철갑</button>
+    </div>
+
+    <!-- 무기 -->
+    <div class="g-filter-row">
+      <span class="g-filter-label">무기</span>
+      <button class="g-chip active" data-group="weapon" data-val="" style="--c:#c026d3;">전체</button>
+      <button class="g-chip" data-group="weapon" data-val="Shotgun"         style="--c:#64748b;">샷건</button>
+      <button class="g-chip" data-group="weapon" data-val="SMG"             style="--c:#64748b;">SMG</button>
+      <button class="g-chip" data-group="weapon" data-val="Assault Rifle"   style="--c:#64748b;">어설트</button>
+      <button class="g-chip" data-group="weapon" data-val="Minigun"         style="--c:#64748b;">미니건</button>
+      <button class="g-chip" data-group="weapon" data-val="Rocket Launcher" style="--c:#64748b;">로켓</button>
+      <button class="g-chip" data-group="weapon" data-val="Sniper Rifle"    style="--c:#64748b;">스나이퍼</button>
+    </div>
+
+    <!-- 버스트 -->
+    <div class="g-filter-row">
+      <span class="g-filter-label">버스트</span>
+      <button class="g-chip active" data-group="burst" data-val="" style="--c:#c026d3;">전체</button>
+      <button class="g-chip" data-group="burst" data-val="1"   style="--c:#0ea5e9;">버스트 I</button>
+      <button class="g-chip" data-group="burst" data-val="2"   style="--c:#8b5cf6;">버스트 II</button>
+      <button class="g-chip" data-group="burst" data-val="3"   style="--c:#ef4444;">버스트 III</button>
+      <button class="g-chip" data-group="burst" data-val="All" style="--c:#f59e0b;">All</button>
+    </div>
+
+    <!-- 제조사 -->
+    <div class="g-filter-row">
+      <span class="g-filter-label">제조사</span>
+      <button class="g-chip active" data-group="mfg" data-val="" style="--c:#c026d3;">전체</button>
+      <button class="g-chip" data-group="mfg" data-val="Elysion"  style="--c:#3b82f6;">엘리시온</button>
+      <button class="g-chip" data-group="mfg" data-val="Missilis" style="--c:#ef4444;">미사일리스</button>
+      <button class="g-chip" data-group="mfg" data-val="Tetra"    style="--c:#10b981;">테트라</button>
+      <button class="g-chip" data-group="mfg" data-val="Pilgrim"  style="--c:#f59e0b;">필그림</button>
+      <button class="g-chip" data-group="mfg" data-val="Abnormal" style="--c:#c026d3;">콜라보</button>
     </div>
   </div>
 
-  <div class="n-count" id="count"></div>
-  <div class="n-grid" id="grid"><div class="n-empty">불러오는 중...</div></div>
-</div>
-
-<!-- 상세 모달 -->
-<div class="n-modal-overlay" id="n-modal" onclick="if(event.target===this)closeModal()">
-  <div class="n-modal">
-    <button class="n-modal-close" onclick="closeModal()">✕</button>
-    <div class="n-modal-img-wrap">
-      <img id="m-img" src="" alt="">
-    </div>
-    <div class="n-modal-body">
-      <div class="n-modal-name" id="m-name"></div>
-      <div class="n-modal-en" id="m-en"></div>
-      <div class="n-modal-rarity" id="m-rarity"></div>
-      <div class="n-modal-tags" id="m-tags"></div>
-    </div>
+  <div class="g-toolbar">
+    <div class="g-count" id="count"></div>
+    <select class="g-sort" id="sort">
+      <option value="rarity">등급순</option>
+      <option value="name">이름순</option>
+    </select>
   </div>
+
+  <div class="g-grid" id="grid">
+    <div class="g-empty" style="grid-column:1/-1;">불러오는 중...</div>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/config.js"></script>
 <script>
-  const TIER_ORDER = ['SSS','SS','S','A','B','C']
+  const ELEM_COLOR = {
+    'Fire':'#ef4444', 'Water':'#3b82f6', 'Wind':'#10b981',
+    'Electric':'#fbbf24', 'Iron':'#6b7280',
+  }
+  const RARITY_ORDER = ['SSR', 'SR', 'R']
+
   let allChars = []
-  let activeTier = ''
+  const filters = { rarity: '', element: '', weapon: '', burst: '', mfg: '' }
 
   async function init() {
     document.getElementById('navbar').innerHTML = renderNavbar()
-    loadAndRenderGameUI(null)
+    loadAndRenderGameUI('nikke')
 
-    const { data: game } = await db.from('Game').select('id').eq('slug', 'nikke').single()
-    if (!game) return
+    try {
+      const { data: game } = await db.from('Game').select('id').eq('slug','nikke').single()
+      if (!game) throw new Error('니케 게임 정보를 찾을 수 없어요.')
 
-    const { data: chars } = await db
-      .from('Character')
-      .select('id, nameKo, nameEn, tier, imageUrl, rarity, manufacturer, weaponType, element, classType, burstType, slug')
-      .eq('gameId', game.id)
-      .eq('isActive', true)
-      .order('tier')
-      .order('nameKo')
+      const { data: chars, error } = await db
+        .from('Character')
+        .select('id, nameKo, nameEn, rarity, element, weaponType, burstType, manufacturer, slug, imageUrl')
+        .eq('gameId', game.id)
+        .eq('isActive', true)
+        .order('nameKo')
 
-    allChars = (chars ?? []).sort((a, b) => {
-      const ta = TIER_ORDER.indexOf(a.tier)
-      const tb = TIER_ORDER.indexOf(b.tier)
-      if (ta !== tb) return ta - tb
-      return a.nameKo.localeCompare(b.nameKo, 'ko')
-    })
+      if (error) throw error
 
-    document.getElementById('total-badge').textContent = `총 ${allChars.length}명`
-    render()
+      allChars = chars ?? []
+      document.querySelector('.g-header p').textContent =
+        `니케 (NIKKE) 전체 ${allChars.length}명의 캐릭터를 등급, 속성, 무기, 제조사, 버스트별로 찾아보세요`
+
+      render()
+    } catch(e) {
+      document.getElementById('grid').innerHTML =
+        `<div class="g-empty" style="grid-column:1/-1;color:#ef4444;">⚠️ ${e.message}</div>`
+    }
   }
 
   function render() {
-    const q = document.getElementById('search').value.trim().toLowerCase()
-    const list = allChars.filter(c => {
-      if (activeTier && c.tier !== activeTier) return false
-      if (q && !c.nameKo.toLowerCase().includes(q)) return false
+    const q    = document.getElementById('search').value.trim()
+    const sort = document.getElementById('sort').value
+
+    let list = allChars.filter(c => {
+      if (filters.rarity  && c.rarity       !== filters.rarity)  return false
+      if (filters.element && c.element      !== filters.element) return false
+      if (filters.weapon  && c.weaponType   !== filters.weapon)  return false
+      if (filters.burst   && c.burstType    !== filters.burst)   return false
+      if (filters.mfg     && c.manufacturer !== filters.mfg)     return false
+      if (q && !c.nameKo.includes(q))                            return false
       return true
     })
+
+    if (sort === 'name') {
+      list = list.slice().sort((a,b) => a.nameKo.localeCompare(b.nameKo,'ko'))
+    } else {
+      list = list.slice().sort((a,b) => {
+        const ra = RARITY_ORDER.indexOf(a.rarity ?? '')
+        const rb = RARITY_ORDER.indexOf(b.rarity ?? '')
+        if (ra !== rb) return (ra === -1 ? 99 : ra) - (rb === -1 ? 99 : rb)
+        return a.nameKo.localeCompare(b.nameKo,'ko')
+      })
+    }
 
     document.getElementById('count').innerHTML = `<strong>${list.length}명</strong> 표시 중`
     const grid = document.getElementById('grid')
 
     if (list.length === 0) {
-      grid.innerHTML = '<div class="n-empty">조건에 맞는 캐릭터가 없어요</div>'
+      grid.innerHTML = '<div class="g-empty" style="grid-column:1/-1;">조건에 맞는 캐릭터가 없어요</div>'
       return
     }
 
     grid.innerHTML = list.map(c => {
-      const borderClass = ['SSS','SS','S'].includes(c.tier) ? `tier-border-${c.tier}` : ''
+      const elemClass = c.element ? `elem-${c.element}` : ''
+      const isTreasure = c.slug?.endsWith('-treasure')
+      const treasureClass = isTreasure ? 'treasure-card' : ''
+      const href = c.slug ? `/game/nikke/characters/${c.slug}/` : '#'
+      const dotColor = ELEM_COLOR[c.element] || '#999'
+      const rarityBadge = c.rarity ? `badge-${c.rarity}` : ''
       return `
-        <div class="n-card ${borderClass}" onclick="openModal('${c.id}')" style="cursor:pointer;">
-          <div class="n-card-img-wrap">
+        <a class="g-card ${elemClass} ${treasureClass}" href="${href}" title="${c.nameKo}${c.nameEn ? ' ('+c.nameEn+')' : ''}">
+          <div class="g-card-img-wrap">
             ${c.imageUrl
               ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy" onerror="this.parentElement.style.background='#1e1e2e'">`
               : ''
             }
-            <span class="n-card-tier tier-${c.tier}">${c.tier}</span>
+            ${rarityBadge ? `<span class="g-tier-badge ${rarityBadge}">${c.rarity}</span>` : ''}
+            ${isTreasure ? `<span class="treasure-badge">💎 애장품</span>` : ''}
           </div>
-          <div class="n-card-body">
-            <div class="n-card-name">${c.nameKo}</div>
+          <div class="g-card-body">
+            <div class="g-card-name">
+              ${c.element ? `<span class="g-elem-dot" style="background:${dotColor};"></span>` : ''}${c.nameKo}
+            </div>
           </div>
-        </div>`
+        </a>`
     }).join('')
   }
 
-  const MANU_KO   = { Elysion:'엘리시온', Missilis:'미실리스', Tetra:'테트라', Pilgrim:'필그림', Abnormal:'애브노멀' }
-  const WEAPON_KO = { 'Assault Rifle':'돌격소총', 'Sniper Rifle':'저격소총', 'Rocket Launcher':'로켓런처', SMG:'기관단총', Shotgun:'산탄총', Minigun:'미니건' }
-  const ELEM_KO   = { Fire:'화염', Water:'수력', Wind:'풍력', Electric:'전력', Iron:'철력' }
-  const CLASS_KO  = { Attacker:'공격', Defender:'방어', Supporter:'지원' }
-  const ELEM_COLOR = { Fire:'#ef4444', Water:'#3b82f6', Wind:'#22c55e', Electric:'#f59e0b', Iron:'#94a3b8' }
-  const CLASS_COLOR = { Attacker:'#ef4444', Defender:'#3b82f6', Supporter:'#a855f7' }
-
-  function openModal(id) {
-    const c = allChars.find(c => c.id === id)
-    if (!c) return
-    const m = document.getElementById('n-modal')
-    m.querySelector('#m-img').src = c.imageUrl || ''
-    m.querySelector('#m-img').alt = c.nameKo
-    m.querySelector('#m-name').textContent = c.nameKo
-    m.querySelector('#m-en').textContent = c.nameEn || ''
-    m.querySelector('#m-rarity').textContent = c.rarity || c.tier
-    m.querySelector('#m-rarity').className = `n-card-tier tier-${c.tier}`
-
-    const tags = [
-      c.manufacturer ? `<span class="m-tag" style="background:#f1f5f9;color:#374151;">${MANU_KO[c.manufacturer]||c.manufacturer}</span>` : '',
-      c.element ? `<span class="m-tag" style="background:${ELEM_COLOR[c.element]}22;color:${ELEM_COLOR[c.element]};">${ELEM_KO[c.element]||c.element}</span>` : '',
-      c.classType ? `<span class="m-tag" style="background:${CLASS_COLOR[c.classType]}22;color:${CLASS_COLOR[c.classType]};">${CLASS_KO[c.classType]||c.classType}</span>` : '',
-      c.burstType ? `<span class="m-tag" style="background:#ede9fe;color:#5b21b6;">버스트 ${c.burstType}</span>` : '',
-      c.weaponType ? `<span class="m-tag" style="background:#f0fdf4;color:#166534;">${WEAPON_KO[c.weaponType]||c.weaponType}</span>` : '',
-    ].filter(Boolean).join('')
-    m.querySelector('#m-tags').innerHTML = tags
-
-    m.classList.add('open')
-    document.body.style.overflow = 'hidden'
-  }
-
-  function closeModal() {
-    document.getElementById('n-modal').classList.remove('open')
-    document.body.style.overflow = ''
-  }
-
-  // 칩 클릭
-  document.querySelectorAll('.n-chip').forEach(btn => {
-    const color = btn.style.getPropertyValue('--c') || '#c026d3'
-    if (btn.classList.contains('active')) {
-      btn.style.background = color
-      btn.style.borderColor = color
-      btn.style.color = '#fff'
-    }
+  function bindChip(btn) {
     btn.addEventListener('click', () => {
-      activeTier = btn.dataset.tier
-      document.querySelectorAll('.n-chip').forEach(b => {
+      const group = btn.dataset.group
+      const val   = btn.dataset.val
+      filters[group] = val
+      document.querySelectorAll(`.g-chip[data-group="${group}"]`).forEach(b => {
         b.classList.remove('active')
-        b.style.background = ''
+        b.style.background  = ''
         b.style.borderColor = ''
-        b.style.color = ''
+        b.style.color       = ''
       })
       btn.classList.add('active')
-      btn.style.background = color
-      btn.style.borderColor = color
-      btn.style.color = '#fff'
+      const c = btn.style.getPropertyValue('--c') || '#c026d3'
+      btn.style.background  = c
+      btn.style.borderColor = c
+      btn.style.color       = '#fff'
       render()
     })
-  })
+    if (btn.classList.contains('active')) {
+      const c = btn.style.getPropertyValue('--c') || '#c026d3'
+      btn.style.background  = c
+      btn.style.borderColor = c
+      btn.style.color       = '#fff'
+    }
+  }
 
+  document.querySelectorAll('.g-chip').forEach(bindChip)
   document.getElementById('search').addEventListener('input', render)
+  document.getElementById('sort').addEventListener('change', render)
 
   init()
 </script>
