@@ -170,7 +170,7 @@
         game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
         server:Server(nameKo),
         user:User(nickname, tradeCount, avgRating),
-        characters:ListingCharacter(count, character:Character(nameKo, tier, imageUrl)),
+        characters:ListingCharacter(count, character:Character(nameKo, tier, imageUrl, metadata)),
         currencies:ListingCurrency(amount, currency:Currency(nameKo, imageUrl, sortOrder))
       `)
       .eq('id', listingId)
@@ -231,7 +231,7 @@
           const gc = gradeClass(c.tier)
           return `
             <div class="detail-char-card${gc ? ' grade-border-' + gc : ''}" style="position:relative;">
-              ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo}" loading="lazy">` : '<div class="detail-char-no-img">?</div>'}
+              ${(c.metadata?.cardImageUrl || c.imageUrl) ? `<img src="${c.metadata?.cardImageUrl || c.imageUrl}" alt="${c.nameKo}" loading="lazy">` : '<div class="detail-char-no-img">?</div>'}
               ${gc ? `<span class="grade-tag grade-${gc}" style="font-size:8px;padding:1px 4px;">${gradeShort(c.tier)}</span>` : ''}
               <div class="char-name-label">${c.nameKo}</div>
               ${count > 1 ? `<span style="position:absolute;top:2px;right:2px;background:#7c3aed;color:#fff;border-radius:999px;font-size:14px;font-weight:800;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;padding:0 5px;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,0.3);">×${count}</span>` : ''}
