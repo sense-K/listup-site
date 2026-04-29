@@ -22,6 +22,7 @@ const STATIC_URLS = [
   { loc: '/game/cookierunkingdom/',        priority: '0.8', changefreq: 'weekly'  },
   { loc: '/game/sevenknightsre/',          priority: '0.8', changefreq: 'weekly'  },
   { loc: '/game/leehwan/',                 priority: '0.8', changefreq: 'weekly'  },
+  { loc: '/game/leehwan/characters/',      priority: '0.8', changefreq: 'weekly'  },
   { loc: '/game/trickcal/',               priority: '0.8', changefreq: 'weekly'  },
   { loc: '/game/limbus/',                  priority: '0.8', changefreq: 'weekly'  },
   { loc: '/game/stardive/',               priority: '0.8', changefreq: 'weekly'  },
@@ -71,6 +72,7 @@ const CHAR_DETAIL_GAMES = {
   zzz:      '/game/zzz/characters/',
   wuwa:     '/game/wuwa/characters/',
   nikke:    '/game/nikke/characters/',
+  leehwan:  '/game/leehwan/characters/',
 }
 
 async function supaGet(path) {
@@ -96,7 +98,7 @@ export async function onRequest() {
 
   // 1. 캐릭터 상세 페이지용 게임 ID 조회
   const games = await supaGet(
-    `Game?slug=in.(genshin,starrail,zzz)&select=id,slug`
+    `Game?slug=in.(genshin,starrail,zzz,wuwa,nikke,leehwan)&select=id,slug`
   )
   const gameMap = {}
   ;(games || []).forEach(g => { gameMap[g.id] = g.slug })
@@ -127,7 +129,7 @@ export async function onRequest() {
   <!-- 정적 페이지 (${staticEntries.length}개) -->
 ${staticEntries.join('\n')}
 
-  <!-- 캐릭터 상세 페이지 (${charUrls.length}개: 원신/스타레일/젠레스) -->
+  <!-- 캐릭터 상세 페이지 (${charUrls.length}개: 원신/스타레일/젠레스/명조/니케/이환) -->
 ${charUrls.join('\n')}
 
 </urlset>`
