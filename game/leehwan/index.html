@@ -1,44 +1,24 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>이환 (二換) 공략 - 플레이센스</title>
-  <meta name="description" content="이환 (二換) 공략 도구와 판매계정 거래소를 플레이센스에서 확인하세요." />
+  <title>이환 (Neverness to Everness) 공략 - 플레이센스</title>
+  <meta name="description" content="이환(Neverness to Everness) 캐릭터 도감, 공략 도구와 판매계정 거래소를 플레이센스에서 확인하세요." />
   <link rel="canonical" href="https://resetlist.kr/game/leehwan/" />
-  <meta property="og:title" content="이환 (二換) 공략 - 플레이센스" />
+  <meta property="og:title" content="이환 (NTE) 공략 - 플레이센스" />
   <meta property="og:url" content="https://resetlist.kr/game/leehwan/" />
   <meta property="og:type" content="website" />
   <link rel="stylesheet" href="/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/config.js"></script>
   <style>
-    /* .game-hub-wrap → style.css */
-    .game-hub-header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
-    .game-hub-icon { font-size: 48px; line-height: 1; }
-    .game-hub-title { font-size: 24px; font-weight: 800; color: var(--text, #1e293b); }
-    .game-hub-sub { font-size: 14px; color: var(--text-sub, #64748b); margin-top: 4px; }
-    .section-label {
-      font-size: 12px; font-weight: 700; color: var(--text-sub, #64748b);
-      text-transform: uppercase; letter-spacing: 0.05em;
-      margin-bottom: 12px; padding-bottom: 8px;
-      border-bottom: 1px solid var(--border, #e5e7eb);
-    }
-    .coming-soon-box {
-      background: #f8fafc; border: 1.5px dashed var(--border, #e5e7eb);
-      border-radius: 16px; padding: 32px; text-align: center;
-      color: var(--text-sub, #64748b); margin-bottom: 40px;
-    }
-    .coming-soon-box p { font-size: 14px; margin-top: 8px; }
-    .trade-section { display: flex; gap: 12px; flex-wrap: wrap; }
-    .trade-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 14px 24px; border-radius: 14px; text-decoration: none;
-      font-size: 15px; font-weight: 700; transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .trade-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-    .trade-btn-primary { background: #6c47ff; color: #fff; }
-    .trade-btn-secondary { background: #f1f5f9; color: #1e293b; border: 1.5px solid var(--border, #e5e7eb); }
+    .section-label { font-size:12px; font-weight:700; color:var(--text-sub,#64748b); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border,#e5e7eb); }
+    .trade-section { display:flex; gap:12px; flex-wrap:wrap; }
+    .trade-btn { display:inline-flex; align-items:center; gap:8px; padding:14px 24px; border-radius:14px; text-decoration:none; font-size:15px; font-weight:700; transition:transform 0.15s,box-shadow 0.15s; }
+    .trade-btn:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+    .trade-btn-primary { background:#6c47ff; color:#fff; }
+    .trade-btn-secondary { background:#f1f5f9; color:#1e293b; border:1.5px solid var(--border,#e5e7eb); }
   </style>
 </head>
 <body>
@@ -51,20 +31,21 @@
         <img class="game-hub-app-icon" id="game-hub-app-icon" src="" alt="" style="display:none;">
         <span class="game-hub-icon" id="game-hub-emoji" style="font-size:48px;line-height:1;">🐉</span>
         <div>
-          <div class="game-hub-title">이환 (二換)</div>
-        <div class="game-hub-sub">공략 도구 준비 중</div>
+          <div class="game-hub-title">이환 (Neverness to Everness)</div>
+          <div class="game-hub-sub">공략 도구 1종 서비스 중</div>
         </div>
       </div>
     </div>
-    <div class="section-label">도감</div>
-    <div class="trade-section" style="margin-bottom:32px;">
-      <a href="/game/leehwan/characters/" class="trade-btn trade-btn-primary" style="background:linear-gradient(135deg,#7c3aed,#6c47ff);">📖 캐릭터 도감 →</a>
-    </div>
     <div class="section-label">공략 도구</div>
-    <div class="coming-soon-box">
-      <div style="font-size:32px">🔧</div>
-      <strong>공략 도구 준비 중이에요</strong>
-      <p>곧 다양한 공략 도구가 추가될 예정이에요.<br>그동안 판매계정 거래소를 이용해보세요!</p>
+    <div class="tools-grid">
+      <a href="/game/leehwan/characters/" class="hub-tool-card">
+        <div class="hub-tool-card-top">
+          <div class="hub-tool-card-icon" style="background:rgba(108,71,255,0.1)">📖</div>
+          <span class="hub-tool-card-badge">서비스 중</span>
+        </div>
+        <div class="hub-tool-card-title">캐릭터 도감</div>
+        <div class="hub-tool-card-desc">이환(NTE) 전체 캐릭터 27명 정보와 보유 계정 시세를 한눈에</div>
+      </a>
     </div>
     <div class="section-label">거래소</div>
     <div class="trade-section">
@@ -78,22 +59,17 @@
     async function loadGameHero() {
       const { data: game } = await db.from('Game').select('imageUrl, artImageUrl').eq('slug', GAME_SLUG).single()
       if (!game) return
-      if (game.artImageUrl) {
-        document.getElementById('game-hub-hero-bg').style.backgroundImage = `url('${game.artImageUrl}')`
-      }
+      if (game.artImageUrl) document.getElementById('game-hub-hero-bg').style.backgroundImage = `url('${game.artImageUrl}')`
       if (game.imageUrl) {
-        const icon = document.getElementById('game-hub-app-icon')
-        const emoji = document.getElementById('game-hub-emoji')
-        icon.src = game.imageUrl
-        icon.alt = game.nameKo || ''
-        icon.style.display = 'block'
+        const icon = document.getElementById('game-hub-app-icon'), emoji = document.getElementById('game-hub-emoji')
+        icon.src = game.imageUrl; icon.alt = '이환'; icon.style.display = 'block'
         if (emoji) emoji.style.display = 'none'
       }
     }
     loadGameHero()
-    document.getElementById('navbar-container').innerHTML = renderNavbar();
-    loadAndRenderGameUI(null);
-    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : '';
+    document.getElementById('navbar-container').innerHTML = renderNavbar()
+    loadAndRenderGameUI('leehwan')
+    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : ''
   </script>
 </body>
 </html>
