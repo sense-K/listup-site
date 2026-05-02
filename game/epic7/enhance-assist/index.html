@@ -250,7 +250,7 @@
           <option value="set_torrent">격류 세트</option>
           <option value="set_chase">추격 세트</option>
         </select>
-        <select class="ea-select" id="sel-main" onchange="markStale()">
+        <select class="ea-select" id="sel-main" onchange="onMainChange()">
           <option value="">주옵션 선택 (선택사항)</option>
           <option value="att">공격력%</option>
           <option value="def">방어력%</option>
@@ -474,8 +474,20 @@ function onSlotChange() {
   markStale()
 }
 
+// ─── 주옵션 변경 ──────────────────────────────────
+function onMainChange() {
+  const mainKey = document.getElementById('sel-main').value
+  // 충돌하는 부옵션 silent reset
+  subRows.forEach((row, i) => {
+    if (mainKey && row.key === mainKey) subRows[i] = { key: '', value: 0 }
+  })
+  renderSubRows()
+  markStale()
+}
+
 // ─── 렌더: 부옵션 행 ─────────────────────────────
 function renderSubRows() {
+  const mainKey = document.getElementById('sel-main')?.value || ''
   const container = document.getElementById('sub-rows')
   container.innerHTML = subRows.map((row, i) => {
     const hasKey = !!row.key
@@ -488,8 +500,9 @@ function renderSubRows() {
         <select class="ea-sub-select" id="sub-sel-${i}" onchange="onSubOptChange(${i}, this.value)">
           <option value="">옵션 ${i + 1}</option>
           ${SUB_OPTS.map(o => {
-            const used = subRows.some((r, ri) => ri !== i && r.key === o.key)
-            return `<option value="${o.key}" ${row.key === o.key ? 'selected' : ''} ${used ? 'disabled' : ''}>${o.name}</option>`
+            const used   = subRows.some((r, ri) => ri !== i && r.key === o.key)
+            const isMain = mainKey && o.key === mainKey
+            return `<option value="${o.key}" ${row.key === o.key ? 'selected' : ''} ${(used || isMain) ? 'disabled' : ''}>${o.name}</option>`
           }).join('')}
         </select>
         <input class="ea-slider" id="sub-slider-${i}" type="range"
