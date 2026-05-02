@@ -166,7 +166,7 @@
     const { data: listing, error } = await db
       .from('Listing')
       .select(`
-        id, price, description, kakaoOpenChatUrl, createdAt, viewCount, status, userId,
+        id, price, description, kakaoOpenChatUrl, createdAt, viewCount, status, userId, gameId,
         game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
         server:Server(nameKo),
         user:User(nickname, tradeCount, avgRating),
@@ -182,7 +182,12 @@
     }
 
     currentListing = listing
-    db.from('Listing').update({ viewCount: (listing.viewCount || 0) + 1 }).eq('id', listingId)
+    // 조회수 백엔드 트래킹 (best-effort, 사용자 화면 변화 없음)
+    fetch('/api/track-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId, gameId: listing.gameId, userId: currentUser?.id || null }),
+    }).catch(() => {})
 
     let myTrade = null
     if (currentUser) {
@@ -320,7 +325,6 @@
           <div class="seller-stats">
             ${ratingHtml}
             <span class="seller-stat">🤝 ${tradeCount}거래</span>
-            <span class="seller-stat">👁 ${l.viewCount || 0}</span>
           </div>
         </div>
 

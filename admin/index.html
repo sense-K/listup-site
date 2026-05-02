@@ -267,6 +267,8 @@
       <button class="admin-nav-item" onclick="showSection('currencies')">💎 재화 관리</button>
       <div class="admin-nav-label">거래</div>
       <button class="admin-nav-item" onclick="showSection('listings')">📋 판매글 관리</button>
+      <div class="admin-nav-label">분석</div>
+      <button class="admin-nav-item" onclick="showSection('stats')">📊 조회수 통계</button>
     </nav>
   </aside>
 
@@ -563,6 +565,12 @@
       </div>
     </div>
 
+    <!-- 조회수 통계 -->
+    <div class="admin-section" id="section-stats">
+      <div class="section-title">조회수 통계</div>
+      <div id="stats-content" style="color:#888;padding:20px 0;">불러오는 중...</div>
+    </div>
+
   </main>
 </div>
 
@@ -675,6 +683,7 @@
     if (name === 'characters') { loadGamesForSelects(); }
     if (name === 'currencies') { loadGamesForSelects(); }
     if (name === 'listings') loadAdminListings()
+    if (name === 'stats') loadStats()
   }
 
   // ===== 게임 로드 =====
@@ -2617,6 +2626,161 @@
       status.textContent = `⚠️ ${e.message}`
       btn.disabled = false; btn.textContent = '🖼️ 이미지 동기화'
     }
+  }
+
+  // ===== 조회수 통계 =====
+  async function loadStats() {
+    const wrap = document.getElementById('stats-content')
+    wrap.innerHTML = '<div style="color:#888;padding:20px 0;">불러오는 중...</div>'
+
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const yestStart  = new Date(todayStart); yestStart.setDate(yestStart.getDate() - 1)
+    const day7Start  = new Date(todayStart); day7Start.setDate(day7Start.getDate() - 7)
+
+    const [todayR, yestR, week7R, allViewsR, top20R, gamesR] = await Promise.all([
+      db.from('ListingView').select('id', { count: 'exact', head: true })
+        .gte('viewedAt', todayStart.toISOString()),
+      db.from('ListingView').select('id', { count: 'exact', head: true })
+        .gte('viewedAt', yestStart.toISOString()).lt('viewedAt', todayStart.toISOString()),
+      db.from('ListingView').select('id', { count: 'exact', head: true })
+        .gte('viewedAt', day7Start.toISOString()),
+      // 일별 + 게임별 집계용
+      db.from('ListingView').select('viewedAt, gameId').gte('viewedAt', day7Start.toISOString()),
+      // TOP 20 by viewCount
+      db.from('Listing')
+        .select('id, price, status, viewCount, game:Game(nameKo), user:User(nickname)')
+        .order('viewCount', { ascending: false }).limit(20),
+      db.from('Game').select('id, slug, nameKo').eq('isActive', true),
+    ])
+
+    if (todayR.error?.code === '42P01') {
+      wrap.innerHTML = `<div style="background:#fef3c7;border-radius:10px;padding:20px;color:#92400e;">
+        <strong>⚠️ ListingView 테이블이 없어요.</strong><br>
+        <code style="font-size:12px;">scripts/listing-view-setup.sql</code>을 Supabase SQL Editor에서 실행한 후 다시 확인해주세요.
+      </div>`
+      return
+    }
+
+    const todayCount = todayR.count ?? 0
+    const yestCount  = yestR.count  ?? 0
+    const week7Count = week7R.count ?? 0
+    const views      = allViewsR.data ?? []
+    const top20      = top20R.data    ?? []
+    const games      = gamesR.data    ?? []
+    const gameMap    = Object.fromEntries(games.map(g => [g.id, g]))
+
+    // 일별 집계 (7일)
+    const dayBuckets = {}
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(todayStart); d.setDate(d.getDate() - i)
+      dayBuckets[d.toISOString().slice(0, 10)] = 0
+    }
+    views.forEach(v => {
+      const day = v.viewedAt.slice(0, 10)
+      if (day in dayBuckets) dayBuckets[day]++
+    })
+    const days = Object.entries(dayBuckets)
+    const maxDayCount = Math.max(...days.map(d => d[1]), 1)
+
+    // 게임별 7일 집계
+    const gameViews = {}
+    views.forEach(v => { gameViews[v.gameId] = (gameViews[v.gameId] || 0) + 1 })
+    const gameSorted = Object.entries(gameViews)
+      .sort((a, b) => b[1] - a[1])
+      .map(([gid, cnt]) => ({ game: gameMap[gid], cnt }))
+      .filter(r => r.game)
+
+    // 7일 sold 수 (전환율용)
+    const { count: sold7 } = await db.from('Listing')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'sold')
+      .gte('updatedAt', day7Start.toISOString())
+
+    const conv = week7Count > 0 ? ((sold7 ?? 0) / week7Count * 100).toFixed(1) : '—'
+
+    wrap.innerHTML = `
+      <!-- 요약 카드 -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+        ${[
+          ['오늘 조회', todayCount, '#3b82f6'],
+          ['어제 조회', yestCount, '#6366f1'],
+          ['7일 누적', week7Count, '#8b5cf6'],
+          ['7일 전환율', conv + (conv === '—' ? '' : '%'), '#10b981'],
+        ].map(([label, val, color]) => `
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px 20px;">
+            <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:6px;">${label}</div>
+            <div style="font-size:28px;font-weight:900;color:${color};">${val.toLocaleString()}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- 일별 차트 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;margin-bottom:24px;">
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:16px;">최근 7일 일별 조회수</div>
+        <div style="display:flex;align-items:flex-end;gap:6px;height:80px;">
+          ${days.map(([day, cnt]) => `
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+              <div style="font-size:10px;color:#64748b;">${cnt}</div>
+              <div style="width:100%;background:#8b5cf6;border-radius:4px 4px 0 0;height:${Math.max(cnt / maxDayCount * 64, cnt > 0 ? 4 : 0)}px;min-height:${cnt > 0 ? 4 : 0}px;" title="${day}: ${cnt}회"></div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          ${days.map(([day]) => `
+            <div style="flex:1;text-align:center;font-size:10px;color:#94a3b8;">${day.slice(5)}</div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- 게임별 통계 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;margin-bottom:24px;">
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:14px;">게임별 7일 조회수</div>
+        <table class="admin-table">
+          <thead><tr><th>게임</th><th>7일 조회</th><th>비율</th></tr></thead>
+          <tbody>
+            ${gameSorted.length === 0
+              ? '<tr class="empty-row"><td colspan="3">데이터 없음</td></tr>'
+              : gameSorted.map(({ game, cnt }) => `
+                <tr>
+                  <td>${game.nameKo} <span style="color:#94a3b8;font-size:11px;">${game.slug}</span></td>
+                  <td><strong>${cnt}</strong></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="width:120px;height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
+                        <div style="width:${(cnt / (gameSorted[0]?.cnt || 1) * 100).toFixed(0)}%;height:100%;background:#8b5cf6;border-radius:99px;"></div>
+                      </div>
+                      <span style="font-size:11px;color:#64748b;">${(cnt / week7Count * 100).toFixed(0)}%</span>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TOP 20 게시글 -->
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;">
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:14px;">누적 조회수 TOP 20</div>
+        <table class="admin-table">
+          <thead><tr><th>#</th><th>게임</th><th>가격</th><th>판매자</th><th>상태</th><th>누적 조회</th></tr></thead>
+          <tbody>
+            ${top20.length === 0
+              ? '<tr class="empty-row"><td colspan="6">데이터 없음</td></tr>'
+              : top20.map((l, i) => `
+                <tr>
+                  <td style="color:#94a3b8;font-weight:700;">${i + 1}</td>
+                  <td>${l.game?.nameKo ?? '—'}</td>
+                  <td>${l.price?.toLocaleString()}원</td>
+                  <td>${l.user?.nickname ?? '—'}</td>
+                  <td><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${l.status === 'active' ? '#dcfce7' : l.status === 'sold' ? '#f3f4f6' : '#fef3c7'};color:${l.status === 'active' ? '#16a34a' : l.status === 'sold' ? '#888' : '#d97706'};">${l.status}</span></td>
+                  <td><a href="/listing/?id=${l.id}" target="_blank" style="color:#8b5cf6;font-weight:700;">${l.viewCount ?? 0}</a></td>
+                </tr>
+              `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
   }
 
   // ===== 초기화 =====
