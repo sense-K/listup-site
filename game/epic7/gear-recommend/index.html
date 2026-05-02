@@ -220,6 +220,23 @@
     .gr-more-btn:hover { background: #f8fafc; }
     .gr-hint { text-align: center; font-size: 11px; color: #cbd5e1; margin-top: 20px; }
 
+    /* 내 영웅 토글 */
+    .e7-toggle-group { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb; }
+    .e7-toggle-group button {
+      padding: 6px 14px; font-size: 13px; font-weight: 700;
+      background: transparent; border: none; cursor: pointer;
+      color: #64748b; transition: background 0.15s; white-space: nowrap;
+    }
+    .e7-myhero-toggle button.active { background: #7c3aed; color: #fff; }
+    .e7-btn-register {
+      padding: 6px 12px; border-radius: 10px;
+      background: transparent; border: 1px solid #7c3aed;
+      font-size: 12px; font-weight: 700; color: #7c3aed;
+      cursor: pointer; text-decoration: none; white-space: nowrap;
+      display: inline-flex; align-items: center;
+    }
+    .e7-btn-register:hover { background: rgba(124,58,237,0.08); }
+
     @media (max-width: 480px) {
       .gr-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
       .gr-stat-btn { padding: 7px 12px; font-size: 12px; }
@@ -263,10 +280,15 @@
 
     <!-- 토글 + 검색 -->
     <div class="gr-action-row">
-<button class="gr-search-btn" id="search-btn" onclick="doSearch()" disabled>
+      <button class="gr-search-btn" id="search-btn" onclick="doSearch()" disabled>
         🔍 찾기
       </button>
       <button class="gr-reset-btn" onclick="resetAll()">↺ 초기화</button>
+      <div class="e7-toggle-group e7-myhero-toggle">
+        <button id="toggle-all-btn" class="active" onclick="setMyHeroMode(false)">전체 영웅</button>
+        <button id="toggle-mine-btn" onclick="setMyHeroMode(true)">내 영웅</button>
+      </div>
+      <a href="/game/epic7/my-heroes/" class="e7-btn-register">내 영웅 등록</a>
     </div>
   </div>
 
@@ -355,6 +377,9 @@ let filterJob      = null
 let showAll        = false
 let lastResults    = []
 let currentSeason  = ''
+let useMyHeroes    = false
+let myHeroCodes    = new Set()
+let currentUser    = null
 
 // ─── 초기화 ──────────────────────────────────────
 async function init() {
@@ -363,6 +388,13 @@ async function init() {
   renderSubStatBtns()
   renderSetBtns()
   renderSubSlots()
+
+  const { data: { session } } = await db.auth.getSession()
+  if (session) {
+    currentUser = session.user
+    const { data: rows } = await db.from('UserHero').select('hero_code').eq('user_id', currentUser.id)
+    if (rows) rows.forEach(r => myHeroCodes.add(r.hero_code))
+  }
 
   try {
     const res = await fetch(`${PROXY}/api/hero-json`)
@@ -669,6 +701,7 @@ function setProgress(pct, label) {
 // ─── 필터 + 렌더 ─────────────────────────────────
 function applyAndRender() {
   const filtered = lastResults.filter(r => {
+    if (useMyHeroes && !myHeroCodes.has(r.hero.code)) return false
     if (filterAttr && r.hero.attribute_cd !== filterAttr) return false
     if (filterJob  && r.hero.job_cd !== filterJob) return false
     if (selectedSet  && !r.heroSets.includes(selectedSet)) return false
@@ -751,6 +784,17 @@ function renderFilterChips() {
 function toggleAttr(a) { filterAttr = filterAttr === a ? null : a; showAll = false; applyAndRender() }
 function toggleJob(j)  { filterJob  = filterJob  === j ? null : j; showAll = false; applyAndRender() }
 function loadMore()    { showAll = true; applyAndRender() }
+
+function setMyHeroMode(val) {
+  if (val && !currentUser) {
+    location.href = '/auth/?redirect=' + encodeURIComponent(location.pathname + location.search)
+    return
+  }
+  useMyHeroes = val
+  document.getElementById('toggle-all-btn').classList.toggle('active', !val)
+  document.getElementById('toggle-mine-btn').classList.toggle('active', val)
+  if (lastResults.length > 0) applyAndRender()
+}
 
 init()
 </script>
