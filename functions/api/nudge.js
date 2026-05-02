@@ -14,7 +14,7 @@ export async function onRequestPost(context) {
     const { tradeId, token } = await context.request.json()
 
     if (!tradeId || !token) {
-      return json({ error: 'missing params' }, 400)
+      return json({ ok: false, error: 'missing params' }, 400)
     }
 
     const upstream = await fetch(EDGE_URL, {
@@ -26,11 +26,15 @@ export async function onRequestPost(context) {
       body: JSON.stringify({ action: 'nudge', tradeId }),
     })
 
-    return upstream.ok
-      ? json({ ok: true }, 200)
-      : json({ error: 'upstream error', status: upstream.status }, 502)
+    // HTTP 502/503/504는 Cloudflare가 자체 에러페이지로 교체함
+    // → 항상 200 반환하고 ok 필드로 성공/실패 구분
+    if (upstream.ok) {
+      return json({ ok: true }, 200)
+    }
+    const upstreamBody = await upstream.text().catch(() => '')
+    return json({ ok: false, error: upstreamBody || 'upstream error', status: upstream.status }, 200)
   } catch (e) {
-    return json({ error: e.message }, 500)
+    return json({ ok: false, error: e.message }, 200)
   }
 }
 

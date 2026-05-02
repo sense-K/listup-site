@@ -498,10 +498,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tradeId: trade.id, token: session.access_token }),
       })
-      if (res.ok) {
+      const data = await res.json()
+      if (data.ok) {
         btn.textContent = '전송됨 ✓'
         setTimeout(() => { btn.textContent = '연락 요청'; btn.disabled = false }, 30000)
       } else {
+        console.error('[nudge upstream]', data)
         alert('전송에 실패했어요. 다시 시도해주세요.')
         btn.disabled = false; btn.textContent = '연락 요청'
       }
