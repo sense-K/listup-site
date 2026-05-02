@@ -175,9 +175,7 @@
     .my-item-btn.review { border-color: #f97316; color: #f97316; }
     .my-item-btn.review:hover { background: #f97316; color: #fff; }
     .my-item-btn.edit:hover { border-color: #111; color: #111; }
-    .my-item-btn.nudge { border-color: #6366f1; color: #6366f1; }
-    .my-item-btn.nudge:hover { background: #6366f1; color: #fff; }
-    .my-item-btn.nudge:disabled { border-color: #bbb; color: #bbb; cursor: default; }
+
 
     .empty-my {
       text-align: center; padding: 32px 0;
@@ -304,12 +302,8 @@
     const st = getEffectiveStatus(l)
     const stClass = { active: 'status-active', trading: 'status-trading', seller_confirmed: 'status-seller-confirmed', sold: 'status-sold' }[st] ?? 'status-active'
     const stText = { active: '판매중', trading: '거래중', seller_confirmed: '수령확인 대기', sold: '판매완료' }[st] ?? '판매중'
-    const nudgeBtn = st === 'trading'
-      ? `<button class="my-item-btn nudge" onclick="event.stopPropagation();nudgeBuyer('${l.id}', this)">연락 요청</button>`
-      : ''
     const btns = st !== 'sold' ? `
       <div>
-        ${nudgeBtn}
         <button class="my-item-btn edit" onclick="event.stopPropagation();location.href='/trade/register/?edit=${l.id}'">수정</button>
         <button class="my-item-btn" onclick="event.stopPropagation();deleteListing('${l.id}')">삭제</button>
       </div>` : ''
@@ -482,36 +476,6 @@
     if (!val) return
     const { error } = await db.from('User').update({ nickname: val }).eq('id', userId)
     if (!error) { document.getElementById('display-nickname').textContent = val; toggleNicknameEdit() }
-  }
-
-  async function nudgeBuyer(listingId, btn) {
-    btn.disabled = true
-    btn.textContent = '전송 중...'
-    try {
-      const { data: { session } } = await db.auth.getSession()
-      if (!session) throw new Error('session_null')
-      const { data: trade } = await db.from('Trade').select('id').eq('listingId', listingId).eq('status', 'active').maybeSingle()
-      if (!trade) { alert('거래 정보를 찾을 수 없어요'); btn.disabled = false; btn.textContent = '연락 요청'; return }
-
-      const res = await fetch('/api/nudge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tradeId: trade.id, token: session.access_token }),
-      })
-      const data = await res.json()
-      if (data.ok) {
-        btn.textContent = '전송됨 ✓'
-        setTimeout(() => { btn.textContent = '연락 요청'; btn.disabled = false }, 30000)
-      } else {
-        console.error('[nudge upstream]', data)
-        alert('전송에 실패했어요. 다시 시도해주세요.')
-        btn.disabled = false; btn.textContent = '연락 요청'
-      }
-    } catch(e) {
-      console.error('[nudge]', e)
-      alert('오류가 발생했어요.')
-      btn.disabled = false; btn.textContent = '연락 요청'
-    }
   }
 
   async function deleteListing(id) {

@@ -373,9 +373,8 @@
         const tradeId = anyActiveTrade?.id ?? ''
         return `
           <div class="status-info-box">
-            거래 진행 중이에요. 구매자와 연락하세요.<br>
-            <button class="cancel-trade-btn" style="margin-top:12px;border-color:#6366f1;color:#6366f1;" id="nudge-btn" onclick="nudgeBuyer('${tradeId}')">연락 요청</button>
-            <button class="cancel-trade-btn" style="margin-top:8px;" onclick="cancelTradeAsSeller()">거래 취소</button>
+            거래 진행 중이에요.<br>구매자가 카톡으로 연락드릴 거예요.
+            <button class="cancel-trade-btn" style="margin-top:12px;" onclick="cancelTradeAsSeller()">거래 취소</button>
             <button class="cancel-trade-btn" style="margin-top:8px;border-color:#10b981;color:#10b981;" onclick="sellerConfirm()">계정 전달 완료</button>
           </div>`
       }
@@ -531,34 +530,6 @@
     await db.from('Trade').update({ status: 'cancelled' }).eq('id', tradeId)
     await db.from('Listing').update({ status: 'active' }).eq('id', listingId)
     location.reload()
-  }
-
-  async function nudgeBuyer(tradeId) {
-    const btn = document.getElementById('nudge-btn')
-    if (!tradeId) { alert('거래 정보를 찾을 수 없어요'); return }
-    btn.disabled = true; btn.textContent = '전송 중...'
-    try {
-      const { data: { session } } = await db.auth.getSession()
-      if (!session) throw new Error('session_null')
-      const res = await fetch('/api/nudge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tradeId, token: session.access_token }),
-      })
-      const data = await res.json()
-      if (data.ok) {
-        btn.textContent = '전송됨 ✓'
-        setTimeout(() => { btn.textContent = '연락 요청'; btn.disabled = false }, 30000)
-      } else {
-        console.error('[nudge upstream]', data)
-        alert('전송에 실패했어요')
-        btn.disabled = false; btn.textContent = '연락 요청'
-      }
-    } catch (e) {
-      console.error('[nudge]', e)
-      alert('오류가 발생했어요')
-      btn.disabled = false; btn.textContent = '연락 요청'
-    }
   }
 
   async function cancelTradeAsSeller() {
