@@ -536,12 +536,20 @@ function onNumChange(i, val) {
 
 // ─── 점수 계산 ────────────────────────────────────
 function calcScore() {
-  const activeRows = subRows.filter(r => r.key)
   let raw = 0
-  activeRows.forEach(r => {
-    const opt = SUB_OPTS.find(o => o.key === r.key)
-    if (opt) raw += r.value * opt.mult
-  })
+  for (let i = 0; i < 4; i++) {
+    const sel = document.getElementById('sub-sel-' + i)
+    const num = document.getElementById('sub-num-' + i)
+    const key = sel?.value
+    if (!key) continue
+    const opt = SUB_OPTS.find(o => o.key === key)
+    if (!opt) continue
+    let v = parseFloat(num?.value)
+    if (isNaN(v)) continue
+    v = Math.max(opt.min, Math.min(opt.max, v))
+    subRows[i] = { key, value: v }  // 상태 동기화
+    raw += v * opt.mult
+  }
   raw += (BASIC_POINT[currentStage] ?? 0)
   const score  = Math.round(raw * 100) / 100
   const target = targets[currentPreset][currentStage]

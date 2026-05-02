@@ -416,8 +416,6 @@ async function init() {
   renderSetBtns()
   renderSubSlots()
 
-  applyUrlParams()
-
   const { data: { session } } = await db.auth.getSession()
   if (session) {
     currentUser = session.user
@@ -438,6 +436,9 @@ async function init() {
     const now  = seasons.find(s => s.is_now_season === 1) ?? seasons[0]
     currentSeason = now?.season_code ?? ''
   } catch(e) { console.error('시즌 로드 실패', e) }
+
+  // 모든 데이터 로드 후 URL 파라미터 적용 (시즌 정보가 준비된 상태에서 doSearch 가능)
+  applyUrlParams()
 }
 
 // ─── 부위 버튼 ───────────────────────────────────
