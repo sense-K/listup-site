@@ -240,7 +240,7 @@ const SLUG_TO_GAME_PATH = {
   'trickcal':       '/game/trickcal/',
   'limbus':         '/game/limbus/',
 }
-const CODEX_SLUGS = ['genshin', 'starrail', 'zzz', 'nikke', 'wuwa', 'leehwan']
+const GUIDE_SLUGS = ['genshin', 'starrail', 'zzz', 'nikke', 'wuwa', 'leehwan', 'epicseven', 'bluearchive']
 function gameSlugToPath(slug) {
   return SLUG_TO_PATH[slug] ?? `/trade/${slug}/`
 }
@@ -282,7 +282,7 @@ async function loadAndRenderGameUI(activeSlug) {
   // 게임 공략 드롭다운 업데이트 (도감 있는 게임만)
   const guideDropdown = document.getElementById('nav-guide-dropdown')
   if (guideDropdown) {
-    guideDropdown.innerHTML = games.filter(g => CODEX_SLUGS.includes(g.slug)).map(g => `
+    guideDropdown.innerHTML = games.filter(g => GUIDE_SLUGS.includes(g.slug)).map(g => `
       <a href="${gameHubPath(g.slug)}" class="nav-dropdown-item">
         ${gameIcon(g, 20)} <span>${g.nameKo}</span>
       </a>
@@ -290,7 +290,7 @@ async function loadAndRenderGameUI(activeSlug) {
   }
   const mobileGuideLinks = document.getElementById('mobile-guide-links')
   if (mobileGuideLinks) {
-    mobileGuideLinks.innerHTML = games.filter(g => CODEX_SLUGS.includes(g.slug)).map(g => `
+    mobileGuideLinks.innerHTML = games.filter(g => GUIDE_SLUGS.includes(g.slug)).map(g => `
       <a href="${gameHubPath(g.slug)}" class="mobile-game-item">
         ${gameIcon(g, 22)} <span>${g.nameKo}</span>
       </a>
