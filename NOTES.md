@@ -1,3 +1,10 @@
+# TODO: 부위/세트/주옵션 칩 UI 공용 컴포넌트화
+- 현재 위치: gear-recommend, enhance-assist 에 동일 코드 중복
+- 3번째 페이지 추가 시 공용 컴포넌트(/components/gear-selector.js)로 추출
+- 함께 추출: MAIN_STAT_RULES, SETS, SLOTS, STAT 아이콘 경로, SET_IMG_BASE
+
+---
+
 # TODO: my-heroes 토글 컴포넌트 분리
 - 현재 위치: rta/, gear-recommend/ 에 동일 코드 중복
 - 3번째 페이지 추가 시 공용 컴포넌트(/components/my-heroes-toggle.js)로 추출
