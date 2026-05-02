@@ -19,7 +19,7 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "에픽세븐 강화 어시스트",
-      "description": "에픽세븐 장비 단계별 GO/STOP 판정 계산기. 유효옵션 점수와 목표 점수를 비교해 강화 방향을 제안합니다.",
+      "description": "에픽세븐 장비 단계별 GO/STOP 판정 계산기.",
       "url": "https://resetlist.kr/game/epic7/enhance-assist/",
       "applicationCategory": "GameApplication",
       "operatingSystem": "Web"
@@ -47,36 +47,55 @@
     .ea-h1 { font-size: 20px; font-weight: 800; color: #1e293b; margin: 0 0 4px; }
     .ea-subtitle { font-size: 13px; color: #64748b; margin: 0 0 20px; }
 
-    /* 카드 공통 */
+    /* 카드 */
     .ea-card { background: #fff; border: 1.5px solid #e5e7eb; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
-    .ea-card-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
 
-    /* 섹션 1 — 장비 정보 */
-    .ea-gear-row { display: flex; gap: 16px; align-items: flex-start; }
-    .ea-gear-thumb {
-      flex-shrink: 0; width: 100px; height: 100px;
-      background: linear-gradient(160deg, #1e1b4b, #312e81);
-      border-radius: 14px; display: flex; align-items: center;
-      justify-content: center; position: relative; overflow: hidden;
+    /* 섹션 라벨 */
+    .ea-sec-label { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+    .ea-sec-label span { font-weight: 400; color: #cbd5e1; }
+    .ea-sec-block { margin-bottom: 16px; }
+    .ea-sec-block:last-of-type { margin-bottom: 0; }
+
+    /* gear-recommend 버튼 패턴 재사용 */
+    .gr-stat-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .gr-stat-btn {
+      padding: 7px 14px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      border: 1.5px solid var(--border, #e5e7eb);
+      background: #f8fafc; color: #64748b;
+      cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 6px;
     }
-    .ea-gear-thumb img { width: 72px; height: 72px; object-fit: contain; }
-    .ea-gear-thumb .ea-thumb-placeholder { font-size: 40px; }
-    .ea-gear-selects { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-    .ea-select {
-      width: 100%; padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px;
-      font-size: 13px; font-family: inherit; background: #f8fafc; color: #1e293b;
-      cursor: pointer; outline: none; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;
+    .gr-stat-btn img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+    .gr-stat-btn:hover { border-color: #7c3aed; color: #7c3aed; }
+    .gr-stat-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    .gr-stat-btn.active img { filter: brightness(0) invert(1); }
+    .gr-stat-btn.ea-excluded {
+      opacity: 0.3; cursor: not-allowed; text-decoration: line-through;
     }
-    .ea-select:focus { border-color: #7c3aed; background-color: #fff; }
+    .gr-stat-btn.ea-excluded:hover { border-color: var(--border, #e5e7eb); color: #64748b; }
+
+    /* 세트 칩 패턴 */
+    .gr-set-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .gr-set-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+      border: 1.5px solid var(--border, #e5e7eb);
+      background: #f8fafc; color: #64748b;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .gr-set-btn img { width: 18px; height: 18px; object-fit: contain; }
+    .gr-set-btn:hover { border-color: #7c3aed; color: #7c3aed; }
+    .gr-set-btn.active { background: rgba(124,58,237,0.1); border-color: #7c3aed; color: #7c3aed; }
 
     /* 구분선 */
     .ea-divider { border: none; border-top: 1.5px solid #f1f5f9; margin: 16px 0; }
 
     /* 주력/서브 토글 */
     .ea-preset-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .ea-preset-label { font-size: 12px; font-weight: 700; color: #64748b; }
+    .ea-preset-label { font-size: 12px; font-weight: 700; color: #64748b; line-height: 1.5; }
+    .ea-preset-label small { font-weight: 400; color: #94a3b8; display: block; font-size: 11px; }
     .ea-preset-toggle { display: flex; gap: 6px; }
     .ea-preset-btn {
       padding: 6px 16px; border-radius: 999px; font-size: 12px; font-weight: 700;
@@ -85,27 +104,29 @@
     }
     .ea-preset-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
 
-    /* 단계 박스 4개 */
+    /* 단계 박스 */
     .ea-stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .ea-stage-box {
       border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px 8px;
       cursor: pointer; transition: all 0.15s; text-align: center; background: #fff;
     }
     .ea-stage-box:hover { border-color: #7c3aed; }
-    .ea-stage-box.active {
-      border: 2px solid #7c3aed; background: #f5f3ff;
-    }
+    .ea-stage-box.active { border: 2px solid #7c3aed; background: #f5f3ff; }
     .ea-stage-num { font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 4px; }
     .ea-current-tag { font-size: 9px; font-weight: 700; background: #7c3aed; color: #fff; border-radius: 4px; padding: 1px 5px; }
+    .ea-stage-input-wrap { position: relative; display: flex; align-items: center; justify-content: center; gap: 3px; }
     .ea-stage-input {
-      width: 100%; text-align: center; border: none; background: transparent;
-      font-size: 18px; font-weight: 800; color: #7c3aed; outline: none;
-      font-family: inherit; padding: 0;
+      width: 100%; text-align: center; border: 1px solid #e5e7eb; border-radius: 6px;
+      background: #f8fafc; font-size: 18px; font-weight: 800; color: #7c3aed;
+      outline: none; font-family: inherit; padding: 3px 4px;
+      transition: border-color 0.15s, background 0.15s;
     }
+    .ea-stage-input:focus { border-color: #7c3aed; background: #fff; }
     .ea-stage-input::-webkit-inner-spin-button, .ea-stage-input::-webkit-outer-spin-button { -webkit-appearance: none; }
-    .ea-stage-hint { font-size: 10px; color: #94a3b8; margin-top: 3px; }
+    .ea-pencil { color: #94a3b8; flex-shrink: 0; pointer-events: none; }
+    .ea-stage-hint { font-size: 10px; color: #94a3b8; margin-top: 4px; }
 
-    /* 섹션 2 — 부옵션 */
+    /* 부옵션 섹션 */
     .ea-sub-row { display: grid; grid-template-columns: 140px 1fr 56px; gap: 8px; align-items: center; margin-bottom: 10px; }
     .ea-sub-row:last-child { margin-bottom: 0; }
     .ea-sub-select {
@@ -129,7 +150,7 @@
     .ea-num-input::-webkit-inner-spin-button, .ea-num-input::-webkit-outer-spin-button { -webkit-appearance: none; }
     .ea-sub-row-empty .ea-slider, .ea-sub-row-empty .ea-num-input { opacity: 0.3; pointer-events: none; }
 
-    /* 섹션 3 — 결과 */
+    /* 결과 */
     .ea-calc-btn {
       width: 100%; padding: 16px; background: #7c3aed; color: #fff; border: none;
       border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer;
@@ -137,7 +158,6 @@
     }
     .ea-calc-btn:hover { opacity: 0.88; transform: translateY(-1px); }
     .ea-calc-btn:active { transform: translateY(0); }
-
     .ea-result { border-radius: 16px; padding: 20px; border: 2px solid; transition: opacity 0.2s; }
     .ea-result.stale { opacity: 0.4; pointer-events: none; }
     .ea-result.go { background: #f0fdf4; border-color: #86efac; }
@@ -172,7 +192,7 @@
     .ea-login-hint { font-size: 12px; color: #94a3b8; text-align: center; margin-top: 8px; }
     .ea-login-hint a { color: #7c3aed; text-decoration: none; }
 
-    /* 가이드 섹션 */
+    /* 가이드 */
     .ea-guide { margin-top: 40px; padding-top: 32px; border-top: 2px solid #f1f5f9; }
     .ea-guide h2 { font-size: 17px; font-weight: 800; color: #1e293b; margin: 28px 0 10px; }
     .ea-guide h2:first-child { margin-top: 0; }
@@ -187,11 +207,9 @@
     .ea-tag-stop { display: inline-block; padding: 1px 6px; background: #fee2e2; color: #dc2626; border-radius: 4px; font-size: 11px; font-weight: 700; }
 
     @media (max-width: 560px) {
-      .ea-gear-row { flex-direction: column; }
-      .ea-gear-thumb { width: 100%; height: 80px; border-radius: 12px; }
-      .ea-gear-thumb img { width: 56px; height: 56px; }
-      .ea-sub-row { grid-template-columns: 120px 1fr 50px; gap: 6px; }
       .ea-stages { grid-template-columns: repeat(2, 1fr); }
+      .ea-sub-row { grid-template-columns: 120px 1fr 50px; gap: 6px; }
+      .gr-stat-btn { padding: 7px 12px; font-size: 12px; }
     }
   </style>
 </head>
@@ -208,93 +226,57 @@
   <h1 class="ea-h1">에픽세븐 강화 어시스트 · 유효옵션 점수 계산기</h1>
   <p class="ea-subtitle">부옵션 수치를 입력해 단계별 GO/STOP을 판단하세요</p>
 
-  <!-- ── 섹션 1: 장비 정보 + 강화 단계 ── -->
+  <!-- ── 섹션 1: 장비 정보 ── -->
   <div class="ea-card">
-    <div class="ea-card-label">장비 정보</div>
-    <div class="ea-gear-row">
-      <div class="ea-gear-thumb" id="gear-thumb">
-        <span class="ea-thumb-placeholder">⚔️</span>
-      </div>
-      <div class="ea-gear-selects">
-        <select class="ea-select" id="sel-slot" onchange="onSlotChange()">
-          <option value="">부위 선택</option>
-          <option value="weapon">무기</option>
-          <option value="helmet">투구</option>
-          <option value="armor">갑옷</option>
-          <option value="neck">목걸이</option>
-          <option value="ring">반지</option>
-          <option value="boots">장화</option>
-        </select>
-        <select class="ea-select" id="sel-set" onchange="markStale()">
-          <option value="">세트 선택 (선택사항)</option>
-          <option value="set_speed">속도 세트</option>
-          <option value="set_cri">치명 세트</option>
-          <option value="set_cri_dmg">파멸 세트</option>
-          <option value="set_attack">공격 세트</option>
-          <option value="set_rage">분노 세트</option>
-          <option value="set_counter">반격 세트</option>
-          <option value="set_vampire">흡혈 세트</option>
-          <option value="set_immune">면역 세트</option>
-          <option value="set_res">저항 세트</option>
-          <option value="set_acc">적중 세트</option>
-          <option value="set_max_hp">체력 세트</option>
-          <option value="set_def">방어 세트</option>
-          <option value="set_shield">수호 세트</option>
-          <option value="set_revenge">복수 세트</option>
-          <option value="set_scar">상처 세트</option>
-          <option value="set_opener">개전 세트</option>
-          <option value="set_penetrate">관통 세트</option>
-          <option value="set_revenant">역습 세트</option>
-          <option value="set_riposte">응수 세트</option>
-          <option value="set_coop">협공 세트</option>
-          <option value="set_torrent">격류 세트</option>
-          <option value="set_chase">추격 세트</option>
-        </select>
-        <select class="ea-select" id="sel-main" onchange="onMainChange()">
-          <option value="">주옵션 선택 (선택사항)</option>
-          <option value="att">공격력%</option>
-          <option value="def">방어력%</option>
-          <option value="max_hp">생명력%</option>
-          <option value="acc">효과적중%</option>
-          <option value="res">효과저항%</option>
-          <option value="cri">치명확률</option>
-          <option value="cri_dmg">치명피해</option>
-          <option value="speed">속도</option>
-        </select>
-      </div>
+    <!-- 부위 선택 -->
+    <div class="ea-sec-block">
+      <div class="ea-sec-label">부위 <span>(선택사항)</span></div>
+      <div class="gr-stat-grid" id="slot-btns"></div>
+    </div>
+
+    <!-- 세트 선택 -->
+    <div class="ea-sec-block">
+      <div class="ea-sec-label">세트 <span>(선택사항)</span></div>
+      <div class="gr-set-grid" id="set-btns"></div>
+    </div>
+
+    <!-- 주옵션 선택 -->
+    <div class="ea-sec-block" id="main-stat-block">
+      <div class="ea-sec-label">주옵션 <span>(선택사항)</span></div>
+      <div class="gr-stat-grid" id="main-stat-btns"></div>
     </div>
 
     <hr class="ea-divider">
 
+    <!-- 강화 단계 + 목표 점수 -->
     <div class="ea-preset-row">
-      <span class="ea-preset-label">단계별 목표 점수</span>
+      <span class="ea-preset-label">
+        현재 강화 단계 · 목표 점수
+        <small>수정 가능 — 클릭해서 단계 선택</small>
+      </span>
       <div class="ea-preset-toggle">
         <button class="ea-preset-btn active" id="btn-main" onclick="setPreset('main')">주력</button>
         <button class="ea-preset-btn" id="btn-sub" onclick="setPreset('sub')">서브</button>
       </div>
     </div>
 
-    <div class="ea-stages" id="stages-grid">
-      <!-- +3, +6, +9, +12 박스 — JS로 렌더 -->
-    </div>
+    <div class="ea-stages" id="stages-grid"></div>
     <p class="ea-login-hint" id="login-hint" style="display:none;">
       <a href="/auth/?redirect=/game/epic7/enhance-assist/">로그인</a>하면 목표 점수가 저장됩니다
     </p>
   </div>
 
-  <!-- ── 섹션 2: 부옵션 4행 ── -->
+  <!-- ── 섹션 2: 부옵션 ── -->
   <div class="ea-card">
-    <div class="ea-card-label">부옵션 입력</div>
-    <div id="sub-rows">
-      <!-- JS로 렌더 -->
-    </div>
+    <div class="ea-sec-label">부옵션 입력</div>
+    <div id="sub-rows"></div>
   </div>
 
-  <!-- ── 섹션 3: 점수 확인 버튼 + 결과 ── -->
+  <!-- ── 점수 확인 + 결과 ── -->
   <button class="ea-calc-btn" onclick="calcScore()">점수 확인</button>
   <div id="result-area" style="display:none;margin-bottom:16px;"></div>
 
-  <!-- ── 가이드 콘텐츠 (SEO) ── -->
+  <!-- ── 가이드 (SEO) ── -->
   <section class="ea-guide">
     <h2>강화 단계별 점수 기준이란?</h2>
     <p>에픽세븐 장비는 +3, +6, +9, +12 단계에서 부옵션이 추가·상승합니다. 매 단계마다 현재 옵션 수치가 충분한지 판단해 강화를 계속할지 결정해야 합니다. 후진 옵션이 붙은 장비를 무리하게 강화하면 강화석 낭비로 이어집니다.</p>
@@ -323,10 +305,10 @@
       <li>속도 → 수치 × 2</li>
     </ul>
     <p>강화 단계별 기본 점수(0강 5점, 3강 9점, 6강 13점, 9강 17점, 12강 21점, 15강 25점)를 더해 최종 점수가 결정됩니다.</p>
-    <p><strong>예시:</strong> +9강 장비 — 공격력% 5, 치명확률 8, 치명피해 12, 속도 4 → (5×1) + (8×1.6) + (12×1.14) + (4×2) + 17 = 5+12.8+13.68+8+17 = <strong>56.48점</strong></p>
+    <p><strong>예시:</strong> +9강 — 공격력% 5, 치명확률 8, 치명피해 12, 속도 4 → 5+12.8+13.68+8+17 = <strong>56.48점</strong></p>
 
     <h2>이 장비를 어디에 끼워야 할지 모르겠나요?</h2>
-    <p>점수 확인 후 "이 장비 주인 찾기" 버튼을 누르면 입력한 옵션이 가장 잘 맞는 영웅을 자동으로 추천받을 수 있습니다. 부위·세트·주옵션·부옵션 4개가 그대로 전달됩니다.</p>
+    <p>점수 확인 후 "이 장비 주인 찾기" 버튼을 누르면 입력한 옵션이 가장 잘 맞는 영웅을 자동으로 추천받을 수 있습니다.</p>
   </section>
 </div>
 
@@ -335,7 +317,55 @@
 document.getElementById('navbar').innerHTML = renderNavbar()
 loadAndRenderGameUI(null)
 
-// ─── 상수 ──────────────────────────────────────
+// ─── 상수 ──────────────────────────────────────────
+const SET_IMG_BASE = 'https://ltcibadxwkupwjikqzik.supabase.co/storage/v1/object/public/epic7/sets'
+
+const SLOTS = [
+  { key: 'weapon', name: '무기',   icon: '/epic7-icons/icon_eq_weapon_bone006.png' },
+  { key: 'helmet', name: '투구',   icon: '/epic7-icons/icon_eq_helm_bone006.png'   },
+  { key: 'armor',  name: '갑옷',   icon: '/epic7-icons/icon_eq_armor_bone006.png'  },
+  { key: 'neck',   name: '목걸이', icon: '/epic7-icons/icon_eq_neck_bone006.png'   },
+  { key: 'ring',   name: '반지',   icon: '/epic7-icons/icon_eq_ring_bone106.png'   },
+  { key: 'boots',  name: '신발',   icon: '/epic7-icons/icon_eq_boot_bone006.png'   },
+]
+
+const SETS = [
+  { key: 'set_speed',    name: '속도'   },
+  { key: 'set_cri',      name: '치명'   },
+  { key: 'set_cri_dmg',  name: '파멸'   },
+  { key: 'set_attack',   name: '공격',  ext: 'webp' },
+  { key: 'set_rage',     name: '분노'   },
+  { key: 'set_counter',  name: '반격'   },
+  { key: 'set_vampire',  name: '흡혈'   },
+  { key: 'set_immune',   name: '면역'   },
+  { key: 'set_res',      name: '저항'   },
+  { key: 'set_acc',      name: '적중'   },
+  { key: 'set_max_hp',   name: '체력'   },
+  { key: 'set_def',      name: '방어'   },
+  { key: 'set_shield',   name: '수호'   },
+  { key: 'set_revenge',  name: '복수'   },
+  { key: 'set_scar',     name: '상처'   },
+  { key: 'set_opener',   name: '개전'   },
+  { key: 'set_penetrate',name: '관통'   },
+  { key: 'set_revenant', name: '역습'   },
+  { key: 'set_riposte',  name: '응수'   },
+  { key: 'set_coop',     name: '협공'   },
+  { key: 'set_torrent',  name: '격류'   },
+  { key: 'set_chase',    name: '추격'   },
+]
+
+// 주옵션 + 부옵션 공용 옵션 목록
+const MAIN_OPTS = [
+  { key: 'att',    label: '공격력%',   icon: '/epic7-icons/stat/att.png'     },
+  { key: 'def',    label: '방어력%',   icon: '/epic7-icons/stat/def.png'     },
+  { key: 'max_hp', label: '생명력%',   icon: '/epic7-icons/stat/max_hp.png'  },
+  { key: 'speed',  label: '속도',      icon: '/epic7-icons/stat/speed.png'   },
+  { key: 'cri',    label: '치명확률',  icon: '/epic7-icons/stat/cri.png'     },
+  { key: 'cri_dmg',label: '치명피해',  icon: '/epic7-icons/stat/cri_dmg.png' },
+  { key: 'acc',    label: '효과적중%', icon: '/epic7-icons/stat/acc.png'     },
+  { key: 'res',    label: '효과저항%', icon: '/epic7-icons/stat/res.png'     },
+]
+
 const SUB_OPTS = [
   { key: 'att',    name: '공격력%',   min: 4,  max: 48, mult: 1.00 },
   { key: 'def',    name: '방어력%',   min: 4,  max: 48, mult: 1.00 },
@@ -346,36 +376,45 @@ const SUB_OPTS = [
   { key: 'cri_dmg',name: '치명피해',  min: 3,  max: 42, mult: 1.14 },
   { key: 'speed',  name: '속도',      min: 1,  max: 25, mult: 2.00 },
 ]
+
+// 부위별 주옵션/부옵션 제한 (game rule)
+const SLOT_RULES = {
+  weapon: { excludeMain: ['def'], excludeSub: ['def']  },
+  helmet: { excludeMain: [],      excludeSub: []        },
+  armor:  { excludeMain: ['att'], excludeSub: ['att']   },
+  neck:   { excludeMain: [],      excludeSub: []        },
+  ring:   { excludeMain: [],      excludeSub: []        },
+  boots:  { excludeMain: [],      excludeSub: []        },
+}
+
 const BASIC_POINT = { 0:5, 3:9, 6:13, 9:17, 12:21, 15:25 }
 const STAGES = [3, 6, 9, 12]
 const DEFAULTS = {
   main: { 3:35, 6:47, 9:57, 12:67 },
   sub:  { 3:30, 6:38, 9:42, 12:52 },
 }
-const SLOT_ICONS = {
-  weapon: '/epic7-icons/icon_eq_weapon_bone006.png',
-  helmet: '/epic7-icons/icon_eq_helm_bone006.png',
-  armor:  '/epic7-icons/icon_eq_armor_bone006.png',
-  neck:   '/epic7-icons/icon_eq_neck_bone006.png',
-  ring:   '/epic7-icons/icon_eq_ring_bone106.png',
-  boots:  '/epic7-icons/icon_eq_boot_bone006.png',
-}
 
-// ─── 상태 ──────────────────────────────────────
-let currentPreset  = 'main'
-let currentStage   = 9           // 기본 선택: +9
-let targets        = { main: {...DEFAULTS.main}, sub: {...DEFAULTS.sub} }
-let subRows        = [           // 부옵션 4행
+// ─── 상태 ──────────────────────────────────────────
+let selectedSlot = ''
+let selectedSet  = ''
+let selectedMain = ''
+let currentPreset = 'main'
+let currentStage  = 9
+let targets = { main: {...DEFAULTS.main}, sub: {...DEFAULTS.sub} }
+let subRows = [
   { key: '', value: 0 },
   { key: '', value: 0 },
   { key: '', value: 0 },
   { key: '', value: 0 },
 ]
-let currentUser    = null
-let saveTimer      = null
+let currentUser = null
+let saveTimer   = null
 
-// ─── 초기화 ──────────────────────────────────────
+// ─── 초기화 ────────────────────────────────────────
 async function init() {
+  renderSlotBtns()
+  renderSetBtns()
+  renderMainStatBtns()
   renderStages()
   renderSubRows()
 
@@ -389,7 +428,7 @@ async function init() {
   renderStages()
 }
 
-// ─── Supabase: 목표 점수 로드 ──────────────────────
+// ─── Supabase ─────────────────────────────────────
 async function loadTargets() {
   if (!currentUser) return
   const { data } = await db.from('UserGearTarget')
@@ -405,31 +444,100 @@ async function loadTargets() {
 async function saveTarget(preset, stage, score) {
   if (!currentUser) return
   await db.from('UserGearTarget').upsert({
-    user_id: currentUser.id,
-    preset,
-    stage,
-    target_score: score,
+    user_id: currentUser.id, preset, stage, target_score: score,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'user_id,preset,stage' })
 }
 
-// ─── 렌더: 단계 박스 ─────────────────────────────
+// ─── 렌더: 부위 버튼 ──────────────────────────────
+function renderSlotBtns() {
+  document.getElementById('slot-btns').innerHTML = SLOTS.map(s => `
+    <button class="gr-stat-btn${selectedSlot === s.key ? ' active' : ''}"
+      onclick="selectSlot('${s.key}')">
+      <img src="${s.icon}" alt="${s.name}"> ${s.name}
+    </button>`).join('')
+}
+
+function selectSlot(key) {
+  selectedSlot = selectedSlot === key ? '' : key
+  // 부위 변경 → 제한되는 주옵션이 현재 선택돼 있으면 해제
+  if (selectedSlot) {
+    const rules = SLOT_RULES[selectedSlot]
+    if (rules?.excludeMain.includes(selectedMain)) {
+      selectedMain = ''
+    }
+  }
+  renderSlotBtns()
+  renderMainStatBtns()
+  renderSubRows()
+  markStale()
+}
+
+// ─── 렌더: 세트 칩 ────────────────────────────────
+function renderSetBtns() {
+  document.getElementById('set-btns').innerHTML = SETS.map(s => `
+    <button class="gr-set-btn${selectedSet === s.key ? ' active' : ''}"
+      onclick="selectSet('${s.key}')">
+      <img src="${SET_IMG_BASE}/${s.key}.${s.ext || 'png'}" alt="${s.name}"
+        onerror="this.style.display='none'"> ${s.name}
+    </button>`).join('')
+}
+
+function selectSet(key) {
+  selectedSet = selectedSet === key ? '' : key
+  renderSetBtns()
+  markStale()
+}
+
+// ─── 렌더: 주옵션 칩 ──────────────────────────────
+function renderMainStatBtns() {
+  const excludeMain = selectedSlot ? (SLOT_RULES[selectedSlot]?.excludeMain ?? []) : []
+  document.getElementById('main-stat-btns').innerHTML = MAIN_OPTS.map(o => {
+    const isExcluded = excludeMain.includes(o.key)
+    const isActive   = selectedMain === o.key
+    return `
+      <button class="gr-stat-btn${isActive ? ' active' : ''}${isExcluded ? ' ea-excluded' : ''}"
+        onclick="selectMainStat('${o.key}')" ${isExcluded ? 'disabled' : ''}>
+        <img src="${o.icon}" alt="${o.label}"> ${o.label}
+      </button>`
+  }).join('')
+}
+
+function selectMainStat(key) {
+  const excludeMain = selectedSlot ? (SLOT_RULES[selectedSlot]?.excludeMain ?? []) : []
+  if (excludeMain.includes(key)) return  // 부위 룰로 차단
+  selectedMain = selectedMain === key ? '' : key
+  // 주옵션 변경 → 같은 옵션이 부옵션에 있으면 silent reset
+  subRows.forEach((row, i) => {
+    if (selectedMain && row.key === selectedMain) subRows[i] = { key: '', value: 0 }
+  })
+  renderMainStatBtns()
+  renderSubRows()
+  markStale()
+}
+
+// ─── 렌더: 단계 박스 ──────────────────────────────
 function renderStages() {
-  const grid = document.getElementById('stages-grid')
-  grid.innerHTML = STAGES.map(s => {
+  const pencil = `<svg class="ea-pencil" width="10" height="10" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2">
+    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"/>
+  </svg>`
+  document.getElementById('stages-grid').innerHTML = STAGES.map(s => {
     const isActive = s === currentStage
     const val = targets[currentPreset][s]
     return `
-      <div class="ea-stage-box${isActive ? ' active' : ''}" id="stage-box-${s}" onclick="selectStage(${s})">
+      <div class="ea-stage-box${isActive ? ' active' : ''}" id="stage-box-${s}"
+        onclick="selectStage(${s})" title="클릭해서 +${s}강 선택">
         <div class="ea-stage-num">
           +${s}
           ${isActive ? '<span class="ea-current-tag">현재</span>' : ''}
         </div>
-        <input class="ea-stage-input" id="stage-input-${s}" type="number" min="1" max="200"
-          value="${val}"
-          onclick="event.stopPropagation()"
-          oninput="onTargetInput(${s}, this.value)"
-        />
+        <div class="ea-stage-input-wrap">
+          <input class="ea-stage-input" id="stage-input-${s}" type="number" min="1" max="200"
+            value="${val}" onclick="event.stopPropagation()"
+            oninput="onTargetInput(${s}, this.value)" title="목표 점수 직접 수정 가능">
+          ${pencil}
+        </div>
         <div class="ea-stage-hint">목표 점수</div>
       </div>`
   }).join('')
@@ -462,32 +570,9 @@ function setPreset(p) {
   markStale()
 }
 
-// ─── 슬롯 변경 ────────────────────────────────────
-function onSlotChange() {
-  const slot = document.getElementById('sel-slot').value
-  const thumb = document.getElementById('gear-thumb')
-  if (slot && SLOT_ICONS[slot]) {
-    thumb.innerHTML = `<img src="${SLOT_ICONS[slot]}" alt="${slot}">`
-  } else {
-    thumb.innerHTML = `<span class="ea-thumb-placeholder">⚔️</span>`
-  }
-  markStale()
-}
-
-// ─── 주옵션 변경 ──────────────────────────────────
-function onMainChange() {
-  const mainKey = document.getElementById('sel-main').value
-  // 충돌하는 부옵션 silent reset
-  subRows.forEach((row, i) => {
-    if (mainKey && row.key === mainKey) subRows[i] = { key: '', value: 0 }
-  })
-  renderSubRows()
-  markStale()
-}
-
-// ─── 렌더: 부옵션 행 ─────────────────────────────
+// ─── 렌더: 부옵션 행 ──────────────────────────────
 function renderSubRows() {
-  const mainKey = document.getElementById('sel-main')?.value || ''
+  const excludeSub = selectedSlot ? (SLOT_RULES[selectedSlot]?.excludeSub ?? []) : []
   const container = document.getElementById('sub-rows')
   container.innerHTML = subRows.map((row, i) => {
     const hasKey = !!row.key
@@ -500,9 +585,11 @@ function renderSubRows() {
         <select class="ea-sub-select" id="sub-sel-${i}" onchange="onSubOptChange(${i}, this.value)">
           <option value="">옵션 ${i + 1}</option>
           ${SUB_OPTS.map(o => {
-            const used   = subRows.some((r, ri) => ri !== i && r.key === o.key)
-            const isMain = mainKey && o.key === mainKey
-            return `<option value="${o.key}" ${row.key === o.key ? 'selected' : ''} ${(used || isMain) ? 'disabled' : ''}>${o.name}</option>`
+            const usedByOtherRow = subRows.some((r, ri) => ri !== i && r.key === o.key)
+            const isMainStat  = selectedMain && o.key === selectedMain
+            const isSlotBlock = excludeSub.includes(o.key)
+            const disabled = usedByOtherRow || isMainStat || isSlotBlock
+            return `<option value="${o.key}" ${row.key === o.key ? 'selected' : ''} ${disabled ? 'disabled' : ''}>${o.name}</option>`
           }).join('')}
         </select>
         <input class="ea-slider" id="sub-slider-${i}" type="range"
@@ -519,11 +606,7 @@ function renderSubRows() {
 
 function onSubOptChange(i, key) {
   const opt = SUB_OPTS.find(o => o.key === key)
-  if (key && opt) {
-    subRows[i] = { key, value: opt.min }
-  } else {
-    subRows[i] = { key: '', value: 0 }
-  }
+  subRows[i] = key && opt ? { key, value: opt.min } : { key: '', value: 0 }
   renderSubRows()
   markStale()
 }
@@ -547,7 +630,7 @@ function onNumChange(i, val) {
   markStale()
 }
 
-// ─── 점수 계산 ────────────────────────────────────
+// ─── 점수 계산 (DOM 직접 읽기) ────────────────────
 function calcScore() {
   let raw = 0
   for (let i = 0; i < 4; i++) {
@@ -560,7 +643,7 @@ function calcScore() {
     let v = parseFloat(num?.value)
     if (isNaN(v)) continue
     v = Math.max(opt.min, Math.min(opt.max, v))
-    subRows[i] = { key, value: v }  // 상태 동기화
+    subRows[i] = { key, value: v }
     raw += v * opt.mult
   }
   raw += (BASIC_POINT[currentStage] ?? 0)
@@ -569,12 +652,10 @@ function calcScore() {
   const diff   = Math.round((score - target) * 100) / 100
   const isGo   = score >= target
 
-  const stageLabel = `+${currentStage}`
+  const stageLabel  = `+${currentStage}`
   const verdictText = isGo
     ? `목표 점수보다 ${diff}점 높습니다 · 강화를 계속 진행하세요`
     : `목표 점수보다 ${Math.abs(diff)}점 낮습니다 · 더 강화할지 신중히 선택하세요`
-
-  const gearSearchUrl = buildGearUrl()
 
   document.getElementById('result-area').style.display = 'block'
   document.getElementById('result-area').innerHTML = `
@@ -588,19 +669,16 @@ function calcScore() {
       <p class="ea-result-msg">${verdictText}</p>
       <div class="ea-result-actions">
         <button class="ea-reset-btn" onclick="resetInputs()">초기화</button>
-        <a class="ea-link-btn" href="${gearSearchUrl}" target="_blank">이 장비 주인 찾기 ↗</a>
+        <a class="ea-link-btn" href="${buildGearUrl()}" target="_blank">이 장비 주인 찾기 ↗</a>
       </div>
     </div>`
 }
 
 function buildGearUrl() {
-  const slot = document.getElementById('sel-slot').value
-  const set  = document.getElementById('sel-set').value
-  const main = document.getElementById('sel-main').value
   const params = new URLSearchParams()
-  if (slot) params.set('slot', slot)
-  if (set)  params.set('set',  set)
-  if (main) params.set('main', main)
+  if (selectedSlot) params.set('slot', selectedSlot)
+  if (selectedSet)  params.set('set',  selectedSet)
+  if (selectedMain) params.set('main', selectedMain)
   subRows.forEach((r, i) => {
     if (r.key) params.set('sub' + (i + 1), `${r.key}:${r.value}`)
   })
@@ -613,11 +691,13 @@ function markStale() {
 }
 
 function resetInputs() {
-  document.getElementById('sel-slot').value = ''
-  document.getElementById('sel-set').value  = ''
-  document.getElementById('sel-main').value = ''
-  document.getElementById('gear-thumb').innerHTML = '<span class="ea-thumb-placeholder">⚔️</span>'
+  selectedSlot = ''
+  selectedSet  = ''
+  selectedMain = ''
   subRows = [{ key:'', value:0 }, { key:'', value:0 }, { key:'', value:0 }, { key:'', value:0 }]
+  renderSlotBtns()
+  renderSetBtns()
+  renderMainStatBtns()
   renderSubRows()
   document.getElementById('result-area').style.display = 'none'
 }
