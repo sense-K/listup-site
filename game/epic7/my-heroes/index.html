@@ -212,6 +212,7 @@
     let selectedCodes = new Set();
     let filterElements = new Set();
     let filterClasses = new Set();
+    let filterStars = new Set();
     let searchQuery = '';
     let currentUser = null;
 
@@ -232,6 +233,7 @@
 
     function getFiltered() {
       return allHeroes.filter(h => {
+        if (filterStars.size > 0 && !filterStars.has(h.stars)) return false;
         if (filterElements.size > 0 && !filterElements.has(h.element)) return false;
         if (filterClasses.size > 0 && !filterClasses.has(h.heroClass)) return false;
         if (searchQuery && !h.name.includes(searchQuery)) return false;
@@ -260,7 +262,7 @@
       const rightHeroes = filtered.filter(h =>  selectedCodes.has(h.code));
       const ELEMENTS = Object.keys(ELEMENT_IMG);
       const CLASSES  = Object.keys(CLASS_IMG);
-      const isAll = filterElements.size === 0 && filterClasses.size === 0;
+      const isAll = filterStars.size === 0 && filterElements.size === 0 && filterClasses.size === 0;
 
       document.getElementById('mh-app').innerHTML = `
         <div class="mh-topbar">
@@ -275,6 +277,11 @@
         <div class="mh-filter">
           <div class="mh-filter-row">
             <button class="mh-filter-all ${isAll?'active':''}" onclick="clearFilters()">전체</button>
+            <div class="mh-filter-divider"></div>
+            ${[5,4,3].map(s => {
+              const active = filterStars.has(s);
+              return `<button class="mh-filter-all ${active?'active':''}" onclick="toggleStar(${s})" style="${active?'':'color:#94a3b8;'}">${s}★</button>`;
+            }).join('')}
             <div class="mh-filter-divider"></div>
             ${ELEMENTS.map(el => {
               const active = filterElements.has(el);
@@ -342,7 +349,8 @@
       }
     }
 
-    function clearFilters() { filterElements.clear(); filterClasses.clear(); render(); }
+    function clearFilters() { filterStars.clear(); filterElements.clear(); filterClasses.clear(); render(); }
+    function toggleStar(s)  { filterStars.has(s) ? filterStars.delete(s) : filterStars.add(s); render(); }
     function toggleEl(el)   { filterElements.has(el) ? filterElements.delete(el) : filterElements.add(el); render(); }
     function toggleCls(cls) { filterClasses.has(cls) ? filterClasses.delete(cls) : filterClasses.add(cls); render(); }
     function onSearch() {
@@ -372,6 +380,7 @@
           code: h.code, name: h.name,
           element: ATTR_MAP[h.attribute_cd] || 'fire',
           heroClass: JOB_MAP[h.job_cd] || 'warrior',
+          stars: parseInt(h.grade) || 5,
         }))
         .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 
