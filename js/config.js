@@ -241,6 +241,48 @@ const SLUG_TO_GAME_PATH = {
   'limbus':         '/game/limbus/',
 }
 const GUIDE_SLUGS = ['genshin', 'starrail', 'zzz', 'nikke', 'wuwa', 'leehwan', 'epicseven', 'bluearchive']
+
+// 메인 페이지 게임별 공략 데이터 (공략 많은 순)
+const GAME_GUIDES = [
+  { slug: 'epicseven', guides: [
+    { name: 'RTA 드래프트',   url: '/game/epic7/rta/',             icon: 'swords'          },
+    { name: '영웅 도감',      url: '/game/epic7/heroes/',          icon: 'book-open'       },
+    { name: '아티팩트 도감',  url: '/game/epic7/artifacts/',       icon: 'gem'             },
+    { name: '장비 주인 찾기', url: '/game/epic7/gear-recommend/', icon: 'settings'        },
+    { name: '강화 어시스트',  url: '/game/epic7/enhance-assist/', icon: 'zap', isNew: true },
+  ]},
+  { slug: 'genshin',      guides: [
+    { name: 'UID 캐릭터 조회', url: '/game/genshin/uid/',          icon: 'search'    },
+    { name: '캐릭터 도감',     url: '/game/genshin/characters/',   icon: 'book-open' },
+  ]},
+  { slug: 'starrail',     guides: [
+    { name: 'UID 캐릭터 조회', url: '/game/starrail/uid/',         icon: 'search'    },
+    { name: '캐릭터 도감',     url: '/game/starrail/characters/',  icon: 'book-open' },
+  ]},
+  { slug: 'zzz',          guides: [
+    { name: 'UID 에이전트 조회', url: '/game/zzz/uid/',            icon: 'search'    },
+    { name: '캐릭터 도감',       url: '/game/zzz/characters/',     icon: 'book-open' },
+  ]},
+  { slug: 'nikke',        guides: [{ name: '캐릭터 도감', url: '/game/nikke/characters/',      icon: 'book-open'       }]},
+  { slug: 'wuwa',         guides: [{ name: '캐릭터 도감', url: '/game/wuwa/characters/',       icon: 'book-open'       }]},
+  { slug: 'leehwan',      guides: [{ name: '캐릭터 도감', url: '/game/leehwan/characters/',    icon: 'book-open'       }]},
+  { slug: 'bluearchive',  guides: [{ name: '학생 도감',   url: '/game/bluearchive/students/', icon: 'graduation-cap'  }]},
+]
+
+const _ICON_SVG = {
+  'swords':         `<polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="2" y1="22" x2="7" y2="7"/>`,
+  'book-open':      `<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>`,
+  'gem':            `<polygon points="6 3 18 3 22 9 12 22 2 9"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="12" y1="3" x2="6" y2="9"/><line x1="12" y1="3" x2="18" y2="9"/>`,
+  'settings':       `<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
+  'zap':            `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
+  'search':         `<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>`,
+  'graduation-cap': `<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>`,
+}
+function guideIconSvg(name) {
+  const inner = _ICON_SVG[name] || _ICON_SVG['book-open']
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`
+}
+
 function gameSlugToPath(slug) {
   return SLUG_TO_PATH[slug] ?? `/trade/${slug}/`
 }
@@ -354,23 +396,35 @@ async function loadAndRenderGameUI(activeSlug) {
     `
   }
 
-  // 게임 선택 카드
-  const gameCardsEl = document.getElementById('game-cards-section')
-  if (gameCardsEl) {
-    const tradeMode = gameCardsEl.dataset.trade === 'true'
-    gameCardsEl.innerHTML = games.map(g => `
-      <a href="${tradeMode ? gameSlugToPath(g.slug) : gameHubPath(g.slug)}" class="game-select-card">
-        ${g.artImageUrl
-          ? `<img class="game-select-card-bg" src="${g.artImageUrl}" alt="${g.nameKo}">`
-          : `<div class="game-select-card-bg" style="background:linear-gradient(135deg,#1a1a2e,#2d2d4e);"></div>`
-        }
-        <div class="game-select-card-overlay"></div>
-        <div class="game-select-card-info">
-          ${g.imageUrl ? `<img class="game-select-card-icon" src="${g.imageUrl}" alt="${g.nameKo}">` : `<span style="font-size:28px;">${g.emoji}</span>`}
-          <span class="game-select-card-name">${g.nameKo}</span>
-        </div>
-      </a>
-    `).join('')
+  // 게임 공략 카드 (메인 페이지)
+  const guideGameEl = document.getElementById('guide-game-section')
+  if (guideGameEl) {
+    const gmap = Object.fromEntries(games.map(g => [g.slug, g]))
+    guideGameEl.innerHTML = GAME_GUIDES.map(gd => {
+      const g = gmap[gd.slug]
+      if (!g) return ''
+      const iconHtml = g.imageUrl
+        ? `<img class="guide-card-img" src="${g.imageUrl}" alt="${g.nameKo}">`
+        : `<span class="guide-card-emoji">${g.emoji || '🎮'}</span>`
+      const miniCards = gd.guides.map(gde => `
+        <a href="${gde.url}" class="guide-mini-card">
+          ${gde.isNew ? `<span class="guide-mini-new">NEW</span>` : ''}
+          <span class="guide-mini-icon">${guideIconSvg(gde.icon)}</span>
+          <span class="guide-mini-label">${gde.name}</span>
+        </a>`).join('')
+      return `
+        <article class="guide-game-card">
+          <a href="${gameHubPath(gd.slug)}" class="guide-card-header">
+            ${iconHtml}
+            <div class="guide-card-info">
+              <div class="guide-card-name">${g.nameKo}</div>
+              <div class="guide-card-count">${gd.guides.length}개 공략</div>
+            </div>
+            <svg class="guide-card-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+          <div class="guide-mini-grid">${miniCards}</div>
+        </article>`
+    }).filter(Boolean).join('')
   }
 }
 
