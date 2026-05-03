@@ -74,6 +74,7 @@
     .gr-stat-btn.ea-excluded:hover { border-color: var(--border, #e5e7eb); color: #64748b; }
     .gr-stat-btn.ea-maxed { opacity: 0.3; cursor: not-allowed; }
     .gr-stat-btn.ea-maxed:hover { border-color: var(--border, #e5e7eb); color: #64748b; }
+    .ea-main-disabled-msg { font-size: 12px; color: #94a3b8; padding: 6px 0; font-style: italic; }
 
     /* 세트 칩 */
     .gr-set-grid { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -381,12 +382,12 @@ const MAIN_OPTS = [
 ]
 
 const SLOT_RULES = {
-  weapon: { excludeMain: ['def'], excludeSub: ['def']  },
-  helmet: { excludeMain: [],      excludeSub: []        },
-  armor:  { excludeMain: ['att'], excludeSub: ['att']   },
-  neck:   { excludeMain: [],      excludeSub: []        },
-  ring:   { excludeMain: [],      excludeSub: []        },
-  boots:  { excludeMain: [],      excludeSub: []        },
+  weapon: { mainDisabled: true,  excludeMain: [], excludeSub: ['def'] },
+  helmet: { mainDisabled: true,  excludeMain: [], excludeSub: []      },
+  armor:  { mainDisabled: true,  excludeMain: [], excludeSub: ['att'] },
+  neck:   { mainDisabled: false, excludeMain: [], excludeSub: []      },
+  ring:   { mainDisabled: false, excludeMain: [], excludeSub: []      },
+  boots:  { mainDisabled: false, excludeMain: [], excludeSub: []      },
 }
 
 const BASIC_POINT = { 0:5, 3:9, 6:13, 9:17, 12:21, 15:25 }
@@ -460,7 +461,8 @@ function selectSlot(key) {
   selectedSlot = selectedSlot === key ? '' : key
   if (selectedSlot) {
     const rules = SLOT_RULES[selectedSlot]
-    if (rules.excludeMain.includes(selectedMain)) selectedMain = ''
+    if (rules.mainDisabled) selectedMain = ''
+    else if (rules.excludeMain.includes(selectedMain)) selectedMain = ''
     // 부위 룰로 차단되는 부옵션 자동 해제
     selectedSubs = selectedSubs.filter(s => !rules.excludeSub.includes(s.key))
   }
@@ -489,7 +491,13 @@ function selectSet(key) {
 
 // ─── 렌더: 주옵션 ─────────────────────────────────
 function renderMainStatBtns() {
-  const excludeMain = selectedSlot ? (SLOT_RULES[selectedSlot]?.excludeMain ?? []) : []
+  const rules = selectedSlot ? SLOT_RULES[selectedSlot] : null
+  if (rules?.mainDisabled) {
+    document.getElementById('main-stat-btns').innerHTML =
+      '<p class="ea-main-disabled-msg">이 부위는 주옵션이 고정되어 있어요</p>'
+    return
+  }
+  const excludeMain = rules?.excludeMain ?? []
   document.getElementById('main-stat-btns').innerHTML = MAIN_OPTS.map(o => {
     const isExcluded = excludeMain.includes(o.key)
     const isActive   = selectedMain === o.key
@@ -501,6 +509,7 @@ function renderMainStatBtns() {
 }
 
 function selectMainStat(key) {
+  if (selectedSlot && SLOT_RULES[selectedSlot]?.mainDisabled) return
   const excludeMain = selectedSlot ? (SLOT_RULES[selectedSlot]?.excludeMain ?? []) : []
   if (excludeMain.includes(key)) return
   selectedMain = selectedMain === key ? '' : key
