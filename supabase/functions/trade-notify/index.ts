@@ -64,6 +64,51 @@ serve(async (req) => {
       return new Response(JSON.stringify(resendData), { status: 200 })
     }
 
+    // 캐릭터 추가 요청 이메일 알림
+    if (body.action === 'char-request') {
+      const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '')
+      const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
+
+      const { data: { user: caller } } = await supabase.auth.getUser(token)
+      console.log('[char-request] caller:', caller?.id ?? 'null')
+      if (!caller) return new Response('unauthorized', { status: 401 })
+
+      const { data: charReq } = await supabase
+        .from('CharacterRequest')
+        .select('id, userId, characterName, createdAt, game:Game(nameKo), user:User(nickname)')
+        .eq('id', body.requestId)
+        .single()
+
+      console.log('[char-request] row:', charReq?.id ?? 'null', 'userId match:', charReq?.userId === caller.id)
+      if (!charReq) return new Response('not_found', { status: 404 })
+      if (charReq.userId !== caller.id) return new Response('forbidden', { status: 403 })
+
+      const { data: { user: requester } } = await supabase.auth.admin.getUserById(charReq.userId)
+      const requesterEmail = requester?.email ?? '(이메일 없음)'
+      const nickname = charReq.user?.nickname ?? '(닉네임 없음)'
+      const gameName = charReq.game?.nameKo ?? '알 수 없음'
+      const createdKST = new Date(charReq.createdAt).toLocaleString('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+      })
+
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: FROM,
+          to: ['zzabhm@gmail.com'],
+          subject: `[플레이센스] 캐릭터 추가 요청 - ${gameName} ${charReq.characterName}`,
+          html: makeCharRequestEmail(gameName, charReq.characterName, nickname, requesterEmail, createdKST, body.requestId),
+        }),
+      })
+      const resendData = await resendRes.json()
+      console.log('[char-request] Resend:', resendRes.status, JSON.stringify(resendData))
+      if (!resendRes.ok) return new Response(JSON.stringify(resendData), { status: 502 })
+      return new Response(JSON.stringify(resendData), { status: 200 })
+    }
+
     const { type, record, old_record } = body
     if (!record) return ok()
 
@@ -173,6 +218,47 @@ function makeEmail(title: string, content: string, btnText: string, btnUrl: stri
        style="display:inline-block;padding:13px 28px;background:#111;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">
       ${btnText}
     </a>
+    <div style="margin-top:32px;padding-top:20px;border-top:1px solid #f0f0f0;font-size:12px;color:#bbb;">
+      리세리스트 · resetlist.kr<br>이 메일은 자동 발송된 알림이에요.
+    </div>
+  </div>
+</body>
+</html>`
+}
+
+function makeCharRequestEmail(
+  gameName: string, characterName: string,
+  nickname: string, email: string,
+  createdKST: string, requestId: string
+) {
+  return `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,sans-serif;background:#f8f8f8;padding:40px 20px;margin:0;">
+  <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #eee;">
+    <div style="font-size:22px;font-weight:900;margin-bottom:24px;">리세리스트</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:16px;">🎮 캐릭터 추가 요청이 들어왔어요</div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;line-height:2;">
+      <tr>
+        <td style="color:#888;width:80px;vertical-align:top;">게임</td>
+        <td style="font-weight:600;">${gameName}</td>
+      </tr>
+      <tr>
+        <td style="color:#888;vertical-align:top;">캐릭터</td>
+        <td style="font-weight:800;font-size:16px;color:#111;">${characterName}</td>
+      </tr>
+      <tr>
+        <td style="color:#888;vertical-align:top;">요청자</td>
+        <td>${nickname} (${email})</td>
+      </tr>
+      <tr>
+        <td style="color:#888;vertical-align:top;">요청 시각</td>
+        <td>${createdKST} KST</td>
+      </tr>
+    </table>
+    <div style="margin-top:24px;background:#f5f5f5;border-radius:10px;padding:16px;">
+      <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">✅ 처리 완료 시 SQL</div>
+      <code style="display:block;background:#111;color:#a3e635;padding:12px;border-radius:8px;font-size:12px;word-break:break-all;">UPDATE "CharacterRequest" SET status='done' WHERE id='${requestId}';</code>
+    </div>
     <div style="margin-top:32px;padding-top:20px;border-top:1px solid #f0f0f0;font-size:12px;color:#bbb;">
       리세리스트 · resetlist.kr<br>이 메일은 자동 발송된 알림이에요.
     </div>
