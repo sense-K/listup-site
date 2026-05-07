@@ -277,6 +277,74 @@
       border-radius: 6px;
       object-fit: cover;
     }
+
+    /* 캐릭터 추가 요청 버튼 */
+    .char-req-btn {
+      width: 100%;
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      background: none;
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      text-align: center;
+    }
+    .char-req-btn:hover { border-color: #6c47ff; color: #6c47ff; }
+
+    /* 캐릭터 요청 모달 */
+    .creq-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .creq-overlay.open { display: flex; }
+    .creq-modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px 20px 20px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    }
+    .creq-title { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+    .creq-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.6; }
+    .creq-label { font-size: 13px; font-weight: 700; margin-bottom: 6px; display: block; }
+    .creq-select, .creq-input {
+      width: 100%; box-sizing: border-box;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px; font-family: inherit;
+      margin-bottom: 14px; outline: none;
+    }
+    .creq-select:focus, .creq-input:focus { border-color: #111; }
+    .creq-btns { display: flex; gap: 8px; margin-top: 4px; }
+
+    /* 토스트 */
+    .creq-toast {
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #111; color: #fff;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 2000;
+    }
+    .creq-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
@@ -337,6 +405,8 @@
     <input type="text" id="char-search" placeholder="캐릭터 이름 검색..." oninput="filterCharsByName(this.value)"
       style="width:100%;box-sizing:border-box;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:10px;outline:none;"
       onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='var(--border)'">
+
+    <button class="char-req-btn" onclick="openCharRequestModal()">찾는 캐릭터가 없나요? 캐릭터 추가 요청하기</button>
 
     <div class="char-grade-list" id="char-grade-list">
       <div class="loading">불러오는 중...</div>
@@ -1012,8 +1082,88 @@
     }
   }
 
+  // ===== 캐릭터 추가 요청 =====
+
+  function showRegisterToast(msg) {
+    const toast = document.getElementById('creq-toast')
+    toast.textContent = msg
+    toast.classList.add('show')
+    setTimeout(() => toast.classList.remove('show'), 2400)
+  }
+
+  async function openCharRequestModal() {
+    const { data: { session } } = await db.auth.getSession()
+    if (!session) {
+      window.location.href = '/auth/?next=' + encodeURIComponent(location.pathname + location.search)
+      return
+    }
+
+    const sel = document.getElementById('creq-game-select')
+    sel.innerHTML = Object.values(gameStore).map(g =>
+      `<option value="${g.id}">${g.nameKo}</option>`
+    ).join('')
+    if (selectedGameId) sel.value = selectedGameId
+
+    document.getElementById('creq-char-name').value = ''
+    document.getElementById('creq-overlay').classList.add('open')
+    setTimeout(() => document.getElementById('creq-char-name').focus(), 50)
+  }
+
+  function closeCharRequestModal() {
+    document.getElementById('creq-overlay').classList.remove('open')
+  }
+
+  async function submitCharRequest() {
+    const gameId = document.getElementById('creq-game-select').value
+    const characterName = document.getElementById('creq-char-name').value.trim()
+    if (!characterName) { showRegisterToast('캐릭터 이름을 입력해주세요'); return }
+
+    const btn = document.getElementById('creq-submit-btn')
+    btn.disabled = true; btn.textContent = '전송 중...'
+
+    try {
+      const { data: { session } } = await db.auth.getSession()
+      if (!session) {
+        window.location.href = '/auth/?next=' + encodeURIComponent(location.pathname + location.search)
+        return
+      }
+      const { error } = await db.from('CharacterRequest').insert({
+        userId: session.user.id,
+        gameId,
+        characterName,
+      })
+      if (error) throw error
+      closeCharRequestModal()
+      showRegisterToast('요청이 접수되었어요! 빠르게 검토할게요')
+    } catch (e) {
+      console.error(e)
+      showRegisterToast('오류가 발생했어요. 잠시 후 다시 시도해주세요')
+    } finally {
+      btn.disabled = false; btn.textContent = '요청 보내기'
+    }
+  }
+
   init()
 </script>
+
+<!-- 캐릭터 추가 요청 모달 -->
+<div class="creq-overlay" id="creq-overlay" onclick="if(event.target===this)closeCharRequestModal()">
+  <div class="creq-modal">
+    <div class="creq-title">캐릭터 추가 요청</div>
+    <div class="creq-desc">업데이트가 늦어 캐릭터가 없을 수 있어요. 요청해주시면 빠르게 추가할게요.</div>
+    <label class="creq-label">게임</label>
+    <select class="creq-select" id="creq-game-select"></select>
+    <label class="creq-label">캐릭터 이름</label>
+    <input class="creq-input" id="creq-char-name" type="text" placeholder="예: 호두" maxlength="30"
+      onkeydown="if(event.key==='Enter')submitCharRequest()">
+    <div class="creq-btns">
+      <button class="btn btn-outline" style="flex:1;" onclick="closeCharRequestModal()">취소</button>
+      <button class="btn btn-primary" style="flex:2;" id="creq-submit-btn" onclick="submitCharRequest()">요청 보내기</button>
+    </div>
+  </div>
+</div>
+<div class="creq-toast" id="creq-toast"></div>
+
 <div id="footer"></div>
 </body>
 </html>
