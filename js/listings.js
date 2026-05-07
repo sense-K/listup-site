@@ -67,6 +67,7 @@ function renderListingCard(listing) {
         ${hotBadge}
         ${tradingOverlay}
         ${soldOverlay}
+        ${gameName ? `<span class="card-art-game-name">${gameName}</span>` : ''}
       </div>
       <div class="card-body">
         ${currencies.length > 0 ? `

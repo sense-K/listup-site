@@ -792,6 +792,30 @@ a { text-decoration: none; color: inherit; }
   text-overflow: ellipsis;
 }
 
+.card-art-game-name {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0 6px;
+  z-index: 3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow:
+    0 0 3px #000,
+    0 0 6px #000,
+    1px 1px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000;
+}
+
 .card-art.genshin        { background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%); }
 .card-art.bluearchive    { background: linear-gradient(160deg, #1a0a2e 0%, #2d1b69 100%); }
 .card-art.nikke          { background: linear-gradient(160deg, #0a1a2e 0%, #0c2a4a 100%); }
