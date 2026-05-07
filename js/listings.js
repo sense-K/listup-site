@@ -80,6 +80,7 @@ function renderListingCard(listing) {
           }).join('')}
         </div>` : ''}
         <div class="card-chars">${charBadges}${extraBadge}</div>
+        ${listing.description ? `<p class="card-desc">${listing.description.replace(/\r?\n/g, ' ').trim()}</p>` : ''}
         <div class="card-footer">
           <div>
             <span class="card-price">${formatPrice(listing.price)}</span>
