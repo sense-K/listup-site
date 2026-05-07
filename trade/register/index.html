@@ -1127,14 +1127,30 @@
         window.location.href = '/auth/?next=' + encodeURIComponent(location.pathname + location.search)
         return
       }
-      const { error } = await db.from('CharacterRequest').insert({
+      const { data: inserted, error } = await db.from('CharacterRequest').insert({
         userId: session.user.id,
         gameId,
         characterName,
-      })
+      }).select('id').single()
       if (error) throw error
+
       closeCharRequestModal()
       showRegisterToast('요청이 접수되었어요! 빠르게 검토할게요')
+
+      // 이메일 알림 (실패해도 UX 영향 없음)
+      if (inserted?.id) {
+        fetch('/api/char-request-notify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ requestId: inserted.id }),
+        }).catch(e => console.error('[char-request-notify] fetch error:', e))
+          .then(res => res?.json())
+          .then(res => { if (res && !res.ok) console.error('[char-request-notify] failed:', res.error) })
+          .catch(() => {})
+      }
     } catch (e) {
       console.error(e)
       showRegisterToast('오류가 발생했어요. 잠시 후 다시 시도해주세요')
