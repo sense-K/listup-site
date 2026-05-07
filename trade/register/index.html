@@ -1122,13 +1122,13 @@
     btn.disabled = true; btn.textContent = '전송 중...'
 
     try {
+      // requireAuth: User 행 없으면 자동 생성 (구글 OAuth 신규 가입자 대응)
+      const authUser = await requireAuth()
+      if (!authUser) return
+
       const { data: { session } } = await db.auth.getSession()
-      if (!session) {
-        window.location.href = '/auth/?next=' + encodeURIComponent(location.pathname + location.search)
-        return
-      }
       const { data: inserted, error } = await db.from('CharacterRequest').insert({
-        userId: session.user.id,
+        userId: authUser.id,
         gameId,
         characterName,
       }).select('id').single()
@@ -1138,7 +1138,7 @@
       showRegisterToast('요청이 접수되었어요! 빠르게 검토할게요')
 
       // 이메일 알림 (실패해도 UX 영향 없음)
-      if (inserted?.id) {
+      if (inserted?.id && session?.access_token) {
         fetch('/api/char-request-notify', {
           method: 'POST',
           headers: {
