@@ -5,7 +5,7 @@ const RESEND_KEY = Deno.env.get('RESEND_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const SITE_URL = 'https://resetlist.kr'
-const FROM = '리세리스트 <onboarding@resend.dev>'
+const FROM = '플레이센스 <onboarding@resend.dev>'
 
 serve(async (req) => {
   try {
@@ -49,7 +49,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from: FROM,
           to: [buyer.email],
-          subject: '[리세리스트] 판매자가 연락을 기다리고 있어요',
+          subject: '[플레이센스] 판매자가 연락을 기다리고 있어요',
           html: makeEmail(
             '판매자가 연락을 기다리고 있어요',
             `<strong>${gameName}</strong> 계정 거래 관련하여 판매자가 연락을 기다리고 있어요.<br><br>빠르게 판매자에게 연락해주세요.`,
@@ -132,7 +132,7 @@ serve(async (req) => {
     if (type === 'INSERT' && record.status === 'active') {
       // 구매 신청 → 판매자 알림
       toUserId = record.sellerId
-      subject = '[리세리스트] 새 구매 신청이 들어왔어요'
+      subject = '[플레이센스] 새 구매 신청이 들어왔어요'
       bodyHtml = makeEmail(
         '새 구매 신청이 들어왔어요!',
         `<strong>${gameName}</strong> 판매계정에 구매 신청이 왔어요.<br>가격: <strong>${price}</strong><br><br>빠르게 확인하고 구매자와 연락해보세요.`,
@@ -146,7 +146,7 @@ serve(async (req) => {
       if (oldStatus === 'active' && newStatus === 'seller_confirmed') {
         // 전달완료 → 구매자 알림
         toUserId = record.buyerId
-        subject = '[리세리스트] 판매자가 계정을 전달했어요'
+        subject = '[플레이센스] 판매자가 계정을 전달했어요'
         bodyHtml = makeEmail(
           '판매자가 계정을 전달했어요',
           `<strong>${gameName}</strong> 계정을 판매자가 전달했어요.<br><br>계정을 확인하고 수령 확인을 해주세요.`,
@@ -156,7 +156,7 @@ serve(async (req) => {
       } else if (oldStatus === 'seller_confirmed' && newStatus === 'completed') {
         // 수령확인 완료 → 판매자 알림
         toUserId = record.sellerId
-        subject = '[리세리스트] 거래가 완료됐어요 🎉'
+        subject = '[플레이센스] 거래가 완료됐어요 🎉'
         bodyHtml = makeEmail(
           '거래가 완료됐어요!',
           `<strong>${gameName}</strong> 계정 거래가 완료됐어요.<br>구매자가 수령을 확인했습니다.`,
@@ -166,7 +166,7 @@ serve(async (req) => {
       } else if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
         // 거래 취소 → 판매자 알림
         toUserId = record.sellerId
-        subject = '[리세리스트] 거래가 취소됐어요'
+        subject = '[플레이센스] 거래가 취소됐어요'
         bodyHtml = makeEmail(
           '거래가 취소됐어요',
           `<strong>${gameName}</strong> 계정의 거래가 취소됐어요.<br>판매글은 다시 판매 중 상태로 돌아가요.`,
@@ -211,7 +211,7 @@ function makeEmail(title: string, content: string, btnText: string, btnUrl: stri
 <html>
 <body style="font-family:-apple-system,sans-serif;background:#f8f8f8;padding:40px 20px;margin:0;">
   <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #eee;">
-    <div style="font-size:22px;font-weight:900;margin-bottom:24px;">리세리스트</div>
+    <div style="font-size:22px;font-weight:900;margin-bottom:24px;">플레이센스</div>
     <div style="font-size:18px;font-weight:800;margin-bottom:12px;">${title}</div>
     <div style="font-size:15px;color:#444;line-height:1.7;margin-bottom:24px;">${content}</div>
     <a href="${btnUrl}"
@@ -219,7 +219,7 @@ function makeEmail(title: string, content: string, btnText: string, btnUrl: stri
       ${btnText}
     </a>
     <div style="margin-top:32px;padding-top:20px;border-top:1px solid #f0f0f0;font-size:12px;color:#bbb;">
-      리세리스트 · resetlist.kr<br>이 메일은 자동 발송된 알림이에요.
+      플레이센스 · resetlist.kr<br>이 메일은 자동 발송된 알림이에요.
     </div>
   </div>
 </body>
@@ -235,7 +235,7 @@ function makeCharRequestEmail(
 <html>
 <body style="font-family:-apple-system,sans-serif;background:#f8f8f8;padding:40px 20px;margin:0;">
   <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #eee;">
-    <div style="font-size:22px;font-weight:900;margin-bottom:24px;">리세리스트</div>
+    <div style="font-size:22px;font-weight:900;margin-bottom:24px;">플레이센스</div>
     <div style="font-size:18px;font-weight:800;margin-bottom:16px;">🎮 캐릭터 추가 요청이 들어왔어요</div>
     <table style="width:100%;border-collapse:collapse;font-size:14px;line-height:2;">
       <tr>
@@ -260,7 +260,7 @@ function makeCharRequestEmail(
       <code style="display:block;background:#111;color:#a3e635;padding:12px;border-radius:8px;font-size:12px;word-break:break-all;">UPDATE "CharacterRequest" SET status='done' WHERE id='${requestId}';</code>
     </div>
     <div style="margin-top:32px;padding-top:20px;border-top:1px solid #f0f0f0;font-size:12px;color:#bbb;">
-      리세리스트 · resetlist.kr<br>이 메일은 자동 발송된 알림이에요.
+      플레이센스 · resetlist.kr<br>이 메일은 자동 발송된 알림이에요.
     </div>
   </div>
 </body>
