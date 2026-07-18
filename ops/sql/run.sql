@@ -1,4 +1,4 @@
--- 니케 이미지 복구 최종 적용: 정확+베이스폴백 매칭 UPDATE + 치자 복사.
+-- 니케 이미지 복구 최종(치자 조인 수정). 매칭 UPDATE는 idempotent 재실행.
 CREATE TEMP TABLE l2d(nname text, code text);
 INSERT INTO l2d(nname,code) VALUES
 ('rapi','c010'),
@@ -270,28 +270,26 @@ INSERT INTO l2d(nname,code) VALUES
 ('story2206','story2206');
 
 CREATE TEMP TABLE matched AS
-SELECT c.id AS cid,
-  COALESCE(le.code, lb.code) AS code
+SELECT c.id AS cid, COALESCE(le.code, lb.code) AS code
 FROM "Character" c JOIN "Game" g ON g.id=c."gameId"
 LEFT JOIN l2d le ON le.nname = regexp_replace(lower(c."nameEn"),'[[:space:]_:.,-]+','','g')
 LEFT JOIN l2d lb ON lb.nname = regexp_replace(lower(split_part(c."nameEn",':',1)),'[[:space:]_:.,-]+','','g')
 WHERE g.slug='nikke' AND c.slug NOT LIKE '%-treasure%';
 
--- 1) 매칭된 캐릭터 imageUrl + cardImageUrl 교체
 UPDATE "Character" c SET
   "imageUrl" = 'https://raw.githubusercontent.com/Nikke-db/Nikke-db.github.io/main/images/sprite/si_' || m.code || '_00_s.png',
   metadata = COALESCE(c.metadata,'{}'::jsonb) || jsonb_build_object('cardImageUrl','https://raw.githubusercontent.com/Nikke-db/Nikke-db.github.io/main/images/sprite/si_' || m.code || '_00_s.png'),
   "updatedAt" = now()
 FROM matched m WHERE c.id = m.cid AND m.code IS NOT NULL;
 
--- 2) 치자(treasure): 베이스 캐릭터(같은 slug -treasure 제거)에서 새 이미지 복사
+-- 치자: 베이스 캐릭터에서 복사 (t 는 SET/WHERE 에서만 참조)
 UPDATE "Character" t SET
   "imageUrl" = b."imageUrl",
   metadata = COALESCE(t.metadata,'{}'::jsonb) || jsonb_build_object('cardImageUrl', b.metadata->>'cardImageUrl'),
   "updatedAt" = now()
 FROM "Character" b JOIN "Game" gb ON gb.id=b."gameId"
-JOIN "Game" gt ON gt.id=t."gameId"
-WHERE gt.slug='nikke' AND gb.slug='nikke'
+WHERE gb.slug='nikke'
+  AND t."gameId" = b."gameId"
   AND t.slug LIKE '%-treasure%'
   AND b.slug = regexp_replace(t.slug,'-treasure$','')
   AND b."imageUrl" LIKE '%githubusercontent%';
