@@ -1,4 +1,4 @@
--- 니케 이미지 복구: nikke-db sprite 로 imageUrl 교체 (l2d.json 매칭 임베드). 미리보기 [sql-dry].
+-- 니케 이미지 복구 v2: 정확매칭 + 베이스이름 폴백. [sql-dry].
 CREATE TEMP TABLE l2d(nname text, code text);
 INSERT INTO l2d(nname,code) VALUES
 ('rapi','c010'),
@@ -269,36 +269,37 @@ INSERT INTO l2d(nname,code) VALUES
 ('story2202','story2202'),
 ('story2206','story2206');
 
-\echo '===== 매칭 결과 미리보기 (교체 예정) ====='
-WITH m AS (
-  SELECT c.id AS cid, c."nameEn", l.code
-  FROM "Character" c JOIN "Game" g ON g.id=c."gameId"
-  JOIN l2d l ON l.nname = regexp_replace(lower(c."nameEn"), '[[:space:]_:.,-]+','','g')
-  WHERE g.slug='nikke' AND c.slug NOT LIKE '%-treasure%'
-)
-SELECT count(*) AS will_update FROM m;
-
-\echo '===== 매칭 실패(치자 제외, 여전히 이미지 없음) ====='
-SELECT c."nameEn"
+CREATE TEMP TABLE cand AS
+SELECT c.id AS cid, c."nameEn",
+  regexp_replace(lower(c."nameEn"),'[[:space:]_:.,-]+','','g') AS full_n,
+  regexp_replace(lower(split_part(c."nameEn",':',1)),'[[:space:]_:.,-]+','','g') AS base_n
 FROM "Character" c JOIN "Game" g ON g.id=c."gameId"
-LEFT JOIN l2d l ON l.nname = regexp_replace(lower(c."nameEn"), '[[:space:]_:.,-]+','','g')
-WHERE g.slug='nikke' AND c.slug NOT LIKE '%-treasure%' AND l.code IS NULL
-ORDER BY c."nameEn";
+WHERE g.slug='nikke' AND c.slug NOT LIKE '%-treasure%';
 
--- 실제 UPDATE (imageUrl + metadata.cardImageUrl 둘 다 새 sprite 로)
-WITH m AS (
-  SELECT c.id AS cid, l.code
-  FROM "Character" c JOIN "Game" g ON g.id=c."gameId"
-  JOIN l2d l ON l.nname = regexp_replace(lower(c."nameEn"), '[[:space:]_:.,-]+','','g')
-  WHERE g.slug='nikke' AND c.slug NOT LIKE '%-treasure%'
-)
+CREATE TEMP TABLE matched AS
+SELECT cand.cid, cand."nameEn", COALESCE(le.code, lb.code) AS code,
+       (le.code IS NOT NULL) AS exact
+FROM cand
+LEFT JOIN l2d le ON le.nname = cand.full_n
+LEFT JOIN l2d lb ON lb.nname = cand.base_n;
+
+\echo '===== 매칭 통계 (exact / base폴백 / 실패) ====='
+SELECT count(*) FILTER (WHERE exact) AS exact_match,
+       count(*) FILTER (WHERE NOT exact AND code IS NOT NULL) AS base_fallback,
+       count(*) FILTER (WHERE code IS NULL) AS unmatched
+FROM matched;
+
+\echo '===== 여전히 실패(수동 필요) ====='
+SELECT "nameEn" FROM matched WHERE code IS NULL ORDER BY "nameEn";
+
 UPDATE "Character" c SET
   "imageUrl" = 'https://raw.githubusercontent.com/Nikke-db/Nikke-db.github.io/main/images/sprite/si_' || m.code || '_00_s.png',
   metadata = COALESCE(c.metadata,'{}'::jsonb) || jsonb_build_object('cardImageUrl','https://raw.githubusercontent.com/Nikke-db/Nikke-db.github.io/main/images/sprite/si_' || m.code || '_00_s.png'),
   "updatedAt" = now()
-FROM m WHERE c.id = m.cid;
+FROM matched m WHERE c.id = m.cid AND m.code IS NOT NULL;
 
 \echo '===== 적용 후 요약 ====='
 SELECT count(*) FILTER (WHERE c."imageUrl" LIKE '%githubusercontent%') AS github_now,
-       count(*) FILTER (WHERE c."imageUrl" LIKE '%prydwen%') AS prydwen_left
+       count(*) FILTER (WHERE c."imageUrl" LIKE '%prydwen%') AS prydwen_left,
+       count(*) FILTER (WHERE c.slug LIKE '%-treasure%') AS treasures_untouched
 FROM "Character" c JOIN "Game" g ON g.id=c."gameId" WHERE g.slug='nikke';
