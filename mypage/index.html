@@ -5,7 +5,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="shortcut icon" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>마이페이지 | 리세 리스트</title>
+  <title>마이페이지 | 플레이센스</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .mypage-wrap {
@@ -175,6 +175,8 @@
     .my-item-btn.review { border-color: #f97316; color: #f97316; }
     .my-item-btn.review:hover { background: #f97316; color: #fff; }
     .my-item-btn.edit:hover { border-color: #111; color: #111; }
+    .my-item-btn.confirm { border-color: var(--primary); color: var(--primary); }
+    .my-item-btn.confirm:hover { background: var(--primary); color: #fff; }
 
 
     .empty-my {
@@ -221,12 +223,14 @@
   let reviewedListingIds = new Set()
   let staleSellerConfirmedIds = new Set()
   let staleTradingIds = new Set()
+  let currentUserId = null
 
   async function init() {
     try {
       const { data: { session } } = await db.auth.getSession()
       if (!session) { window.location.href = '/auth/?next=/mypage/'; return }
       const authUser = session.user
+      currentUserId = authUser.id
 
       let { data: user } = await db.from('User').select('id, nickname').eq('id', authUser.id).single()
       if (!user) {
@@ -271,7 +275,7 @@
 
       const { data: myTrades } = await db
         .from('Trade')
-        .select(`id, type, status, createdAt,
+        .select(`id, type, status, createdAt, sellerId,
           listing:Listing(id, price, status,
             game:Game(nameKo, emoji, imageUrl, artImageUrl),
             characters:ListingCharacter(character:Character(nameKo)))`)
@@ -334,6 +338,11 @@
     const stText = { active: '거래중', seller_confirmed: '수령확인 대기', completed: '거래완료', cancelled: '취소됨' }[t.status] ?? ''
     const reviewBtn = t.status === 'completed' && !reviewedListingIds.has(l.id)
       ? `<div><button class="my-item-btn review" onclick="event.stopPropagation();location.href='/review/?tradeId=${t.id}'">후기작성</button></div>` : ''
+    const confirmBtn = t.status === 'seller_confirmed'
+      ? `<div>
+          <button class="my-item-btn confirm" onclick="event.stopPropagation();mypageBuyerConfirm('${t.id}','${l.id}','${t.sellerId}')">수령 확인</button>
+          <button class="my-item-btn review" onclick="event.stopPropagation();location.href='/review/?tradeId=${t.id}'">후기작성</button>
+        </div>` : ''
     return `
       <div class="my-listing-item" onclick="location.href='/listing/?id=${l.id}'">
         ${gameImg ? `<img class="my-listing-thumb" src="${gameImg}" alt="${gameName}">` : `<div class="my-listing-thumb-placeholder">${gameEmoji}</div>`}
@@ -346,6 +355,7 @@
           <div class="my-listing-status ${stClass}">${stText}</div>
           <div class="my-listing-time">${timeAgo(t.createdAt)}</div>
           ${reviewBtn}
+          ${confirmBtn}
         </div>
       </div>`
   }
@@ -476,6 +486,32 @@
     if (!val) return
     const { error } = await db.from('User').update({ nickname: val }).eq('id', userId)
     if (!error) { document.getElementById('display-nickname').textContent = val; toggleNicknameEdit() }
+  }
+
+  async function mypageBuyerConfirm(tradeId, listingId, sellerId) {
+    if (!confirm('계정을 정상적으로 수령하셨나요?\n확인하면 거래가 완료돼요. (후기는 나중에 마이페이지에서도 작성할 수 있어요)')) return
+    try {
+      const now = new Date().toISOString()
+
+      // 동일 buyer-seller 쌍 이전 완료 거래 수 확인 (어뷰징 방지)
+      const { data: prevCompleted } = await db.from('Trade')
+        .select('id').eq('buyerId', currentUserId).eq('sellerId', sellerId).eq('status', 'completed')
+      const isFirstTime = !prevCompleted || prevCompleted.length === 0
+
+      await db.from('Trade').update({ status: 'completed', completedAt: now }).eq('id', tradeId)
+      await db.from('Listing').update({ status: 'sold' }).eq('id', listingId)
+
+      if (isFirstTime) {
+        const { data: seller } = await db.from('User').select('tradeCount').eq('id', sellerId).single()
+        await db.from('User').update({ tradeCount: (seller?.tradeCount ?? 0) + 1 }).eq('id', sellerId)
+      }
+
+      alert('거래가 완료됐어요! 감사합니다 😊')
+      init()
+    } catch (e) {
+      console.error(e)
+      alert('오류가 발생했어요: ' + e.message)
+    }
   }
 
   async function deleteListing(id) {

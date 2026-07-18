@@ -8,6 +8,8 @@
   --text-muted: #888888;
   --text-light: #aaaaaa;
   --border: #e8e8e8;
+  --primary: #6c47ff;
+  --primary-hover: #5f3ee0;
   --radius-card: 16px;
   --radius-btn: 4px;
   --shadow-card: 0 2px 12px rgba(0,0,0,0.10);
@@ -1540,6 +1542,8 @@ a { text-decoration: none; color: inherit; }
 .btn-black:hover { opacity: 0.8; }
 .btn-outline { background: transparent; border: 1.5px solid var(--black); color: var(--black); }
 .btn-outline:hover { background: var(--black); color: var(--white); }
+.btn-primary { background: var(--primary); color: var(--white); }
+.btn-primary:hover { background: var(--primary-hover); }
 .btn-full { width: 100%; }
 
 /* ===== FAB ===== */
