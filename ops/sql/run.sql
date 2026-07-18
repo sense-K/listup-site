@@ -1,53 +1,31 @@
--- 더미 정리 (미리보기: [sql-dry] 로 먼저 실행 → 롤백). 문제 없으면 [sql] 로 반영.
--- 삭제 대상: status='sold' Listing 전부(전부 더미로 확인됨) + 자식 레코드
---           + 더미 유저(d0000000-* 15명 + 2e7ce614)  [cmniojabx/6ebbc246 계정은 보존]
+-- 거래완료 RLS 수정: 구매자가 자신의 거래를 완료할 때 Listing seller_confirmed→sold 허용.
+-- + 이미 Trade=completed 인데 Listing 이 sold 아닌 것 백필.
+-- 미리보기: [sql-dry] → 문제없으면 [sql].
 
-\echo '===== Listing 참조 FK 자식 테이블 (누락 방지 확인) ====='
-SELECT tc.table_name, kcu.column_name
-FROM information_schema.table_constraints tc
-JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name AND tc.table_schema = ccu.table_schema
-WHERE tc.constraint_type = 'FOREIGN KEY' AND ccu.table_name = 'Listing' ORDER BY 1;
+\echo '===== 적용 전: Listing UPDATE 정책 목록 ====='
+SELECT policyname, cmd, roles FROM pg_policies WHERE tablename = 'Listing' AND cmd = 'UPDATE' ORDER BY policyname;
 
-\echo '===== User 참조 FK 자식 테이블 ====='
-SELECT tc.table_name, kcu.column_name
-FROM information_schema.table_constraints tc
-JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name AND tc.table_schema = ccu.table_schema
-WHERE tc.constraint_type = 'FOREIGN KEY' AND ccu.table_name = 'User' ORDER BY 1;
+-- 구매자 완료 정책 (없으면 생성, 있으면 재생성)
+DROP POLICY IF EXISTS "buyer can complete listing" ON "Listing";
+CREATE POLICY "buyer can complete listing" ON "Listing"
+  FOR UPDATE TO authenticated
+  USING (
+    status = 'seller_confirmed'
+    AND EXISTS (SELECT 1 FROM "Trade" t WHERE t."listingId" = "Listing".id AND t."buyerId" = (auth.uid())::text)
+  )
+  WITH CHECK (status = 'sold');
 
--- 삭제 대상 집합
-CREATE TEMP TABLE del_listings AS SELECT id FROM "Listing" WHERE status = 'sold';
-CREATE TEMP TABLE del_users(id text);
-INSERT INTO del_users
-  SELECT id FROM "User" WHERE id LIKE 'd0000000-%'
-  UNION SELECT '2e7ce614-615e-4df3-9cba-4c1a133ae99c';
+\echo '===== 백필 대상: Trade=completed 인데 Listing!=sold (적용 전) ====='
+SELECT count(*) AS to_backfill
+FROM "Trade" t JOIN "Listing" l ON l.id = t."listingId"
+WHERE t.status = 'completed' AND l.status <> 'sold';
 
-\echo '===== [before] 삭제 예정 건수 ====='
-SELECT (SELECT count(*) FROM del_listings) AS sold_listings_to_delete,
-       (SELECT count(*) FROM del_users) AS users_to_delete;
+UPDATE "Listing" SET status = 'sold'
+WHERE id IN (SELECT t."listingId" FROM "Trade" t WHERE t.status = 'completed')
+  AND status <> 'sold';
 
-\echo '===== 안전점검: 삭제할 유저가 실(real) 데이터에 얽혔는지 (0이어야 안전) ====='
-SELECT
- (SELECT count(*) FROM "Listing" l WHERE l."userId" IN (SELECT id FROM del_users) AND l.status <> 'sold') AS delusers_nonsold_listings,
- (SELECT count(*) FROM "Trade" t WHERE (t."buyerId" IN (SELECT id FROM del_users) OR t."sellerId" IN (SELECT id FROM del_users))
-        AND t."listingId" NOT IN (SELECT id FROM del_listings)) AS delusers_trades_on_real_listings;
-
--- 자식 → 부모 순서 삭제 (sold listing 기준)
-DELETE FROM "ListingView"      WHERE "listingId" IN (SELECT id FROM del_listings);
-DELETE FROM "Review"           WHERE "listingId" IN (SELECT id FROM del_listings);
-DELETE FROM "Trade"            WHERE "listingId" IN (SELECT id FROM del_listings);
-DELETE FROM "ListingCharacter" WHERE "listingId" IN (SELECT id FROM del_listings);
-DELETE FROM "Listing"          WHERE id IN (SELECT id FROM del_listings);
-
--- 삭제할 더미 유저에 남은 참조 정리 후 유저 삭제
-DELETE FROM "Review" WHERE "reviewerId" IN (SELECT id FROM del_users) OR "sellerId" IN (SELECT id FROM del_users);
-DELETE FROM "Trade"  WHERE "buyerId" IN (SELECT id FROM del_users) OR "sellerId" IN (SELECT id FROM del_users);
-DELETE FROM "Listing" WHERE "userId" IN (SELECT id FROM del_users);
-DELETE FROM "User"   WHERE id IN (SELECT id FROM del_users);
-
-\echo '===== [after] 남은 수치 (sold=0, del_users=0 이어야 성공) ====='
-SELECT (SELECT count(*) FROM "Listing" WHERE status = 'sold') AS remaining_sold,
-       (SELECT count(*) FROM "User" WHERE id LIKE 'd0000000-%' OR id = '2e7ce614-615e-4df3-9cba-4c1a133ae99c') AS remaining_delusers,
-       (SELECT count(*) FROM "Listing") AS remaining_listings_total,
-       (SELECT count(*) FROM "User") AS remaining_users_total;
+\echo '===== 적용 후 확인: 새 정책 존재 + 잔여 불일치(0이어야) ====='
+SELECT policyname FROM pg_policies WHERE tablename = 'Listing' AND policyname = 'buyer can complete listing';
+SELECT count(*) AS remaining_mismatch
+FROM "Trade" t JOIN "Listing" l ON l.id = t."listingId"
+WHERE t.status = 'completed' AND l.status <> 'sold';
