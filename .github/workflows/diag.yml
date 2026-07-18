@@ -53,3 +53,18 @@ jobs:
             echo "   projects_success: $(jq -r '.success' /tmp/proj.json)"
             jq -r '.result[]? | "   project=\(.name) | subdomain=\(.subdomain) | prod_branch=\(.production_branch) | domains=\(.domains|join(","))"' /tmp/proj.json
           done
+
+      - name: 배포 설정 검증 (ACCOUNT_ID secret + CF_PAGES_PROJECT variable)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+        run: |
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "CLOUDFLARE_ACCOUNT_ID secret: (미설정)"; else echo "CLOUDFLARE_ACCOUNT_ID secret: 설정됨"; fi
+          echo "CF_PAGES_PROJECT variable: ${CF_PAGES_PROJECT:-(미설정)}"
+          echo "== ACCOUNT_ID(secret) + PROJECT(variable) 조합으로 프로젝트 직접 조회 =="
+          curl -s "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$CF_PAGES_PROJECT" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" > /tmp/one.json
+          echo "success: $(jq -r '.success' /tmp/one.json)"
+          echo "errors: $(jq -c '.errors' /tmp/one.json)"
+          echo "matched_project: $(jq -r '.result.name // "none"' /tmp/one.json)"
+          echo "domains: $(jq -rc '.result.domains // []' /tmp/one.json)"
