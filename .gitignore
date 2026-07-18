@@ -1,0 +1,19 @@
+# dependencies
+/node_modules
+
+# env / secrets
+.env*
+.dev.vars
+
+# cloudflare / wrangler
+.wrangler
+_deploy
+
+# OS / editor
+.DS_Store
+*.pem
+
+# 클로드 코드: 팀 설정(agents/settings)만 공유, 스크린샷·다운로드·probe는 로컬 전용
+.claude/*
+!.claude/agents/
+!.claude/settings.json

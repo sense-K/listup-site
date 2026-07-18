@@ -1,0 +1,64 @@
+name: Deploy to Cloudflare Pages (resetlist.kr)
+
+# 정적 사이트(바닐라 HTML/CSS/JS + Pages Functions) 배포 워크플로.
+# 배포 트리거 2가지:
+#  1) 커밋 메시지에 "[deploy]" 포함해 push → 배포 (매니저 Claude가 세션에서 트리거)
+#  2) workflow_dispatch (Actions 탭 Run 버튼) — 워크플로가 기본 브랜치(main)에 올라간 뒤부터 노출
+# 일반 커밋 push는 배포되지 않음(deploy 잡의 if 조건으로 걸러짐).
+#
+# 필요한 GitHub 설정:
+#   Secret CLOUDFLARE_API_TOKEN    — Cloudflare API 토큰 (권한: Account > Cloudflare Pages > Edit)
+#   Secret CLOUDFLARE_ACCOUNT_ID   — Cloudflare 계정 ID (대시보드 우측 또는 Workers & Pages 개요)
+#   Variable CF_PAGES_PROJECT      — Cloudflare Pages 프로젝트명 (Settings → Secrets and variables → Actions → Variables)
+#
+# 주의: 기존에 Cloudflare Pages가 Git 연동(main push 자동배포)으로 설정돼 있다면
+#       이 워크플로의 direct-upload 배포와 이중이 될 수 있음. 한쪽만 쓰는 것을 권장.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Stage deployable files (repo에서 VCS/CI/에이전트 내부 제외)
+        run: |
+          rsync -a --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.claude' \
+            --exclude='node_modules' \
+            --exclude='ops' \
+            ./ ./_deploy/
+          echo "===== 배포 대상 최상위 =====" && ls -A ./_deploy
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secret이 없습니다. 저장소 Settings → Secrets and variables → Actions 에 등록하세요."
+            exit 1
+          fi
+          PROJECT="${{ vars.CF_PAGES_PROJECT }}"
+          if [ -z "$PROJECT" ]; then
+            echo "::error::CF_PAGES_PROJECT variable이 없습니다. Actions → Variables 에 Pages 프로젝트명을 등록하세요."
+            exit 1
+          fi
+          npx wrangler@latest pages deploy ./_deploy \
+            --project-name="$PROJECT" \
+            --branch=main \
+            --commit-dirty=true
