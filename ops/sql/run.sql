@@ -1,28 +1,44 @@
--- 정체 거래 현황 조회 (읽기전용). [sql-dry].
-\echo '===== [1] 미완료 Trade 상태별 건수 + 최고령/최신 ====='
-SELECT t.status, count(*) AS cnt,
-  min(t."createdAt") AS oldest, max(t."createdAt") AS newest
-FROM "Trade" t
-WHERE t.status IN ('active','trading','seller_confirmed')
-GROUP BY t.status ORDER BY 2 DESC;
+-- 항목1: 정체 거래 일괄 종결 + pg_cron 자동 타임아웃. 미리보기 [sql-dry].
+-- seller_confirmed → completed(+Listing sold),  active → cancelled(+Listing active 복귀)
 
-\echo '===== [2] 미완료 Trade 상세 (경과일, 대응 Listing 상태) ====='
-SELECT t.id, t.status AS trade_status,
-  date_trunc('day', now() - t."createdAt") AS age,
-  l.status AS listing_status, g.slug AS game
-FROM "Trade" t
-JOIN "Listing" l ON l.id = t."listingId"
-LEFT JOIN "Game" g ON g.id = l."gameId"
-WHERE t.status IN ('active','trading','seller_confirmed')
-ORDER BY t."createdAt";
+CREATE TEMP TABLE sc_listings AS SELECT "listingId" FROM "Trade" WHERE status = 'seller_confirmed';
+CREATE TEMP TABLE ac_listings AS SELECT "listingId" FROM "Trade" WHERE status = 'active';
 
-\echo '===== [3] Listing 은 trading/seller_confirmed 인데 Trade 없는 고아 ====='
-SELECT l.status, count(*)
-FROM "Listing" l
-LEFT JOIN "Trade" t ON t."listingId" = l.id
-WHERE l.status IN ('trading','seller_confirmed') AND t.id IS NULL
-GROUP BY l.status;
+\echo '===== [before] 종결 예정 ====='
+SELECT (SELECT count(*) FROM sc_listings) AS seller_confirmed_to_complete,
+       (SELECT count(*) FROM ac_listings) AS active_to_cancel;
 
-\echo '===== [4] Trade 테이블 컬럼 (자동종결 설계용) ====='
-SELECT string_agg(column_name, ', ' ORDER BY ordinal_position) AS trade_columns
-FROM information_schema.columns WHERE table_name = 'Trade';
+-- 1) seller_confirmed → completed + 매물 sold
+UPDATE "Trade"   SET status = 'completed', "completedAt" = now() WHERE status = 'seller_confirmed';
+UPDATE "Listing" SET status = 'sold' WHERE id IN (SELECT "listingId" FROM sc_listings);
+
+-- 2) active → cancelled + 매물 active 복귀
+UPDATE "Listing" SET status = 'active' WHERE id IN (SELECT "listingId" FROM ac_listings) AND status = 'trading';
+UPDATE "Trade"   SET status = 'cancelled' WHERE status = 'active';
+
+\echo '===== [after] 남은 미완료 Trade (0 이어야) ====='
+SELECT status, count(*) FROM "Trade" WHERE status IN ('active','trading','seller_confirmed') GROUP BY status;
+\echo '===== [after] Listing 상태 분포 ====='
+SELECT status, count(*) FROM "Listing" GROUP BY status ORDER BY 2 DESC;
+
+-- 3) pg_cron 자동 타임아웃 (재발 방지)
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- 기존 동일 잡 있으면 제거 후 재등록
+SELECT cron.unschedule(jobid) FROM cron.job WHERE jobname = 'auto-close-stale-trades';
+SELECT cron.schedule('auto-close-stale-trades', '0 18 * * *', $job$
+  -- seller_confirmed 7일 경과 → 자동 수령확인(완료)
+  UPDATE "Trade" SET status='completed', "completedAt"=now()
+    WHERE status='seller_confirmed' AND "createdAt" < now() - interval '7 days';
+  UPDATE "Listing" SET status='sold'
+    WHERE status='seller_confirmed'
+      AND id IN (SELECT "listingId" FROM "Trade" WHERE status='completed');
+  -- active 14일 경과 → 자동 취소 + 매물 복귀
+  UPDATE "Listing" SET status='active'
+    WHERE status='trading'
+      AND id IN (SELECT "listingId" FROM "Trade" WHERE status='active' AND "createdAt" < now() - interval '14 days');
+  UPDATE "Trade" SET status='cancelled'
+    WHERE status='active' AND "createdAt" < now() - interval '14 days';
+$job$);
+
+\echo '===== 등록된 cron 잡 확인 ====='
+SELECT jobname, schedule, active FROM cron.job WHERE jobname = 'auto-close-stale-trades';
