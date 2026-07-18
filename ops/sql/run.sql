@@ -1,4 +1,4 @@
--- 니케 이미지 복구 v2: 정확매칭 + 베이스이름 폴백. [sql-dry].
+-- 니케 이미지 복구 최종 적용: 정확+베이스폴백 매칭 UPDATE + 치자 복사.
 CREATE TEMP TABLE l2d(nname text, code text);
 INSERT INTO l2d(nname,code) VALUES
 ('rapi','c010'),
@@ -269,37 +269,35 @@ INSERT INTO l2d(nname,code) VALUES
 ('story2202','story2202'),
 ('story2206','story2206');
 
-CREATE TEMP TABLE cand AS
-SELECT c.id AS cid, c."nameEn",
-  regexp_replace(lower(c."nameEn"),'[[:space:]_:.,-]+','','g') AS full_n,
-  regexp_replace(lower(split_part(c."nameEn",':',1)),'[[:space:]_:.,-]+','','g') AS base_n
+CREATE TEMP TABLE matched AS
+SELECT c.id AS cid,
+  COALESCE(le.code, lb.code) AS code
 FROM "Character" c JOIN "Game" g ON g.id=c."gameId"
+LEFT JOIN l2d le ON le.nname = regexp_replace(lower(c."nameEn"),'[[:space:]_:.,-]+','','g')
+LEFT JOIN l2d lb ON lb.nname = regexp_replace(lower(split_part(c."nameEn",':',1)),'[[:space:]_:.,-]+','','g')
 WHERE g.slug='nikke' AND c.slug NOT LIKE '%-treasure%';
 
-CREATE TEMP TABLE matched AS
-SELECT cand.cid, cand."nameEn", COALESCE(le.code, lb.code) AS code,
-       (le.code IS NOT NULL) AS exact
-FROM cand
-LEFT JOIN l2d le ON le.nname = cand.full_n
-LEFT JOIN l2d lb ON lb.nname = cand.base_n;
-
-\echo '===== 매칭 통계 (exact / base폴백 / 실패) ====='
-SELECT count(*) FILTER (WHERE exact) AS exact_match,
-       count(*) FILTER (WHERE NOT exact AND code IS NOT NULL) AS base_fallback,
-       count(*) FILTER (WHERE code IS NULL) AS unmatched
-FROM matched;
-
-\echo '===== 여전히 실패(수동 필요) ====='
-SELECT "nameEn" FROM matched WHERE code IS NULL ORDER BY "nameEn";
-
+-- 1) 매칭된 캐릭터 imageUrl + cardImageUrl 교체
 UPDATE "Character" c SET
   "imageUrl" = 'https://raw.githubusercontent.com/Nikke-db/Nikke-db.github.io/main/images/sprite/si_' || m.code || '_00_s.png',
   metadata = COALESCE(c.metadata,'{}'::jsonb) || jsonb_build_object('cardImageUrl','https://raw.githubusercontent.com/Nikke-db/Nikke-db.github.io/main/images/sprite/si_' || m.code || '_00_s.png'),
   "updatedAt" = now()
 FROM matched m WHERE c.id = m.cid AND m.code IS NOT NULL;
 
+-- 2) 치자(treasure): 베이스 캐릭터(같은 slug -treasure 제거)에서 새 이미지 복사
+UPDATE "Character" t SET
+  "imageUrl" = b."imageUrl",
+  metadata = COALESCE(t.metadata,'{}'::jsonb) || jsonb_build_object('cardImageUrl', b.metadata->>'cardImageUrl'),
+  "updatedAt" = now()
+FROM "Character" b JOIN "Game" gb ON gb.id=b."gameId"
+JOIN "Game" gt ON gt.id=t."gameId"
+WHERE gt.slug='nikke' AND gb.slug='nikke'
+  AND t.slug LIKE '%-treasure%'
+  AND b.slug = regexp_replace(t.slug,'-treasure$','')
+  AND b."imageUrl" LIKE '%githubusercontent%';
+
 \echo '===== 적용 후 요약 ====='
 SELECT count(*) FILTER (WHERE c."imageUrl" LIKE '%githubusercontent%') AS github_now,
        count(*) FILTER (WHERE c."imageUrl" LIKE '%prydwen%') AS prydwen_left,
-       count(*) FILTER (WHERE c.slug LIKE '%-treasure%') AS treasures_untouched
+       count(*) AS total
 FROM "Character" c JOIN "Game" g ON g.id=c."gameId" WHERE g.slug='nikke';
