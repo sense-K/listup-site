@@ -1,4 +1,13 @@
--- ops/sql/run.sql — Supabase SQL Runner가 실행할 SQL.
--- 사용 후에는 이 중립 기본값으로 되돌려 둔다(실수로 [sql] 재실행돼도 무해하도록).
--- 실제 SQL 작업 시: 여기에 내용을 채우고 커밋 메시지에 [sql](반영) 또는 [sql-dry](검증) 태그.
-select now() as checked_at, current_user as run_as;
+-- 니케 이미지 진단 + 매칭용 목록. [sql-dry].
+\echo '===== 요약 ====='
+SELECT count(*) AS total,
+  count(*) FILTER (WHERE "imageUrl" LIKE '%prydwen%') AS prydwen_img,
+  count(*) FILTER (WHERE "imageUrl" IS NULL OR "imageUrl"='') AS null_img,
+  count(*) FILTER (WHERE "imageUrl" LIKE '%githubusercontent%') AS github_img,
+  count(*) FILTER (WHERE slug LIKE '%-treasure%') AS treasures
+FROM "Character" c JOIN "Game" g ON g.id=c."gameId" WHERE g.slug='nikke';
+\echo '===== NIKKE_LIST_START ====='
+SELECT "nameEn" || E'\t' || COALESCE(slug,'') AS row
+FROM "Character" c JOIN "Game" g ON g.id=c."gameId" WHERE g.slug='nikke'
+ORDER BY "nameEn";
+\echo '===== NIKKE_LIST_END ====='
