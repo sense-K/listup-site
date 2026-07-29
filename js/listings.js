@@ -141,7 +141,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       }
     }
 
-    // 판매중(active/trading) 먼저, 판매완료(sold) 나중 — 각 그룹 내에서 선택 정렬 적용
+    // 상태 구분 없이 최신순으로 한 번에 노출 (거래중·판매완료가 섞여 활발해 보이도록)
     const SELECT_FIELDS = `
       id, price, discountAmount, description, createdAt, viewCount, status,
       game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
@@ -166,16 +166,12 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       return q
     }
 
-    // 두 그룹을 병렬 fetch (각각 최대 200개)
-    const [{ data: activeData, error: e1 }, { data: soldData, error: e2 }] = await Promise.all([
-      buildBase(['active', 'trading']).limit(200),
-      buildBase(['sold']).limit(200),
-    ])
-    const error = e1 || e2
+    // 판매중·거래중·판매완료를 한 번에 최신순(또는 가격순)으로 fetch — 상태별로 묶지 않음
+    const { data: mixedData, error } = await buildBase(['active', 'trading', 'sold']).limit(400)
     if (error) throw error
 
-    // 판매중 → 판매완료 순으로 합치고 페이지네이션
-    const allListings = [...(activeData ?? []), ...(soldData ?? [])]
+    // 정렬 그대로(최신순/가격순) 사용 → 거래완료가 뒤로 몰리지 않고 중간중간 섞여 노출됨
+    const allListings = mixedData ?? []
     const start = (page - 1) * limit
     const listings = allListings.slice(start, start + limit + 1)  // limit+1 for hasMore check
 
