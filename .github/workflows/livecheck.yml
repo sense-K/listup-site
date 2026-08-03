@@ -1,38 +1,42 @@
 name: Livecheck
 
-# 배포 후 라이브 검증: 상점 페이지 SSR·거래소·기존 페이지 회귀 확인.
-# 트리거: 커밋 메시지에 RUNLIVE 포함 push, 또는 workflow_dispatch. 확인 후 삭제 가능.
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - 'claude/**'
+    branches: [main, 'claude/**']
 
 jobs:
   livecheck:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'RUNLIVE')
     runs-on: ubuntu-latest
     steps:
-      - name: 상점 SSR + 회귀 체크
+      - name: 상점 통합 + 푸터 + 회귀 검증
         run: |
           check() {
             local url="$1" expect="$2" needle="$3"
             code=$(curl -s -o /tmp/body -w "%{http_code}" --max-time 20 "$url")
-            size=$(wc -c < /tmp/body)
-            hit="-"
+            size=$(wc -c < /tmp/body); hit="-"
             if [ -n "$needle" ]; then grep -q "$needle" /tmp/body && hit="FOUND" || hit="MISSING"; fi
-            echo "[$code/$expect] size=$size needle($needle)=$hit  $url"
-            if [ "$code" != "$expect" ]; then echo "::error::$url -> $code (expect $expect)"; fi
+            echo "[$code/$expect] size=$size  needle($needle)=$hit  $url"
+            [ "$code" != "$expect" ] && echo "::error::$url -> $code (expect $expect)"
+            [ -n "$needle" ] && [ "$hit" = "MISSING" ] && echo "::error::$url missing '$needle'"
+            return 0
           }
-          echo "== 신규 상점 페이지 =="
-          check "https://resetlist.kr/shop/shop0002" 200 "zzabhm"
-          check "https://resetlist.kr/shop/shop0001" 200 "상점"
-          check "https://resetlist.kr/shop/no-such-user-xyz" 404 ""
-          check "https://resetlist.kr/shop/BAD!!id" 404 ""
-          echo "== 회귀: 기존 핵심 페이지 =="
+          echo "== 상점 통합(관리 영역) =="
+          check "https://resetlist.kr/shop/shop0002" 200 "판매 관리"
+          check "https://resetlist.kr/shop/shop0002" 200 "구매 내역"
+          check "https://resetlist.kr/shop/shop0002" 200 "상점 설정"
+          check "https://resetlist.kr/shop/shop0002" 200 "인증"
+          echo "== 마이페이지 리다이렉트 스텁 =="
+          check "https://resetlist.kr/mypage/" 200 "/shop/"
+          echo "== 푸터(config.js) =="
+          check "https://resetlist.kr/js/config.js" 200 "통신판매중개자"
+          check "https://resetlist.kr/js/config.js" 200 "footer-col"
+          check "https://resetlist.kr/js/config.js" 200 "/shop/"
+          echo "== 푸터 링크 실제 존재 확인 =="
+          for p in /trade/ /trade/register/ /trade/price/ /contact/ /game/genshin/characters/ /game/starrail/characters/ /game/zzz/characters/ /game/nikke/characters/ /game/wuwa/characters/ /game/bluearchive/students/ /game/genshin/uid/; do
+            check "https://resetlist.kr$p" 200 ""
+          done
+          echo "== 회귀 =="
           check "https://resetlist.kr/" 200 "플레이센스"
           check "https://resetlist.kr/trade/" 200 "돌계"
-          check "https://resetlist.kr/js/listings.js" 200 "typeFilter"
-          check "https://resetlist.kr/trade/register/" 200 "돌계"
-          check "https://resetlist.kr/mypage/" 200 "내 상점"
