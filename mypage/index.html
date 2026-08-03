@@ -205,6 +205,66 @@
       cursor: pointer; transition: all 0.15s;
     }
     .logout-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    /* 내 상점 탭 */
+    .shop-address-card {
+      background: #111; border-radius: 14px; padding: 18px 20px;
+      color: #fff; margin-bottom: 16px;
+    }
+    .shop-address-label { font-size: 11px; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+    .shop-address-row {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .shop-address-text { font-size: 15px; font-weight: 800; word-break: break-all; }
+    .shop-address-actions { display: flex; gap: 6px; margin-left: auto; }
+    .shop-address-btn {
+      background: rgba(255,255,255,0.12); color: #fff; border: none;
+      border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s; white-space: nowrap;
+      text-decoration: none; display: inline-flex; align-items: center;
+    }
+    .shop-address-btn:hover { background: rgba(255,255,255,0.22); }
+    .shop-badges { margin-top: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .shop-verified-badge {
+      background: #16a34a; color: #fff; font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 999px;
+    }
+    .shop-grade-badge {
+      background: rgba(255,255,255,0.15); color: #fff; font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 999px;
+    }
+    .shop-verify-hint { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 10px; }
+
+    .shop-form-group { margin-bottom: 16px; }
+    .shop-form-label { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 6px; display: block; }
+    .shop-form-hint { font-size: 11px; color: #aaa; margin-top: 4px; }
+    .shop-form-group textarea.form-input { resize: vertical; min-height: 72px; font-family: inherit; }
+    .shop-username-prefix {
+      display: flex; align-items: stretch; border: 1.5px solid #e5e7eb; border-radius: 10px; overflow: hidden;
+    }
+    .shop-username-prefix span {
+      background: #f8f8f8; color: #aaa; font-size: 13px; font-weight: 600;
+      padding: 0 10px; display: flex; align-items: center; white-space: nowrap;
+    }
+    .shop-username-prefix input {
+      border: none; flex: 1; padding: 10px 10px; font-size: 14px;
+    }
+    .shop-username-prefix input:focus { outline: none; }
+    .shop-checkbox-row {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+    }
+    .shop-checkbox-row input { width: 16px; height: 16px; cursor: pointer; }
+    .shop-checkbox-row span { font-size: 13px; font-weight: 700; color: #111; }
+    .shop-save-btn { width: 100%; margin-top: 4px; padding: 13px; font-size: 14px; }
+
+    .mypage-toast {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: #111; color: #fff; font-size: 13px; font-weight: 600;
+      padding: 10px 20px; border-radius: 999px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      z-index: 9999; white-space: nowrap;
+    }
+    .mypage-toast.show { opacity: 1; }
   </style>
 </head>
 <body>
@@ -232,7 +292,9 @@
       const authUser = session.user
       currentUserId = authUser.id
 
-      let { data: user } = await db.from('User').select('id, nickname').eq('id', authUser.id).single()
+      let { data: user } = await db.from('User')
+        .select('id, nickname, username, shopBio, deliveryTime, refundPolicy, supportRecovery, businessHours, isVerified, sellerGrade')
+        .eq('id', authUser.id).single()
       if (!user) {
         const now = new Date().toISOString()
         const nickname = authUser.email?.split('@')[0] ?? '사용자'
@@ -438,8 +500,9 @@
       </div>
 
       <div class="mypage-tabs">
-        <div class="mypage-tab active" onclick="switchTab('sell')">판매</div>
-        <div class="mypage-tab" onclick="switchTab('buy')">구매</div>
+        <div class="mypage-tab active" data-tab="sell" onclick="switchTab('sell')">판매</div>
+        <div class="mypage-tab" data-tab="buy" onclick="switchTab('buy')">구매</div>
+        <div class="mypage-tab" data-tab="shop" onclick="switchTab('shop')">내 상점</div>
       </div>
 
       <div class="mypage-tab-panel active" id="panel-sell">
@@ -456,17 +519,175 @@
           ? sectionHtml('buy-cancelled', '취소된 거래', cancelledTrades.map(renderTradeItem)) : ''}
       </div>
 
+      <div class="mypage-tab-panel" id="panel-shop">
+        ${renderShopPanel(user)}
+      </div>
+
       ${authUser.email === 'zzabhm@gmail.com' ? `<a href="/admin/" class="btn btn-primary" style="display:block;text-align:center;margin-top:16px;margin-bottom:8px;">관리자 페이지 →</a>` : ''}
       <button class="logout-btn" onclick="logout()">로그아웃</button>
     `
   }
 
   function switchTab(tab) {
-    document.querySelectorAll('.mypage-tab').forEach((el, i) => {
-      el.classList.toggle('active', (i === 0 && tab === 'sell') || (i === 1 && tab === 'buy'))
+    document.querySelectorAll('.mypage-tab').forEach(el => {
+      el.classList.toggle('active', el.dataset.tab === tab)
     })
     document.getElementById('panel-sell').classList.toggle('active', tab === 'sell')
     document.getElementById('panel-buy').classList.toggle('active', tab === 'buy')
+    document.getElementById('panel-shop').classList.toggle('active', tab === 'shop')
+  }
+
+  const SHOP_RESERVED_USERNAMES = ['admin','shop','shops','api','trade','listing','mypage','auth','game','seller']
+
+  function renderShopPanel(user) {
+    const username = user.username ?? ''
+    const shopBio = user.shopBio ?? ''
+    const deliveryTime = user.deliveryTime ?? ''
+    const refundPolicy = user.refundPolicy ?? ''
+    const supportRecovery = !!user.supportRecovery
+    const businessHours = user.businessHours ?? ''
+    const isVerified = !!user.isVerified
+    const sellerGrade = user.sellerGrade ?? ''
+
+    const badgesHtml = isVerified
+      ? `<div class="shop-badges">
+          <span class="shop-verified-badge">✓ 인증 상점</span>
+          ${sellerGrade ? `<span class="shop-grade-badge">${escapeHtml(sellerGrade)}</span>` : ''}
+        </div>`
+      : `<div class="shop-verify-hint">인증 배지는 운영자 심사 후 부여돼요</div>`
+
+    return `
+      <div class="shop-address-card">
+        <div class="shop-address-label">내 상점 주소</div>
+        <div class="shop-address-row">
+          <div class="shop-address-text" id="shop-address-text">resetlist.kr/shop/${username ? escapeHtml(username) : '-'}</div>
+          <div class="shop-address-actions">
+            <a class="shop-address-btn" id="shop-address-link" href="${username ? '/shop/' + encodeURIComponent(username) : '#'}" target="_blank" rel="noopener">상점 보기 →</a>
+            <button class="shop-address-btn" onclick="copyShopLink()">복사</button>
+          </div>
+        </div>
+        ${badgesHtml}
+      </div>
+
+      <div class="shop-form-group">
+        <label class="shop-form-label" for="shop-username-input">상점 아이디 (영문)</label>
+        <div class="shop-username-prefix">
+          <span>resetlist.kr/shop/</span>
+          <input type="text" id="shop-username-input" value="${escapeHtml(username)}" placeholder="my-shop" maxlength="20"
+            oninput="this.value = this.value.toLowerCase()">
+        </div>
+        <div class="shop-form-hint">영문 소문자·숫자·하이픈만 사용, 3~20자</div>
+      </div>
+
+      <div class="shop-form-group">
+        <label class="shop-form-label" for="shop-bio-input">상점 소개</label>
+        <textarea class="form-input" id="shop-bio-input" placeholder="상점을 소개해주세요">${escapeHtml(shopBio)}</textarea>
+      </div>
+
+      <div class="shop-form-group">
+        <label class="shop-form-label" for="shop-delivery-input">전달 시간 정책</label>
+        <input type="text" class="form-input" id="shop-delivery-input" value="${escapeHtml(deliveryTime)}" placeholder="예: 30분 이내">
+      </div>
+
+      <div class="shop-form-group">
+        <label class="shop-form-label" for="shop-refund-input">환불 정책</label>
+        <input type="text" class="form-input" id="shop-refund-input" value="${escapeHtml(refundPolicy)}" placeholder="예: 밴 시 100% 환불">
+      </div>
+
+      <div class="shop-form-group">
+        <label class="shop-checkbox-row">
+          <input type="checkbox" id="shop-recovery-input" ${supportRecovery ? 'checked' : ''}>
+          <span>계정복구 지원</span>
+        </label>
+      </div>
+
+      <div class="shop-form-group">
+        <label class="shop-form-label" for="shop-hours-input">영업시간</label>
+        <input type="text" class="form-input" id="shop-hours-input" value="${escapeHtml(businessHours)}" placeholder="예: 10:00~24:00">
+      </div>
+
+      <button class="btn btn-primary shop-save-btn" id="shop-save-btn" onclick="saveShopSettings('${user.id}')">저장</button>
+    `
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))
+  }
+
+  async function saveShopSettings(userId) {
+    const usernameInput = document.getElementById('shop-username-input')
+    const username = usernameInput.value.trim().toLowerCase()
+    usernameInput.value = username
+
+    if (!/^[a-z0-9-]{3,20}$/.test(username)) {
+      showMypageToast('아이디는 영문 소문자·숫자·하이픈 3~20자로 입력해주세요')
+      return
+    }
+    if (SHOP_RESERVED_USERNAMES.includes(username)) {
+      showMypageToast('사용할 수 없는 아이디예요')
+      return
+    }
+
+    const payload = {
+      username,
+      shopBio: document.getElementById('shop-bio-input').value.trim(),
+      deliveryTime: document.getElementById('shop-delivery-input').value.trim(),
+      refundPolicy: document.getElementById('shop-refund-input').value.trim(),
+      supportRecovery: document.getElementById('shop-recovery-input').checked,
+      businessHours: document.getElementById('shop-hours-input').value.trim(),
+    }
+
+    const saveBtn = document.getElementById('shop-save-btn')
+    saveBtn.disabled = true
+    saveBtn.textContent = '저장 중...'
+
+    const { data, error } = await db.from('User').update(payload).eq('id', userId).select()
+
+    saveBtn.disabled = false
+    saveBtn.textContent = '저장'
+
+    if (error) {
+      if (error.code === '23505') {
+        showMypageToast('이미 사용 중인 아이디예요')
+      } else {
+        showMypageToast('저장 중 오류가 발생했어요: ' + error.message)
+      }
+      return
+    }
+    if (!data || data.length === 0) {
+      showMypageToast('저장에 실패했어요 (권한 문제일 수 있어요)')
+      return
+    }
+
+    document.getElementById('shop-address-text').textContent = 'resetlist.kr/shop/' + username
+    document.getElementById('shop-address-link').href = '/shop/' + encodeURIComponent(username)
+    showMypageToast('상점 정보가 저장됐어요!')
+  }
+
+  async function copyShopLink() {
+    const usernameInput = document.getElementById('shop-username-input')
+    const username = (usernameInput?.value ?? '').trim()
+    if (!username) { showMypageToast('먼저 상점 아이디를 저장해주세요'); return }
+    const url = 'https://resetlist.kr/shop/' + encodeURIComponent(username)
+    try {
+      await navigator.clipboard.writeText(url)
+      showMypageToast('링크가 복사됐어요!')
+    } catch (e) {
+      showMypageToast('링크: ' + url)
+    }
+  }
+
+  function showMypageToast(msg) {
+    let toast = document.getElementById('mypage-toast')
+    if (!toast) {
+      toast = document.createElement('div')
+      toast.id = 'mypage-toast'
+      toast.className = 'mypage-toast'
+      document.body.appendChild(toast)
+    }
+    toast.textContent = msg
+    toast.classList.add('show')
+    setTimeout(() => toast.classList.remove('show'), 2200)
   }
 
   function toggleSection(id) {

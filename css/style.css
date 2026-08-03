@@ -1089,6 +1089,92 @@ a { text-decoration: none; color: inherit; }
   margin-top: auto;
 }
 
+.card-footer-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* 재고 칩 */
+.stock-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #555;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 돌계(재화) 유형 배지 — 카드 아트 좌상단 */
+.badge-type-doll {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  background: #0ea5e9;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* 돌계 카드 재화 라인 (캐릭터 칩 대신 표시) */
+.card-currency-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.card-currency-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f9ff;
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  min-width: 0;
+}
+.card-currency-line img {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.card-currency-line-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.card-currency-line-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* 상점 미니 라인 (카드 하단, 판매자 닉네임) */
+.card-shop-mini {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 6px;
+}
+.card-shop-mini .verified {
+  color: #16a34a;
+  font-weight: 800;
+}
+
 .card-seller {
   display: flex;
   align-items: center;

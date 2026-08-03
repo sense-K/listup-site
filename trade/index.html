@@ -91,8 +91,34 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
     .trade-sort { display: flex; align-items: center; gap: 6px; }
+
+    /* 유형 탭 (전체/리세계/돌계) */
+    .trade-type-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .trade-type-tab {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1.5px solid #e5e7eb;
+      background: #fff;
+      color: #64748b;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+    .trade-type-tab:hover { border-color: #6c47ff; color: #6c47ff; }
+    .trade-type-tab.active { border-color: #6c47ff; color: #6c47ff; background: #f5f3ff; }
+    @media (max-width: 768px) {
+      .trade-sort-bar { flex-direction: column; align-items: flex-start; }
+    }
   </style>
 </head>
 <body>
@@ -121,8 +147,13 @@
     </a>
   </div>
 
-  <!-- 정렬 -->
+  <!-- 유형 탭 + 정렬 -->
   <div class="trade-sort-bar">
+    <div class="trade-type-tabs" id="type-tabs">
+      <button class="trade-type-tab active" data-type="all" onclick="setTypeFilter('all')">전체</button>
+      <button class="trade-type-tab" data-type="reroll" onclick="setTypeFilter('reroll')">리세계</button>
+      <button class="trade-type-tab" data-type="currency" onclick="setTypeFilter('currency')">돌계</button>
+    </div>
     <div class="trade-sort">
       <button class="sort-btn active" id="sort-latest" onclick="setSort('latest')">최신순</button>
       <span class="sort-divider">|</span>
@@ -163,19 +194,29 @@
 
   let currentSort = 'latest'
   let currentPage = 1
+  let currentType = 'all'
 
   function setSort(sort) {
     currentSort = sort
     currentPage = 1
     document.getElementById('sort-latest').classList.toggle('active', sort === 'latest')
     document.getElementById('sort-price').classList.toggle('active', sort === 'price')
-    loadListings({ container: 'listings-container', limit: 12, sort, moreBtn: 'more-btn' })
+    loadListings({ container: 'listings-container', limit: 12, sort, moreBtn: 'more-btn', typeFilter: currentType })
+  }
+
+  function setTypeFilter(type) {
+    currentType = type
+    currentPage = 1
+    document.querySelectorAll('#type-tabs .trade-type-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.type === type)
+    })
+    loadListings({ container: 'listings-container', limit: 12, sort: currentSort, moreBtn: 'more-btn', typeFilter: currentType })
   }
 
   document.getElementById('more-btn').addEventListener('click', e => {
     e.preventDefault()
     currentPage++
-    loadListings({ container: 'listings-container', limit: 12, sort: currentSort, page: currentPage, append: true, moreBtn: 'more-btn' })
+    loadListings({ container: 'listings-container', limit: 12, sort: currentSort, page: currentPage, append: true, moreBtn: 'more-btn', typeFilter: currentType })
   })
 
   loadGameTabs()
