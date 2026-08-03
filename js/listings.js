@@ -20,11 +20,11 @@ function renderListingCard(listing) {
   const sellerGrade = listing.user?.sellerGrade ?? ''
   const artClass = getArtClass(gameSlug)
 
-  const isCurrency = listing.type === 'currency'
   const stock = listing.stock ?? 1
 
   const chars = listing.characters ?? []
   const currencies = (listing.currencies ?? []).filter(lc => lc.currency && lc.amount > 0)
+  const hasChars = chars.length > 0
   const TOTAL_SLOTS = 10
 
   let charBadges, extraBadge
@@ -49,12 +49,10 @@ function renderListingCard(listing) {
     ? `<span class="card-discount">↓ ${formatPrice(listing.discountAmount)} 할인</span>`
     : ''
 
-  // 돌계(재화) 배지 + 재고 칩
-  const dollBadge = isCurrency ? `<span class="badge-type-doll">돌계</span>` : ''
   const stockChip = stock > 1 ? `<span class="stock-chip">재고 ${stock}</span>` : ''
 
-  // 돌계 카드: 캐릭터 칩 대신 재화 라인(재화 이미지 + 이름 + 수량 + 환산 연차)
-  const currencyLinesHtml = isCurrency ? currencies.map(lc => {
+  // 보유 재화 라인 (재화 이미지 + 이름 + 수량 + 환산 연차) — 리세계/돌계 구분 없이 있으면 표시
+  const currencyLinesHtml = currencies.map(lc => {
     const c = lc.currency
     const rate = c?.ratePerUnit
     const approx = (rate && rate > 0) ? ` · 약 ${Math.floor(lc.amount / rate).toLocaleString()}연` : ''
@@ -62,7 +60,7 @@ function renderListingCard(listing) {
       ${c?.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo ?? '재화'}">` : `<span class="card-currency-line-icon">💎</span>`}
       <span class="card-currency-line-text">${c?.nameKo ?? '재화'} ${(lc.amount ?? 0).toLocaleString()}${approx}</span>
     </div>`
-  }).join('') : ''
+  }).join('')
 
   // 상점 미니 라인 (판매자 닉네임 + 등급) — 카드 전체가 <a>라서 텍스트로만 표시
   const shopMiniHtml = `<div class="card-shop-mini">🏪 ${nickname}${sellerGrade ? ` <span class="grade">🏅 ${sellerGrade}</span>` : ''}</div>`
@@ -86,14 +84,13 @@ function renderListingCard(listing) {
         ${gameArtUrl ? `<img class="card-art-img" src="${gameArtUrl}" alt="${gameName}">` : ''}
         <div class="card-art-overlay"></div>
         ${isSold ? `<div class="card-art-blur"></div>` : ''}
-        ${dollBadge}
         ${hotBadge}
         ${tradingOverlay}
         ${soldOverlay}
         ${gameName ? `<span class="card-art-game-name">${gameName}</span>` : ''}
       </div>
       <div class="card-body">
-        ${(currencies.length > 0 && !isCurrency) ? `
+        ${(hasChars && currencies.length > 0) ? `
         <div class="card-currencies">
           ${currencies.map(lc => {
             const c = lc.currency
@@ -103,9 +100,8 @@ function renderListingCard(listing) {
             </span>`
           }).join('')}
         </div>` : ''}
-        ${isCurrency
-          ? `<div class="card-currency-lines">${currencyLinesHtml}</div>`
-          : `<div class="card-chars">${charBadges}${extraBadge}</div>`}
+        ${hasChars ? `<div class="card-chars">${charBadges}${extraBadge}</div>` : ''}
+        ${(!hasChars && currencies.length > 0) ? `<div class="card-currency-lines">${currencyLinesHtml}</div>` : ''}
         ${listing.description ? `<p class="card-desc">${listing.description.replace(/\r?\n/g, ' ').trim()}</p>` : ''}
         <div class="card-footer">
           <div>
@@ -123,7 +119,7 @@ function renderListingCard(listing) {
 }
 
 // ===== 매물 목록 로드 =====
-async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest', append = false, moreBtn = null, characterIds = null, characterFilter = null, typeFilter = 'all' }) {
+async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest', append = false, moreBtn = null, characterIds = null, characterFilter = null }) {
   const el = document.getElementById(container)
   if (!el) return
 
@@ -172,7 +168,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
 
     // 상태 구분 없이 최신순으로 한 번에 노출 (거래중·판매완료가 섞여 활발해 보이도록)
     const SELECT_FIELDS = `
-      id, price, discountAmount, description, createdAt, viewCount, status, type, stock,
+      id, price, discountAmount, description, createdAt, bumpedAt, viewCount, status, type, stock,
       game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
       server:Server(nameKo),
       user:User(nickname, username, sellerGrade),
@@ -182,7 +178,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       ),
       currencies:ListingCurrency(amount, currency:Currency(nameKo, imageUrl, sortOrder, ratePerUnit))
     `
-    const orderCol = sort === 'price' ? 'price' : 'createdAt'
+    const orderCol = sort === 'price' ? 'price' : 'bumpedAt'
     const orderAsc = sort === 'price'
 
     const buildBase = (statusList) => {
@@ -191,7 +187,6 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
         .order(orderCol, { ascending: orderAsc })
       if (gameId) q = q.eq('gameId', gameId)
       if (serverId) q = q.eq('serverId', serverId)
-      if (typeFilter && typeFilter !== 'all') q = q.eq('type', typeFilter)
       if (filteredListingIds) q = q.in('id', filteredListingIds)
       return q
     }

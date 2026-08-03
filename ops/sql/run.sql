@@ -1,25 +1,34 @@
--- 게임별 재화(Currency) 설정 현황 조회. [sql]
-\echo '===== 게임별 재화 설정 ====='
-SELECT g."nameKo" AS "게임", g.slug AS "슬러그",
-       coalesce(c."nameKo",'(없음)') AS "재화",
-       c."ratePerUnit" AS "1연당",
-       c."isActive" AS "활성",
-       c."sortOrder" AS "순서"
-FROM "Game" g
-LEFT JOIN "Currency" c ON c."gameId" = g.id
-WHERE g."isActive" = true
-ORDER BY g."sortOrder" NULLS LAST, g."nameKo", c."sortOrder";
+-- 판매글 끌어올리기(bump) 기반 마련. [sql]
 
-\echo '===== 재화 미설정 게임 (돌계 등록 불가) ====='
-SELECT g."nameKo", g.slug
-FROM "Game" g
-WHERE g."isActive" = true
-  AND NOT EXISTS (SELECT 1 FROM "Currency" c WHERE c."gameId" = g.id AND c."isActive" = true)
-ORDER BY g."sortOrder" NULLS LAST, g."nameKo";
+-- 1) bumpedAt 컬럼 (없으면 추가) — 정렬 기준. 기본값은 등록 시각.
+ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "bumpedAt" timestamptz;
+UPDATE "Listing" SET "bumpedAt" = "createdAt" WHERE "bumpedAt" IS NULL;
+ALTER TABLE "Listing" ALTER COLUMN "bumpedAt" SET DEFAULT now();
+CREATE INDEX IF NOT EXISTS "Listing_bumpedAt_idx" ON "Listing" ("bumpedAt" DESC);
 
-\echo '===== 재화가 실제 쓰인 판매글 수 ====='
-SELECT g."nameKo", count(DISTINCT lc."listingId") AS "재화 등록 판매글"
-FROM "ListingCurrency" lc
-JOIN "Currency" c ON c.id = lc."currencyId"
-JOIN "Game" g ON g.id = c."gameId"
-GROUP BY 1 ORDER BY 2 DESC;
+-- 2) 5분 쿨다운을 DB에서 강제 (클라이언트 우회 차단)
+CREATE OR REPLACE FUNCTION enforce_bump_cooldown() RETURNS trigger AS $fn$
+BEGIN
+  IF NEW."bumpedAt" IS DISTINCT FROM OLD."bumpedAt" THEN
+    IF OLD."bumpedAt" IS NOT NULL AND OLD."bumpedAt" > now() - interval '5 minutes' THEN
+      RAISE EXCEPTION '끌어올리기는 5분에 한 번만 가능해요';
+    END IF;
+    -- 미래 시각으로 올려치기 방지
+    IF NEW."bumpedAt" > now() + interval '1 minute' THEN
+      NEW."bumpedAt" := now();
+    END IF;
+  END IF;
+  RETURN NEW;
+END $fn$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_bump_cooldown ON "Listing";
+CREATE TRIGGER trg_bump_cooldown BEFORE UPDATE ON "Listing"
+  FOR EACH ROW EXECUTE FUNCTION enforce_bump_cooldown();
+
+\echo '===== 컬럼 확인 ====='
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'Listing' AND column_name IN ('bumpedAt','createdAt');
+
+\echo '===== bumpedAt 백필 결과 ====='
+SELECT count(*) AS total, count("bumpedAt") AS filled FROM "Listing";
