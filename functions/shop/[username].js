@@ -482,9 +482,9 @@ export async function onRequest({ params }) {
     try {
       const { data: listings } = await db
         .from('Listing')
-        .select(`id, price, status, createdAt,
+        .select(\`id, price, status, createdAt,
           game:Game(nameKo, emoji, imageUrl, artImageUrl),
-          characters:ListingCharacter(character:Character(nameKo))`)
+          characters:ListingCharacter(character:Character(nameKo))\`)
         .eq('userId', authUser.id)
         .order('createdAt', { ascending: false })
 
@@ -515,10 +515,10 @@ export async function onRequest({ params }) {
 
       const { data: myTrades } = await db
         .from('Trade')
-        .select(`id, type, status, createdAt, sellerId,
+        .select(\`id, type, status, createdAt, sellerId,
           listing:Listing(id, price, status,
             game:Game(nameKo, emoji, imageUrl, artImageUrl),
-            characters:ListingCharacter(character:Character(nameKo)))`)
+            characters:ListingCharacter(character:Character(nameKo)))\`)
         .eq('buyerId', authUser.id)
         .order('createdAt', { ascending: false })
 
@@ -545,25 +545,25 @@ export async function onRequest({ params }) {
     const st = mgrGetEffectiveStatus(l)
     const stClass = { active: 'status-active', trading: 'status-trading', seller_confirmed: 'status-seller-confirmed', sold: 'status-sold' }[st] ?? 'status-active'
     const stText = { active: '판매중', trading: '거래중', seller_confirmed: '수령확인 대기', sold: '판매완료' }[st] ?? '판매중'
-    const btns = st !== 'sold' ? `
+    const btns = st !== 'sold' ? \`
       <div>
-        <button class="my-item-btn edit" onclick="event.stopPropagation();location.href='/trade/register/?edit=${l.id}'">수정</button>
-        <button class="my-item-btn" onclick="event.stopPropagation();mgrDeleteListing('${l.id}')">삭제</button>
-      </div>` : ''
-    return `
-      <div class="my-listing-item" onclick="location.href='/listing/?id=${l.id}'">
-        ${gameImg ? `<img class="my-listing-thumb" src="${gameImg}" alt="${gameName}">` : `<div class="my-listing-thumb-placeholder">${gameEmoji}</div>`}
+        <button class="my-item-btn edit" onclick="event.stopPropagation();location.href='/trade/register/?edit=\${l.id}'">수정</button>
+        <button class="my-item-btn" onclick="event.stopPropagation();mgrDeleteListing('\${l.id}')">삭제</button>
+      </div>\` : ''
+    return \`
+      <div class="my-listing-item" onclick="location.href='/listing/?id=\${l.id}'">
+        \${gameImg ? \`<img class="my-listing-thumb" src="\${gameImg}" alt="\${gameName}">\` : \`<div class="my-listing-thumb-placeholder">\${gameEmoji}</div>\`}
         <div class="my-listing-info">
-          <div class="my-listing-game">${gameName}</div>
-          <div class="my-listing-price">${formatPrice(l.price)}</div>
-          <div class="my-listing-chars">${chars.length > 0 ? chars.join(', ') : '캐릭터 없음'}</div>
+          <div class="my-listing-game">\${gameName}</div>
+          <div class="my-listing-price">\${formatPrice(l.price)}</div>
+          <div class="my-listing-chars">\${chars.length > 0 ? chars.join(', ') : '캐릭터 없음'}</div>
         </div>
         <div class="my-listing-meta">
-          <div class="my-listing-status ${stClass}">${stText}</div>
-          <div class="my-listing-time">${timeAgo(l.createdAt)}</div>
-          ${btns}
+          <div class="my-listing-status \${stClass}">\${stText}</div>
+          <div class="my-listing-time">\${timeAgo(l.createdAt)}</div>
+          \${btns}
         </div>
-      </div>`
+      </div>\`
   }
 
   function mgrRenderTradeItem(t) {
@@ -576,46 +576,46 @@ export async function onRequest({ params }) {
     const stClass = { active: 'status-trading', seller_confirmed: 'status-seller-confirmed', completed: 'status-sold', cancelled: 'status-sold' }[t.status] ?? 'status-sold'
     const stText = { active: '거래중', seller_confirmed: '수령확인 대기', completed: '거래완료', cancelled: '취소됨' }[t.status] ?? ''
     const reviewBtn = t.status === 'completed' && !mgrReviewedListingIds.has(l.id)
-      ? `<div><button class="my-item-btn review" onclick="event.stopPropagation();location.href='/review/?tradeId=${t.id}'">후기작성</button></div>` : ''
+      ? \`<div><button class="my-item-btn review" onclick="event.stopPropagation();location.href='/review/?tradeId=\${t.id}'">후기작성</button></div>\` : ''
     const confirmBtn = t.status === 'seller_confirmed'
-      ? `<div>
-          <button class="my-item-btn confirm" onclick="event.stopPropagation();mgrBuyerConfirm('${t.id}','${l.id}','${t.sellerId}')">수령 확인</button>
-          <button class="my-item-btn review" onclick="event.stopPropagation();location.href='/review/?tradeId=${t.id}'">후기작성</button>
-        </div>` : ''
-    return `
-      <div class="my-listing-item" onclick="location.href='/listing/?id=${l.id}'">
-        ${gameImg ? `<img class="my-listing-thumb" src="${gameImg}" alt="${gameName}">` : `<div class="my-listing-thumb-placeholder">${gameEmoji}</div>`}
+      ? \`<div>
+          <button class="my-item-btn confirm" onclick="event.stopPropagation();mgrBuyerConfirm('\${t.id}','\${l.id}','\${t.sellerId}')">수령 확인</button>
+          <button class="my-item-btn review" onclick="event.stopPropagation();location.href='/review/?tradeId=\${t.id}'">후기작성</button>
+        </div>\` : ''
+    return \`
+      <div class="my-listing-item" onclick="location.href='/listing/?id=\${l.id}'">
+        \${gameImg ? \`<img class="my-listing-thumb" src="\${gameImg}" alt="\${gameName}">\` : \`<div class="my-listing-thumb-placeholder">\${gameEmoji}</div>\`}
         <div class="my-listing-info">
-          <div class="my-listing-game">${gameName}</div>
-          <div class="my-listing-price">${formatPrice(l.price)}</div>
-          <div class="my-listing-chars">${chars.length > 0 ? chars.join(', ') : '캐릭터 없음'}</div>
+          <div class="my-listing-game">\${gameName}</div>
+          <div class="my-listing-price">\${formatPrice(l.price)}</div>
+          <div class="my-listing-chars">\${chars.length > 0 ? chars.join(', ') : '캐릭터 없음'}</div>
         </div>
         <div class="my-listing-meta">
-          <div class="my-listing-status ${stClass}">${stText}</div>
-          <div class="my-listing-time">${timeAgo(t.createdAt)}</div>
-          ${reviewBtn}
-          ${confirmBtn}
+          <div class="my-listing-status \${stClass}">\${stText}</div>
+          <div class="my-listing-time">\${timeAgo(t.createdAt)}</div>
+          \${reviewBtn}
+          \${confirmBtn}
         </div>
-      </div>`
+      </div>\`
   }
 
   function mgrSectionHtml(id, name, items) {
     mgrSectionData[id] = { items, page: 1 }
     const count = items.length
-    return `
-      <div class="mypage-section collapsed" id="sec-wrap-${id}">
-        <div class="mypage-section-header" onclick="mgrToggleSection('${id}')">
+    return \`
+      <div class="mypage-section collapsed" id="sec-wrap-\${id}">
+        <div class="mypage-section-header" onclick="mgrToggleSection('\${id}')">
           <div class="mypage-section-header-left">
-            <span class="mypage-section-name">${name}</span>
-            <span class="mypage-section-count ${count > 0 ? 'has-items' : ''}">${count}</span>
+            <span class="mypage-section-name">\${name}</span>
+            <span class="mypage-section-count \${count > 0 ? 'has-items' : ''}">\${count}</span>
           </div>
           <span class="mypage-section-arrow">▼</span>
         </div>
-        <div class="mypage-section-body" id="sec-${id}">
-          <div id="sec-items-${id}"></div>
-          <div id="sec-pager-${id}"></div>
+        <div class="mypage-section-body" id="sec-\${id}">
+          <div id="sec-items-\${id}"></div>
+          <div id="sec-pager-\${id}"></div>
         </div>
-      </div>`
+      </div>\`
   }
 
   function mgrRenderSectionPage(id) {
@@ -633,11 +633,11 @@ export async function onRequest({ params }) {
       return
     }
     let html = '<div class="sec-pager">'
-    if (page > 1) html += `<button class="sec-page-btn" onclick="mgrGoSectionPage('${id}',${page-1})">‹</button>`
+    if (page > 1) html += \`<button class="sec-page-btn" onclick="mgrGoSectionPage('\${id}',\${page-1})">‹</button>\`
     for (let i = 1; i <= totalPages; i++) {
-      html += `<button class="sec-page-btn ${i===page?'active':''}" onclick="mgrGoSectionPage('${id}',${i})">${i}</button>`
+      html += \`<button class="sec-page-btn \${i===page?'active':''}" onclick="mgrGoSectionPage('\${id}',\${i})">\${i}</button>\`
     }
-    if (page < totalPages) html += `<button class="sec-page-btn" onclick="mgrGoSectionPage('${id}',${page+1})">›</button>`
+    if (page < totalPages) html += \`<button class="sec-page-btn" onclick="mgrGoSectionPage('\${id}',\${page+1})">›</button>\`
     html += '</div>'
     document.getElementById('sec-pager-' + id).innerHTML = html
   }
@@ -654,20 +654,20 @@ export async function onRequest({ params }) {
     const doneTrades = myTrades.filter(t => t.status === 'completed')
     const cancelledTrades = myTrades.filter(t => t.status === 'cancelled')
 
-    document.getElementById('mgr-panel-sell').innerHTML = `
-      ${mgrSectionHtml('sale-ongoing', '판매 중', ongoingListings.map(mgrRenderListingItem))}
-      ${mgrSectionHtml('sale-done', '판매 완료', soldListings.map(mgrRenderListingItem))}
-      ${ongoingListings.length === 0 && soldListings.length === 0
+    document.getElementById('mgr-panel-sell').innerHTML = \`
+      \${mgrSectionHtml('sale-ongoing', '판매 중', ongoingListings.map(mgrRenderListingItem))}
+      \${mgrSectionHtml('sale-done', '판매 완료', soldListings.map(mgrRenderListingItem))}
+      \${ongoingListings.length === 0 && soldListings.length === 0
         ? '<div class="empty-my" style="padding:40px 0;">아직 등록한 판매계정이 없어요<br><br><a href="/trade/register/">판매계정 올리기 →</a></div>' : ''}
-    `
+    \`
 
-    document.getElementById('mgr-panel-buy').innerHTML = `
-      ${mgrSectionHtml('buy-ongoing', '거래 진행중', activeTrades.map(mgrRenderTradeItem))}
-      ${mgrSectionHtml('buy-done', '거래 완료', doneTrades.map(mgrRenderTradeItem))}
-      ${cancelledTrades.length > 0 ? mgrSectionHtml('buy-cancelled', '취소된 거래', cancelledTrades.map(mgrRenderTradeItem)) : ''}
-      ${activeTrades.length === 0 && doneTrades.length === 0 && cancelledTrades.length === 0
+    document.getElementById('mgr-panel-buy').innerHTML = \`
+      \${mgrSectionHtml('buy-ongoing', '거래 진행중', activeTrades.map(mgrRenderTradeItem))}
+      \${mgrSectionHtml('buy-done', '거래 완료', doneTrades.map(mgrRenderTradeItem))}
+      \${cancelledTrades.length > 0 ? mgrSectionHtml('buy-cancelled', '취소된 거래', cancelledTrades.map(mgrRenderTradeItem)) : ''}
+      \${activeTrades.length === 0 && doneTrades.length === 0 && cancelledTrades.length === 0
         ? '<div class="empty-my" style="padding:40px 0;">아직 구매한 판매계정이 없어요<br><br><a href="/trade/">거래소 둘러보기 →</a></div>' : ''}
-    `
+    \`
 
     document.getElementById('mgr-panel-settings').innerHTML = mgrRenderSettingsPanel(authUser, me)
   }
@@ -688,37 +688,37 @@ export async function onRequest({ params }) {
     const sellerGrade = me.sellerGrade ?? ''
 
     const badgesHtml = isVerified
-      ? `<div class="shop-mgr-badges">
+      ? \`<div class="shop-mgr-badges">
           <span class="shop-verified-badge" style="background:#16a34a;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">✓ 인증 상점</span>
-          ${sellerGrade ? `<span class="shop-grade-badge" style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">${mgrEscapeHtml(sellerGrade)}</span>` : ''}
-        </div>`
-      : `<div class="shop-mgr-verify-hint">인증 배지는 운영자 심사 후 부여돼요</div>`
+          \${sellerGrade ? \`<span class="shop-grade-badge" style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">\${mgrEscapeHtml(sellerGrade)}</span>\` : ''}
+        </div>\`
+      : \`<div class="shop-mgr-verify-hint">인증 배지는 운영자 심사 후 부여돼요</div>\`
 
-    return `
+    return \`
       <div class="shop-mgr-nick-row">
         <div style="flex:1;">
           <label class="shop-mgr-label-sm" for="mgr-nickname-input">상점 이름 (닉네임)</label>
-          <input type="text" class="form-input" id="mgr-nickname-input" value="${mgrEscapeHtml(nickname)}" placeholder="닉네임" maxlength="20">
+          <input type="text" class="form-input" id="mgr-nickname-input" value="\${mgrEscapeHtml(nickname)}" placeholder="닉네임" maxlength="20">
         </div>
-        <button class="btn btn-outline" style="align-self:flex-end;" onclick="mgrSaveNickname('${authUser.id}')">닉네임 저장</button>
+        <button class="btn btn-outline" style="align-self:flex-end;" onclick="mgrSaveNickname('\${authUser.id}')">닉네임 저장</button>
       </div>
 
       <div class="shop-mgr-link-card">
         <div class="shop-mgr-link-label">내 상점 주소</div>
         <div class="shop-mgr-link-row">
-          <div class="shop-mgr-link-text" id="mgr-shop-address-text">resetlist.kr/shop/${username ? mgrEscapeHtml(username) : '-'}</div>
+          <div class="shop-mgr-link-text" id="mgr-shop-address-text">resetlist.kr/shop/\${username ? mgrEscapeHtml(username) : '-'}</div>
           <div class="shop-mgr-link-actions">
             <button class="shop-mgr-link-btn" onclick="mgrCopyShopLink()">복사</button>
           </div>
         </div>
-        ${badgesHtml}
+        \${badgesHtml}
       </div>
 
       <div class="shop-form-group">
         <label class="shop-form-label" for="mgr-username-input">상점 아이디 (영문)</label>
         <div class="shop-username-prefix">
           <span>resetlist.kr/shop/</span>
-          <input type="text" id="mgr-username-input" value="${mgrEscapeHtml(username)}" placeholder="my-shop" maxlength="20"
+          <input type="text" id="mgr-username-input" value="\${mgrEscapeHtml(username)}" placeholder="my-shop" maxlength="20"
             oninput="this.value = this.value.toLowerCase()">
         </div>
         <div class="shop-form-hint">영문 소문자·숫자·하이픈만 사용, 3~20자. 변경하면 상점 주소가 바뀌어요.</div>
@@ -726,36 +726,36 @@ export async function onRequest({ params }) {
 
       <div class="shop-form-group">
         <label class="shop-form-label" for="mgr-bio-input">상점 소개</label>
-        <textarea class="form-input" id="mgr-bio-input" placeholder="상점을 소개해주세요">${mgrEscapeHtml(shopBio)}</textarea>
+        <textarea class="form-input" id="mgr-bio-input" placeholder="상점을 소개해주세요">\${mgrEscapeHtml(shopBio)}</textarea>
       </div>
 
       <div class="shop-form-group">
         <label class="shop-form-label" for="mgr-delivery-input">전달 시간 정책</label>
-        <input type="text" class="form-input" id="mgr-delivery-input" value="${mgrEscapeHtml(deliveryTime)}" placeholder="예: 30분 이내">
+        <input type="text" class="form-input" id="mgr-delivery-input" value="\${mgrEscapeHtml(deliveryTime)}" placeholder="예: 30분 이내">
       </div>
 
       <div class="shop-form-group">
         <label class="shop-form-label" for="mgr-refund-input">환불 정책</label>
-        <input type="text" class="form-input" id="mgr-refund-input" value="${mgrEscapeHtml(refundPolicy)}" placeholder="예: 밴 시 100% 환불">
+        <input type="text" class="form-input" id="mgr-refund-input" value="\${mgrEscapeHtml(refundPolicy)}" placeholder="예: 밴 시 100% 환불">
       </div>
 
       <div class="shop-form-group">
         <label class="shop-checkbox-row">
-          <input type="checkbox" id="mgr-recovery-input" ${supportRecovery ? 'checked' : ''}>
+          <input type="checkbox" id="mgr-recovery-input" \${supportRecovery ? 'checked' : ''}>
           <span>계정복구 지원</span>
         </label>
       </div>
 
       <div class="shop-form-group">
         <label class="shop-form-label" for="mgr-hours-input">영업시간</label>
-        <input type="text" class="form-input" id="mgr-hours-input" value="${mgrEscapeHtml(businessHours)}" placeholder="예: 10:00~24:00">
+        <input type="text" class="form-input" id="mgr-hours-input" value="\${mgrEscapeHtml(businessHours)}" placeholder="예: 10:00~24:00">
       </div>
 
-      <button class="btn btn-primary shop-save-btn" id="mgr-save-btn" onclick="mgrSaveShopSettings('${me.id}')">저장</button>
+      <button class="btn btn-primary shop-save-btn" id="mgr-save-btn" onclick="mgrSaveShopSettings('\${me.id}')">저장</button>
 
-      ${authUser.email === 'zzabhm@gmail.com' ? `<a href="/admin/" class="btn btn-primary" style="display:block;text-align:center;margin-top:16px;">관리자 페이지 →</a>` : ''}
+      \${authUser.email === 'zzabhm@gmail.com' ? \`<a href="/admin/" class="btn btn-primary" style="display:block;text-align:center;margin-top:16px;">관리자 페이지 →</a>\` : ''}
       <button class="shop-mgr-logout-btn" onclick="mgrLogout()">로그아웃</button>
-    `
+    \`
   }
 
   async function mgrSaveNickname(userId) {
