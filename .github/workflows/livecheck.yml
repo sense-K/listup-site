@@ -10,7 +10,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'RUNLIVE')
     runs-on: ubuntu-latest
     steps:
-      - name: 대시보드 재설계 검증
+      - name: 헤더/등록버튼/배지안내 검증
         run: |
           check() {
             url="$1"; expect="$2"; needle="$3"; mode="${4:-want}"
@@ -24,16 +24,22 @@ jobs:
             return 0
           }
           U="https://resetlist.kr/shop/shop0002"
-          echo "== 새 대시보드 요소 =="
-          check "$U" 200 "지금 처리할 일"
-          check "$U" 200 "상점 설정"
-          check "$U" 200 "mgrSellerConfirm"
-          check "$U" 200 "mgrRenderSummary"
-          check "$U" 200 "수령 확인"
-          echo "== 제거된 UI (없어야 정상) =="
-          check "$U" 200 "mgrSwitchTab" gone
-          check "$U" 200 "상점 관리 접기" gone
-          check "$U" 200 "이 상점의 주인이에요" gone
+          echo "== 상점: 등록 버튼 + 배지 안내 =="
+          check "$U" 200 "판매글 등록"
+          check "$U" 200 "/trade/register/"
+          check "$U" 200 "인증 상점이란"
+          check "$U" 200 "파워대행"
+          check "$U" 200 "mgrToggleBadgeHelp"
+          echo "== 헤더에서 시세 제거 (config.js) =="
+          curl -s --max-time 20 "https://resetlist.kr/js/config.js" > /tmp/cfg.js
+          NAV=$(sed -n '1,120p' /tmp/cfg.js | grep -c "trade/price" || true)
+          ALL=$(grep -c "trade/price" /tmp/cfg.js || true)
+          echo "navbar 영역 시세링크=$NAV (0이어야) / 파일 전체=$ALL (푸터에 1 남아야)"
+          [ "$NAV" != "0" ] && echo "::error::헤더에 시세 링크 남아있음"
+          [ "$ALL" = "0" ] && echo "::error::푸터 시세 링크까지 사라짐"
+          echo "== 시세 페이지는 살아있어야 =="
+          check "https://resetlist.kr/trade/price/" 200 ""
+          check "https://resetlist.kr/trade/price/genshin/" 200 ""
           echo "== 회귀 =="
           check "https://resetlist.kr/" 200 "플레이센스"
           check "https://resetlist.kr/trade/" 200 "돌계"
