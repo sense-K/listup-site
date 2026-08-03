@@ -69,7 +69,7 @@ export async function onRequest({ params }) {
     }
 
     const listingsRaw = await supaGet(
-      `Listing?userId=eq.${user.id}&status=in.(active,trading,sold)` +
+      `Listing?userId=eq.${user.id}&status=in.(active,trading,seller_confirmed,sold)` +
       `&select=id,price,description,status,type,stock,createdAt,game:Game(nameKo,slug,emoji,imageUrl),` +
       `characters:ListingCharacter(count,character:Character(nameKo,imageUrl)),` +
       `currencies:ListingCurrency(amount,currency:Currency(nameKo,ratePerUnit))` +
@@ -78,7 +78,7 @@ export async function onRequest({ params }) {
     const listings = listingsRaw || []
 
     const soldCount = listings.filter(l => l.status === 'sold').length
-    const activeCount = listings.filter(l => l.status === 'active' || l.status === 'trading').length
+    const activeCount = listings.filter(l => l.status === 'active' || l.status === 'trading' || l.status === 'seller_confirmed').length
 
     // 게임 탭 집계
     const gameMap = new Map()
@@ -170,7 +170,7 @@ export async function onRequest({ params }) {
     .shop-hero {
       display: flex; gap: 20px; align-items: flex-start;
       background: #fff; border: 1px solid var(--border, #e8e8e8); border-radius: 20px;
-      padding: 24px; margin-bottom: 24px; flex-wrap: wrap;
+      padding: 24px; margin-bottom: 20px; flex-wrap: wrap;
     }
     .shop-avatar-img { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid #e8e8e8; }
     .shop-avatar-fallback {
@@ -190,8 +190,18 @@ export async function onRequest({ params }) {
     .shop-chip { font-size: 12px; font-weight: 700; color: #6c47ff; background: #f3f0ff; padding: 5px 11px; border-radius: 999px; }
     .shop-hours { font-size: 12px; color: #999; }
 
-    /* 게임 탭 */
-    .shop-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 20px; }
+    /* 주인 전용: 상점 설정 버튼 (헤더 우측) */
+    .shop-settings-btn {
+      display: none; align-items: center; gap: 6px; flex-shrink: 0;
+      background: #111; color: #fff; border: none; border-radius: 10px;
+      padding: 9px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.15s;
+      margin-left: auto; align-self: flex-start;
+    }
+    .shop-settings-btn:hover { background: #2a2a2a; }
+
+    /* 게임 탭 + 상태 필터 */
+    .shop-filters-row { margin-bottom: 20px; }
+    .shop-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; }
     .shop-tab {
       flex-shrink: 0; font-size: 13px; font-weight: 700; color: #555; background: #fff;
       border: 1.5px solid var(--border, #e8e8e8); border-radius: 999px; padding: 8px 16px; cursor: pointer;
@@ -200,8 +210,16 @@ export async function onRequest({ params }) {
     .shop-tab.active { background: #111; color: #fff; border-color: #111; }
     .shop-tab-count { opacity: 0.6; font-weight: 600; }
 
+    .shop-status-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+    .shop-status-chip {
+      flex-shrink: 0; font-size: 12px; font-weight: 700; color: #666; background: #f3f4f6;
+      border: 1.5px solid transparent; border-radius: 999px; padding: 7px 14px; cursor: pointer;
+      white-space: nowrap; transition: all 0.15s;
+    }
+    .shop-status-chip.active { background: #6c47ff; color: #fff; }
+
     /* 매물 그리드 */
-    .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 8px; }
     @media (min-width: 720px) { .shop-grid { grid-template-columns: repeat(4, 1fr); } }
 
     .shop-card {
@@ -237,58 +255,80 @@ export async function onRequest({ params }) {
     }
     .shop-status-overlay {
       position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.45); color: #fff; font-size: 15px; font-weight: 800;
+      background: rgba(0,0,0,0.45); color: #fff; font-size: 15px; font-weight: 800; text-align: center; padding: 0 8px;
     }
     .shop-empty { grid-column: 1 / -1; text-align: center; padding: 60px 0; color: #aaa; font-size: 14px; }
+
+    /* 주인 전용: 매물 카드 하단 관리 액션 */
+    .shop-card-owner-actions { display: flex; gap: 6px; padding: 0 12px 12px; margin-top: -2px; }
+    .shop-card-owner-btn {
+      flex: 1; background: #f3f4f6; border: none; border-radius: 8px; color: #555;
+      font-size: 11px; font-weight: 700; padding: 7px 0; cursor: pointer; transition: all 0.15s;
+    }
+    .shop-card-owner-btn:hover { background: #e5e7eb; color: #111; }
+    .shop-card-owner-btn.danger:hover { background: #fee2e2; color: #dc2626; }
 
     @media (max-width: 480px) {
       .shop-name { font-size: 19px; }
       .shop-hero { padding: 18px; }
     }
 
-    /* ===== 상점 주인 관리 영역 (mypage 이식) ===== */
-    .shop-mgr-banner {
-      display: none; align-items: center; justify-content: space-between; gap: 10px;
-      background: #111; color: #fff; border-radius: 14px; padding: 12px 18px;
-      margin-bottom: 16px; font-size: 13px; font-weight: 700; flex-wrap: wrap;
-    }
-    .shop-mgr-toggle-btn {
-      background: rgba(255,255,255,0.14); color: #fff; border: none; border-radius: 8px;
-      padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; transition: background 0.15s;
-    }
-    .shop-mgr-toggle-btn:hover { background: rgba(255,255,255,0.24); }
+    /* ===== 주인 전용: 대시보드 영역 ===== */
+    #shop-settings-btn, #shop-summary-strip, #shop-action-section, #shop-purchases-section { display: none; }
+    body.is-owner-view #shop-settings-btn { display: inline-flex; }
+    body.is-owner-view #shop-summary-strip { display: grid; }
+    body.is-owner-view #shop-action-section { display: block; }
+    body.is-owner-view #shop-purchases-section { display: block; }
 
-    .shop-mgr-panel {
-      display: none; background: #fff; border: 1.5px solid var(--border, #e8e8e8);
-      border-radius: 18px; padding: 20px; margin-bottom: 24px;
-    }
-    .shop-mgr-panel.collapsed .shop-mgr-body { display: none; }
-    .shop-mgr-tabs { display: flex; border-bottom: 2px solid #e5e7eb; margin-bottom: 18px; gap: 0; }
-    .shop-mgr-tab {
-      flex: 1; text-align: center; padding: 11px 0; font-size: 13px; font-weight: 700;
-      color: #aaa; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
-      transition: all 0.15s;
-    }
-    .shop-mgr-tab.active { color: #111; border-bottom-color: #111; }
-    .shop-mgr-tab-panel { display: none; }
-    .shop-mgr-tab-panel.active { display: block; }
+    .shop-section-title { font-size: 15px; font-weight: 800; color: #111; margin: 0 0 12px; }
 
-    /* 판매/구매 섹션 */
-    .mypage-section { margin-bottom: 8px; border: 1.5px solid #e5e7eb; border-radius: 14px; overflow: hidden; }
-    .mypage-section-header {
-      display: flex; align-items: center; justify-content: space-between; padding: 14px 18px;
-      cursor: pointer; user-select: none; background: #fff; transition: background 0.1s;
+    /* 요약 스트립 */
+    .shop-summary-strip { grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+    .shop-summary-card {
+      background: #fff; border: 1px solid var(--border, #e8e8e8); border-radius: 14px;
+      padding: 14px 8px; text-align: center;
     }
-    .mypage-section-header:hover { background: #fafafa; }
-    .mypage-section-header-left { display: flex; align-items: center; gap: 8px; }
-    .mypage-section-name { font-size: 14px; font-weight: 700; color: #111; }
-    .mypage-section-count { font-size: 12px; font-weight: 600; background: #f3f4f6; color: #888; padding: 2px 8px; border-radius: 999px; }
-    .mypage-section-count.has-items { background: #111; color: #fff; }
-    .mypage-section-arrow { font-size: 11px; color: #bbb; transition: transform 0.2s; }
-    .mypage-section.collapsed .mypage-section-arrow { transform: rotate(-90deg); }
-    .mypage-section-body { border-top: 1.5px solid #e5e7eb; padding: 4px 14px 8px; background: #fff; }
-    .mypage-section.collapsed .mypage-section-body { display: none; }
+    .shop-summary-num { font-size: 22px; font-weight: 900; color: #111; line-height: 1.2; }
+    .shop-summary-label { font-size: 11px; color: #888; font-weight: 700; margin-top: 4px; }
+    @media (max-width: 480px) {
+      .shop-summary-strip { grid-template-columns: repeat(2, 1fr); }
+      .shop-summary-num { font-size: 19px; }
+    }
 
+    /* 지금 처리할 일 */
+    #shop-action-section { margin-bottom: 20px; }
+    .shop-action-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width: 640px) { .shop-action-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .shop-action-card {
+      display: flex; align-items: center; gap: 12px; background: #fffaf0;
+      border: 1.5px solid #fde68a; border-radius: 14px; padding: 14px 16px; flex-wrap: wrap;
+    }
+    .shop-action-role { font-size: 11px; font-weight: 800; padding: 4px 9px; border-radius: 999px; flex-shrink: 0; }
+    .shop-action-role.role-sell { background: #dbeafe; color: #1d4ed8; }
+    .shop-action-role.role-buy { background: #fce7f3; color: #be185d; }
+    .shop-action-main { flex: 1; min-width: 140px; }
+    .shop-action-game { font-size: 12px; color: #888; margin-bottom: 2px; }
+    .shop-action-price { font-size: 16px; font-weight: 900; color: #111; }
+    .shop-action-counterparty { font-size: 12px; color: #999; margin-top: 2px; }
+    .shop-action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .shop-action-btn {
+      border: none; border-radius: 9px; padding: 9px 14px; font-size: 12px; font-weight: 700;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; white-space: nowrap;
+    }
+    .shop-action-btn.primary { background: #111; color: #fff; }
+    .shop-action-btn.primary:hover { background: #2a2a2a; }
+    .shop-action-btn.secondary { background: #fff; color: #111; border: 1.5px solid #e5e7eb; }
+    .shop-action-btn.secondary:hover { border-color: #111; }
+
+    @media (max-width: 480px) {
+      .shop-action-card { padding: 12px; }
+      .shop-action-btns { width: 100%; }
+      .shop-action-btn { flex: 1; justify-content: center; }
+    }
+
+    /* 내 구매 내역 (완료/취소) */
+    #shop-purchases-section { margin-top: 28px; }
     .my-listing-item { display: flex; align-items: center; gap: 14px; padding: 12px 4px; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: opacity 0.15s; }
     .my-listing-item:hover { opacity: 0.7; }
     .my-listing-item:last-child { border-bottom: none; }
@@ -310,19 +350,34 @@ export async function onRequest({ params }) {
     .my-item-btn:hover { border-color: #ef4444; color: #ef4444; }
     .my-item-btn.review { border-color: #f97316; color: #f97316; }
     .my-item-btn.review:hover { background: #f97316; color: #fff; }
-    .my-item-btn.edit:hover { border-color: #111; color: #111; }
     .my-item-btn.confirm { border-color: var(--primary); color: var(--primary); }
     .my-item-btn.confirm:hover { background: var(--primary); color: #fff; }
 
     .empty-my { text-align: center; padding: 32px 0; color: #bbb; font-size: 13px; line-height: 1.8; }
     .empty-my a { color: #111; font-weight: 700; }
 
-    .sec-pager { display: flex; gap: 4px; justify-content: center; padding: 12px 0 8px; }
-    .sec-page-btn { min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; border: 1.5px solid #e5e7eb; background: #fff; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.15s; }
-    .sec-page-btn:hover { border-color: #111; color: #111; }
-    .sec-page-btn.active { background: #111; color: #fff; border-color: #111; }
+    /* 상점 설정 모달 */
+    .shop-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 10000; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto;
+    }
+    .shop-modal-overlay.open { display: flex; }
+    .shop-modal {
+      background: #fff; border-radius: 18px; width: 100%; max-width: 480px;
+      max-height: calc(100vh - 80px); display: flex; flex-direction: column; overflow: hidden;
+    }
+    .shop-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 20px; border-bottom: 1.5px solid #f0f0f0; flex-shrink: 0;
+    }
+    .shop-modal-header h3 { font-size: 16px; font-weight: 800; color: #111; margin: 0; }
+    .shop-modal-close {
+      background: none; border: none; font-size: 16px; color: #aaa; cursor: pointer;
+      width: 28px; height: 28px; border-radius: 50%; transition: background 0.15s;
+    }
+    .shop-modal-close:hover { background: #f3f4f6; color: #111; }
+    .shop-modal-body { padding: 20px; overflow-y: auto; }
 
-    /* 상점 설정 탭 */
     .shop-mgr-nick-row { display: flex; gap: 8px; align-items: center; margin-bottom: 22px; flex-wrap: wrap; }
     .shop-mgr-nick-row input { flex: 1; min-width: 140px; }
     .shop-mgr-label-sm { font-size: 12px; font-weight: 700; color: #888; margin-bottom: 6px; display: block; }
@@ -393,32 +448,45 @@ export async function onRequest({ params }) {
       ${policyChips ? `<div class="shop-chips">${policyChips}</div>` : ''}
       ${user.businessHours ? `<div class="shop-hours">🕒 영업시간 ${esc(user.businessHours)}</div>` : ''}
     </div>
+    <button class="shop-settings-btn" id="shop-settings-btn" onclick="mgrOpenSettings()">⚙ 상점 설정</button>
   </section>
 
-  <div class="shop-mgr-banner" id="shop-mgr-banner">
-    <span>👑 이 상점의 주인이에요</span>
-    <button class="shop-mgr-toggle-btn" id="shop-mgr-toggle-btn" onclick="toggleMgrPanel()">상점 관리 접기</button>
-  </div>
+  <div class="shop-summary-strip" id="shop-summary-strip"></div>
 
-  <section class="shop-mgr-panel" id="shop-mgr-panel">
-    <div class="shop-mgr-body" id="shop-mgr-body">
-      <div class="shop-mgr-tabs">
-        <div class="shop-mgr-tab active" data-tab="sell" onclick="mgrSwitchTab('sell')">판매 관리</div>
-        <div class="shop-mgr-tab" data-tab="buy" onclick="mgrSwitchTab('buy')">구매 내역</div>
-        <div class="shop-mgr-tab" data-tab="settings" onclick="mgrSwitchTab('settings')">상점 설정</div>
-      </div>
-      <div class="shop-mgr-tab-panel active" id="mgr-panel-sell"><div class="loading">불러오는 중...</div></div>
-      <div class="shop-mgr-tab-panel" id="mgr-panel-buy"></div>
-      <div class="shop-mgr-tab-panel" id="mgr-panel-settings"></div>
+  <section id="shop-action-section">
+    <h2 class="shop-section-title">⚡ 지금 처리할 일</h2>
+    <div class="shop-action-grid" id="shop-action-grid"></div>
+  </section>
+
+  <div class="shop-filters-row">
+    <div class="shop-tabs" id="shop-tabs">${tabsHtml}</div>
+    <div class="shop-status-filters" id="shop-status-filters">
+      <button class="shop-status-chip active" data-status="all">전체</button>
+      <button class="shop-status-chip" data-status="active">판매중</button>
+      <button class="shop-status-chip" data-status="trading">거래중</button>
+      <button class="shop-status-chip" data-status="sold">판매완료</button>
     </div>
-  </section>
-
-  <div class="shop-tabs" id="shop-tabs">${tabsHtml}</div>
+  </div>
 
   <div class="shop-grid" id="shop-grid">
     ${cardsHtml}
   </div>
+
+  <section id="shop-purchases-section">
+    <h2 class="shop-section-title">내 구매 내역</h2>
+    <div id="shop-purchases-list"></div>
+  </section>
 </main>
+
+<div class="shop-modal-overlay" id="shop-settings-modal" onclick="if(event.target===this) mgrCloseSettings()">
+  <div class="shop-modal">
+    <div class="shop-modal-header">
+      <h3>⚙ 상점 설정</h3>
+      <button class="shop-modal-close" onclick="mgrCloseSettings()" aria-label="닫기">✕</button>
+    </div>
+    <div class="shop-modal-body" id="shop-settings-body"><div class="loading">불러오는 중...</div></div>
+  </div>
+</div>
 
 <div id="footer-container"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -428,38 +496,62 @@ export async function onRequest({ params }) {
   loadAndRenderGameUI(null)
   document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : ''
 
+  // ===== 게임 탭 + 상태 필터 (방문자에게도 항상 노출) =====
   ;(function () {
-    var tabs = document.querySelectorAll('.shop-tab')
+    var gameTabs = document.querySelectorAll('.shop-tab')
+    var statusChips = document.querySelectorAll('.shop-status-chip')
     var cards = document.querySelectorAll('.shop-card')
-    tabs.forEach(function (tab) {
+    var activeGame = 'all'
+    var activeStatusFilter = 'all'
+
+    function statusMatches(cardStatus, filter) {
+      if (filter === 'all') return true
+      if (filter === 'trading') return cardStatus === 'trading' || cardStatus === 'seller_confirmed'
+      return cardStatus === filter
+    }
+
+    function applyFilters() {
+      cards.forEach(function (c) {
+        var gameOk = activeGame === 'all' || c.getAttribute('data-game') === activeGame
+        var statusOk = statusMatches(c.getAttribute('data-status'), activeStatusFilter)
+        c.style.display = (gameOk && statusOk) ? '' : 'none'
+      })
+    }
+
+    gameTabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
-        tabs.forEach(function (t) { t.classList.remove('active') })
+        gameTabs.forEach(function (t) { t.classList.remove('active') })
         tab.classList.add('active')
-        var g = tab.getAttribute('data-tab')
-        cards.forEach(function (c) {
-          c.style.display = (g === 'all' || c.getAttribute('data-game') === g) ? '' : 'none'
-        })
+        activeGame = tab.getAttribute('data-tab')
+        applyFilters()
+      })
+    })
+
+    statusChips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        statusChips.forEach(function (c) { c.classList.remove('active') })
+        chip.classList.add('active')
+        activeStatusFilter = chip.getAttribute('data-status')
+        applyFilters()
       })
     })
   })()
 
-  // ===== 상점 주인 관리 영역 (구 /mypage/ 기능 이식) =====
+  // ===== 상점 주인 대시보드 (구 /mypage/ 기능 이식) =====
   // 로그인한 유저의 username이 이 상점 페이지의 username과 같을 때만 노출된다.
   // SSR 시점엔 로그인 여부를 알 수 없으므로 반드시 클라이언트에서 판정한다.
   const PAGE_USERNAME = ${JSON.stringify(username)}
   const SHOP_RESERVED_USERNAMES = ['admin','shop','shops','api','trade','listing','mypage','auth','game','seller']
-  const MGR_PER_PAGE = 5
 
   let mgrCurrentUserId = null
   let mgrReviewedListingIds = new Set()
   let mgrStaleSellerConfirmedIds = new Set()
   let mgrStaleTradingIds = new Set()
-  const mgrSectionData = {}
 
   async function mgrInit() {
     try {
       const { data: { session } } = await db.auth.getSession()
-      if (!session) return // 비로그인 방문자는 관리 영역 없이 공개 상점만 본다
+      if (!session) return // 비로그인 방문자는 대시보드 없이 공개 상점만 본다
 
       const authUser = session.user
       const { data: me } = await db.from('User')
@@ -469,12 +561,11 @@ export async function onRequest({ params }) {
       if (!me || (me.username || '').toLowerCase() !== PAGE_USERNAME) return // 남의 상점을 구경 중
 
       mgrCurrentUserId = authUser.id
-      document.getElementById('shop-mgr-banner').style.display = 'flex'
-      document.getElementById('shop-mgr-panel').style.display = 'block'
+      document.body.classList.add('is-owner-view')
 
       await mgrLoadData(authUser, me)
     } catch (e) {
-      console.error('shop manager init error:', e)
+      console.error('shop dashboard init error:', e)
     }
   }
 
@@ -522,12 +613,32 @@ export async function onRequest({ params }) {
         .eq('buyerId', authUser.id)
         .order('createdAt', { ascending: false })
 
+      // 판매자로서 "계정 전달"을 아직 안 한, 구매자가 기다리고 있는 거래
+      const { data: sellActionTrades } = await db
+        .from('Trade')
+        .select(\`id, status, createdAt, listingId, buyerId,
+          listing:Listing(price, game:Game(nameKo, emoji))\`)
+        .eq('sellerId', authUser.id)
+        .eq('status', 'active')
+        .order('createdAt', { ascending: false })
+
       const { data: myReviews } = await db.from('Review').select('listingId').eq('reviewerId', authUser.id)
       mgrReviewedListingIds = new Set((myReviews ?? []).map(r => r.listingId))
 
-      mgrRender(authUser, me, listings ?? [], myTrades ?? [])
+      const buyActionTrades = (myTrades ?? []).filter(t => t.status === 'seller_confirmed')
+      const nickIds = [...new Set([
+        ...(sellActionTrades ?? []).map(t => t.buyerId),
+        ...buyActionTrades.map(t => t.sellerId),
+      ])].filter(Boolean)
+      let nickMap = {}
+      if (nickIds.length > 0) {
+        const { data: nickUsers } = await db.from('User').select('id, nickname').in('id', nickIds)
+        ;(nickUsers ?? []).forEach(u => { nickMap[u.id] = u.nickname })
+      }
+
+      mgrRender(authUser, me, listings ?? [], myTrades ?? [], sellActionTrades ?? [], nickMap)
     } catch (e) {
-      console.error('shop manager data load error:', e)
+      console.error('shop dashboard data load error:', e)
     }
   }
 
@@ -537,35 +648,102 @@ export async function onRequest({ params }) {
     return l.status
   }
 
-  function mgrRenderListingItem(l) {
-    const gameName = l.game?.nameKo ?? ''
-    const gameImg = l.game?.artImageUrl ?? ''
-    const gameEmoji = l.game?.emoji ?? ''
-    const chars = (l.characters ?? []).map(lc => lc.character?.nameKo).filter(Boolean)
-    const st = mgrGetEffectiveStatus(l)
-    const stClass = { active: 'status-active', trading: 'status-trading', seller_confirmed: 'status-seller-confirmed', sold: 'status-sold' }[st] ?? 'status-active'
-    const stText = { active: '판매중', trading: '거래중', seller_confirmed: '수령확인 대기', sold: '판매완료' }[st] ?? '판매중'
-    const btns = st !== 'sold' ? \`
-      <div>
-        <button class="my-item-btn edit" onclick="event.stopPropagation();location.href='/trade/register/?edit=\${l.id}'">수정</button>
-        <button class="my-item-btn" onclick="event.stopPropagation();mgrDeleteListing('\${l.id}')">삭제</button>
-      </div>\` : ''
-    return \`
-      <div class="my-listing-item" onclick="location.href='/listing/?id=\${l.id}'">
-        \${gameImg ? \`<img class="my-listing-thumb" src="\${gameImg}" alt="\${gameName}">\` : \`<div class="my-listing-thumb-placeholder">\${gameEmoji}</div>\`}
-        <div class="my-listing-info">
-          <div class="my-listing-game">\${gameName}</div>
-          <div class="my-listing-price">\${formatPrice(l.price)}</div>
-          <div class="my-listing-chars">\${chars.length > 0 ? chars.join(', ') : '캐릭터 없음'}</div>
-        </div>
-        <div class="my-listing-meta">
-          <div class="my-listing-status \${stClass}">\${stText}</div>
-          <div class="my-listing-time">\${timeAgo(l.createdAt)}</div>
-          \${btns}
-        </div>
-      </div>\`
+  function mgrEscapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))
   }
 
+  function mgrRender(authUser, me, listings, myTrades, sellActionTrades, nickMap) {
+    mgrRenderSummary(listings, myTrades)
+    mgrRenderActionSection(sellActionTrades, myTrades.filter(t => t.status === 'seller_confirmed'), nickMap)
+    mgrDecorateGrid()
+    mgrRenderPurchases(myTrades)
+    document.getElementById('shop-settings-body').innerHTML = mgrRenderSettingsPanel(authUser, me)
+  }
+
+  // --- 요약 스트립 ---
+  function mgrRenderSummary(listings, myTrades) {
+    const activeN = listings.filter(l => mgrGetEffectiveStatus(l) === 'active').length
+    const tradingN = listings.filter(l => ['trading', 'seller_confirmed'].includes(mgrGetEffectiveStatus(l))).length
+    const soldN = listings.filter(l => mgrGetEffectiveStatus(l) === 'sold').length
+    const buyingN = myTrades.filter(t => t.status === 'active' || t.status === 'seller_confirmed').length
+
+    document.getElementById('shop-summary-strip').innerHTML = \`
+      <div class="shop-summary-card"><div class="shop-summary-num">\${activeN}</div><div class="shop-summary-label">판매중</div></div>
+      <div class="shop-summary-card"><div class="shop-summary-num">\${tradingN}</div><div class="shop-summary-label">거래중</div></div>
+      <div class="shop-summary-card"><div class="shop-summary-num">\${soldN}</div><div class="shop-summary-label">판매완료</div></div>
+      <div class="shop-summary-card"><div class="shop-summary-num">\${buyingN}</div><div class="shop-summary-label">구매 진행중</div></div>
+    \`
+  }
+
+  // --- 지금 처리할 일 ---
+  function mgrRenderActionSection(sellActionTrades, buyActionTrades, nickMap) {
+    const section = document.getElementById('shop-action-section')
+    const grid = document.getElementById('shop-action-grid')
+    const cards = []
+
+    sellActionTrades.forEach(t => {
+      const l = t.listing
+      if (!l) return
+      const nick = nickMap[t.buyerId] || '구매자'
+      cards.push(\`
+        <div class="shop-action-card">
+          <span class="shop-action-role role-sell">판매</span>
+          <div class="shop-action-main">
+            <div class="shop-action-game">\${mgrEscapeHtml(l.game?.emoji || '')} \${mgrEscapeHtml(l.game?.nameKo || '')}</div>
+            <div class="shop-action-price">\${formatPrice(l.price)}</div>
+            <div class="shop-action-counterparty">구매자 \${mgrEscapeHtml(nick)} · \${timeAgo(t.createdAt)}</div>
+          </div>
+          <div class="shop-action-btns">
+            <button class="shop-action-btn primary" onclick="mgrSellerConfirm('\${t.id}','\${t.listingId}')">계정 전달 완료</button>
+          </div>
+        </div>\`)
+    })
+
+    buyActionTrades.forEach(t => {
+      const l = t.listing
+      if (!l) return
+      const nick = nickMap[t.sellerId] || '판매자'
+      cards.push(\`
+        <div class="shop-action-card">
+          <span class="shop-action-role role-buy">구매</span>
+          <div class="shop-action-main">
+            <div class="shop-action-game">\${mgrEscapeHtml(l.game?.emoji || '')} \${mgrEscapeHtml(l.game?.nameKo || '')}</div>
+            <div class="shop-action-price">\${formatPrice(l.price)}</div>
+            <div class="shop-action-counterparty">판매자 \${mgrEscapeHtml(nick)} · \${timeAgo(t.createdAt)}</div>
+          </div>
+          <div class="shop-action-btns">
+            <button class="shop-action-btn primary" onclick="mgrBuyerConfirm('\${t.id}','\${l.id}','\${t.sellerId}')">수령 확인</button>
+            <a class="shop-action-btn secondary" href="/review/?tradeId=\${t.id}">후기 작성</a>
+          </div>
+        </div>\`)
+    })
+
+    if (cards.length === 0) {
+      section.style.display = 'none'
+      return
+    }
+    section.style.display = ''
+    grid.innerHTML = cards.join('')
+  }
+
+  // --- 매물 그리드에 주인 전용 수정/삭제 버튼 부착 ---
+  function mgrDecorateGrid() {
+    document.querySelectorAll('.shop-card-owner-actions').forEach(el => el.remove())
+    document.querySelectorAll('.shop-card').forEach(card => {
+      const id = card.getAttribute('data-id')
+      const status = card.getAttribute('data-status')
+      if (!id || status === 'sold') return
+      const bar = document.createElement('div')
+      bar.className = 'shop-card-owner-actions'
+      bar.innerHTML = \`
+        <button class="shop-card-owner-btn" onclick="event.preventDefault();event.stopPropagation();location.href='/trade/register/?edit=\${id}'">수정</button>
+        <button class="shop-card-owner-btn danger" onclick="event.preventDefault();event.stopPropagation();mgrDeleteListing('\${id}')">삭제</button>
+      \`
+      card.appendChild(bar)
+    })
+  }
+
+  // --- 내 구매 내역 (완료/취소) ---
   function mgrRenderTradeItem(t) {
     const l = t.listing
     if (!l) return ''
@@ -577,11 +755,6 @@ export async function onRequest({ params }) {
     const stText = { active: '거래중', seller_confirmed: '수령확인 대기', completed: '거래완료', cancelled: '취소됨' }[t.status] ?? ''
     const reviewBtn = t.status === 'completed' && !mgrReviewedListingIds.has(l.id)
       ? \`<div><button class="my-item-btn review" onclick="event.stopPropagation();location.href='/review/?tradeId=\${t.id}'">후기작성</button></div>\` : ''
-    const confirmBtn = t.status === 'seller_confirmed'
-      ? \`<div>
-          <button class="my-item-btn confirm" onclick="event.stopPropagation();mgrBuyerConfirm('\${t.id}','\${l.id}','\${t.sellerId}')">수령 확인</button>
-          <button class="my-item-btn review" onclick="event.stopPropagation();location.href='/review/?tradeId=\${t.id}'">후기작성</button>
-        </div>\` : ''
     return \`
       <div class="my-listing-item" onclick="location.href='/listing/?id=\${l.id}'">
         \${gameImg ? \`<img class="my-listing-thumb" src="\${gameImg}" alt="\${gameName}">\` : \`<div class="my-listing-thumb-placeholder">\${gameEmoji}</div>\`}
@@ -594,88 +767,23 @@ export async function onRequest({ params }) {
           <div class="my-listing-status \${stClass}">\${stText}</div>
           <div class="my-listing-time">\${timeAgo(t.createdAt)}</div>
           \${reviewBtn}
-          \${confirmBtn}
         </div>
       </div>\`
   }
 
-  function mgrSectionHtml(id, name, items) {
-    mgrSectionData[id] = { items, page: 1 }
-    const count = items.length
-    return \`
-      <div class="mypage-section collapsed" id="sec-wrap-\${id}">
-        <div class="mypage-section-header" onclick="mgrToggleSection('\${id}')">
-          <div class="mypage-section-header-left">
-            <span class="mypage-section-name">\${name}</span>
-            <span class="mypage-section-count \${count > 0 ? 'has-items' : ''}">\${count}</span>
-          </div>
-          <span class="mypage-section-arrow">▼</span>
-        </div>
-        <div class="mypage-section-body" id="sec-\${id}">
-          <div id="sec-items-\${id}"></div>
-          <div id="sec-pager-\${id}"></div>
-        </div>
-      </div>\`
-  }
-
-  function mgrRenderSectionPage(id) {
-    const d = mgrSectionData[id]
-    if (!d) return
-    const { items, page } = d
-    const totalPages = Math.ceil(items.length / MGR_PER_PAGE)
-    const pageItems = items.slice((page - 1) * MGR_PER_PAGE, page * MGR_PER_PAGE)
-
-    document.getElementById('sec-items-' + id).innerHTML =
-      pageItems.length ? pageItems.join('') : '<div class="empty-my">없어요</div>'
-
-    if (totalPages <= 1) {
-      document.getElementById('sec-pager-' + id).innerHTML = ''
+  function mgrRenderPurchases(myTrades) {
+    const section = document.getElementById('shop-purchases-section')
+    const list = document.getElementById('shop-purchases-list')
+    const historyTrades = myTrades.filter(t => t.status === 'completed' || t.status === 'cancelled')
+    if (historyTrades.length === 0) {
+      section.style.display = 'none'
       return
     }
-    let html = '<div class="sec-pager">'
-    if (page > 1) html += \`<button class="sec-page-btn" onclick="mgrGoSectionPage('\${id}',\${page-1})">‹</button>\`
-    for (let i = 1; i <= totalPages; i++) {
-      html += \`<button class="sec-page-btn \${i===page?'active':''}" onclick="mgrGoSectionPage('\${id}',\${i})">\${i}</button>\`
-    }
-    if (page < totalPages) html += \`<button class="sec-page-btn" onclick="mgrGoSectionPage('\${id}',\${page+1})">›</button>\`
-    html += '</div>'
-    document.getElementById('sec-pager-' + id).innerHTML = html
+    section.style.display = ''
+    list.innerHTML = historyTrades.map(mgrRenderTradeItem).join('')
   }
 
-  function mgrGoSectionPage(id, page) {
-    mgrSectionData[id].page = page
-    mgrRenderSectionPage(id)
-  }
-
-  function mgrRender(authUser, me, listings, myTrades) {
-    const ongoingListings = listings.filter(l => mgrGetEffectiveStatus(l) !== 'sold')
-    const soldListings = listings.filter(l => mgrGetEffectiveStatus(l) === 'sold')
-    const activeTrades = myTrades.filter(t => t.status === 'active' || t.status === 'seller_confirmed')
-    const doneTrades = myTrades.filter(t => t.status === 'completed')
-    const cancelledTrades = myTrades.filter(t => t.status === 'cancelled')
-
-    document.getElementById('mgr-panel-sell').innerHTML = \`
-      \${mgrSectionHtml('sale-ongoing', '판매 중', ongoingListings.map(mgrRenderListingItem))}
-      \${mgrSectionHtml('sale-done', '판매 완료', soldListings.map(mgrRenderListingItem))}
-      \${ongoingListings.length === 0 && soldListings.length === 0
-        ? '<div class="empty-my" style="padding:40px 0;">아직 등록한 판매계정이 없어요<br><br><a href="/trade/register/">판매계정 올리기 →</a></div>' : ''}
-    \`
-
-    document.getElementById('mgr-panel-buy').innerHTML = \`
-      \${mgrSectionHtml('buy-ongoing', '거래 진행중', activeTrades.map(mgrRenderTradeItem))}
-      \${mgrSectionHtml('buy-done', '거래 완료', doneTrades.map(mgrRenderTradeItem))}
-      \${cancelledTrades.length > 0 ? mgrSectionHtml('buy-cancelled', '취소된 거래', cancelledTrades.map(mgrRenderTradeItem)) : ''}
-      \${activeTrades.length === 0 && doneTrades.length === 0 && cancelledTrades.length === 0
-        ? '<div class="empty-my" style="padding:40px 0;">아직 구매한 판매계정이 없어요<br><br><a href="/trade/">거래소 둘러보기 →</a></div>' : ''}
-    \`
-
-    document.getElementById('mgr-panel-settings').innerHTML = mgrRenderSettingsPanel(authUser, me)
-  }
-
-  function mgrEscapeHtml(str) {
-    return String(str ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))
-  }
-
+  // --- 상점 설정 (모달) ---
   function mgrRenderSettingsPanel(authUser, me) {
     const nickname = me.nickname ?? ''
     const username = me.username ?? ''
@@ -757,6 +865,20 @@ export async function onRequest({ params }) {
       <button class="shop-mgr-logout-btn" onclick="mgrLogout()">로그아웃</button>
     \`
   }
+
+  function mgrOpenSettings() {
+    document.getElementById('shop-settings-modal').classList.add('open')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function mgrCloseSettings() {
+    document.getElementById('shop-settings-modal').classList.remove('open')
+    document.body.style.overflow = ''
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') mgrCloseSettings()
+  })
 
   async function mgrSaveNickname(userId) {
     const val = document.getElementById('mgr-nickname-input').value.trim()
@@ -850,29 +972,17 @@ export async function onRequest({ params }) {
     setTimeout(() => toast.classList.remove('show'), 2200)
   }
 
-  function mgrToggleSection(id) {
-    const wrap = document.getElementById('sec-wrap-' + id)
-    if (!wrap) return
-    const wasCollapsed = wrap.classList.contains('collapsed')
-    wrap.classList.toggle('collapsed')
-    if (wasCollapsed) mgrRenderSectionPage(id)
-  }
-
-  function mgrSwitchTab(tab) {
-    document.querySelectorAll('.shop-mgr-tab').forEach(el => {
-      el.classList.toggle('active', el.dataset.tab === tab)
-    })
-    document.getElementById('mgr-panel-sell').classList.toggle('active', tab === 'sell')
-    document.getElementById('mgr-panel-buy').classList.toggle('active', tab === 'buy')
-    document.getElementById('mgr-panel-settings').classList.toggle('active', tab === 'settings')
-  }
-
-  function toggleMgrPanel() {
-    const panel = document.getElementById('shop-mgr-panel')
-    const btn = document.getElementById('shop-mgr-toggle-btn')
-    const collapsed = panel.style.display === 'none'
-    panel.style.display = collapsed ? 'block' : 'none'
-    btn.textContent = collapsed ? '상점 관리 접기' : '상점 관리 펴기'
+  // --- 거래 액션: 판매자 계정 전달 완료 / 구매자 수령 확인 / 매물 삭제 ---
+  async function mgrSellerConfirm(tradeId, listingId) {
+    if (!confirm('계정을 구매자에게 전달하셨나요?\\n확인을 누르면 구매자에게 수령 확인 요청이 돼요.')) return
+    try {
+      await db.from('Trade').update({ status: 'seller_confirmed' }).eq('id', tradeId)
+      await db.from('Listing').update({ status: 'seller_confirmed' }).eq('id', listingId)
+      location.reload()
+    } catch (e) {
+      console.error(e)
+      alert('오류가 발생했어요: ' + e.message)
+    }
   }
 
   async function mgrBuyerConfirm(tradeId, listingId, sellerId) {
@@ -894,7 +1004,7 @@ export async function onRequest({ params }) {
       }
 
       alert('거래가 완료됐어요! 감사합니다 😊')
-      mgrInit()
+      location.reload()
     } catch (e) {
       console.error(e)
       alert('오류가 발생했어요: ' + e.message)
@@ -908,7 +1018,7 @@ export async function onRequest({ params }) {
     await db.from('Trade').delete().eq('listingId', id)
     const { error } = await db.from('Listing').delete().eq('id', id)
     if (error) { alert('삭제 중 오류가 발생했어요: ' + error.message); return }
-    mgrInit()
+    location.reload()
   }
 
   async function mgrLogout() {
@@ -938,6 +1048,7 @@ function renderCard(l) {
   const game = l.game || {}
   const isCurrency = l.type === 'currency'
   const isSold = l.status === 'sold'
+  const isSellerConfirmed = l.status === 'seller_confirmed'
   const isTrading = l.status === 'trading'
 
   let bodyInner
@@ -971,12 +1082,14 @@ function renderCard(l) {
   const stockChip = (l.stock && l.stock > 1) ? `<span class="shop-stock-chip">재고 ${esc(l.stock)}</span>` : ''
   const statusOverlay = isSold
     ? `<div class="shop-status-overlay">판매완료</div>`
-    : isTrading
-      ? `<div class="shop-status-overlay">거래중</div>`
-      : ''
+    : isSellerConfirmed
+      ? `<div class="shop-status-overlay">수령확인 대기</div>`
+      : isTrading
+        ? `<div class="shop-status-overlay">거래중</div>`
+        : ''
 
   return `
-    <a class="shop-card${isSold ? ' is-sold' : ''}" href="/listing/?id=${esc(l.id)}" data-game="${esc(game.slug || '')}">
+    <a class="shop-card${isSold ? ' is-sold' : ''}" href="/listing/?id=${esc(l.id)}" data-id="${esc(l.id)}" data-game="${esc(game.slug || '')}" data-status="${esc(l.status || '')}">
       ${stockChip}
       ${statusOverlay}
       <div class="shop-card-body">
