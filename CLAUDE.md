@@ -1006,7 +1006,14 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 ### 페이지
 - `/shop/{username}` — 상점 SSR (`functions/shop/[username].js`, `_routes.json` include `/shop/*`). 헤더(배지·평점·정책칩)+게임탭+매물 그리드.
 - `/trade/` — 유형 탭(전체/리세계/돌계). `listings.js`의 `loadListings({typeFilter})`.
-- 카드: 돌계 배지(#0ea5e9)+재화 라인(약N연), 재고 칩(stock>1), 🏪 상점 미니라인(+✓인증).
+- **매물 카드 = 대표 캐릭터 히어로형** (2026-08-03 개편, `renderListingCard` in `js/listings.js`):
+  - `.listings-grid`는 **4열 그리드** (1280px↓ 3열 / 900px↓ 2열). 기존 1열 가로 카드에서 전환.
+  - 히어로(4:3): **첫 번째 캐릭터 이미지**가 대표. 캐릭터 없으면 게임 `artImageUrl`→`imageUrl`.
+    캐릭터 이미지 404 시 `onerror`로 게임 이미지 폴백.
+  - 히어로 문구: 캐릭터 있으면 `캐릭터명 / 외 N명 보유`, 돌계면 `재화명 수량 / 약 N연 분량`, 둘 다 없으면 `게임명 / 상세 설명 참고`.
+  - 히어로 하단 3px 라인 = 대표 캐릭터 티어색. `cardTierClass()`로 정규화(s/a/b/c) — `gradeClass()`는 쿠키런킹덤 전용이라 별도 함수.
+  - 스트립: 2번째 캐릭터부터 최대 6칸(+N). 캐릭터 1명뿐이거나 돌계면 재화 칩이 그 자리에.
+  - 기본 페이지 크기 `limit = 12` (4열 × 3줄).
 - `/trade/register/` — **3단계**: 게임/서버 → 계정 구성(캐릭터 + 재화를 한 화면에서 자유롭게, 최소 1개) → 가격+재고+상시판매. 리세계/돌계 유형 선택 단계는 없앰(2026-08-03) — 리세계에도 재화가 있고 돌계에도 캐릭이 있어서.
 - `/mypage/` — **`/shop/{username}` 리다이렉트 스텁**(비로그인은 `/auth/`). 마이페이지 기능은 상점 페이지로 통합됨.
 - **상점 = 마이페이지 통합**: `/shop/{username}` 접속자가 주인이면(클라이언트에서 `db.auth.getSession()`으로 판정) 공개 상점 아래 **관리 영역**(판매 관리 / 구매 내역 / 상점 설정) 노출. 함수는 `mgr*` 접두어(mgrInit·mgrBuyerConfirm=수령확인·mgrSaveShopSettings·mgrDeleteListing 등). 네비바의 내 아이디 클릭 → `/shop/{username}`(username 없으면 `/mypage/` 폴백).
