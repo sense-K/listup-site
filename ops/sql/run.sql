@@ -33,6 +33,3 @@ WHERE NOT EXISTS (SELECT 1 FROM "Currency" c WHERE c."gameId"=g.id AND c."nameKo
 \echo '===== [D] 시드 결과 ====='
 SELECT g.slug, c."nameKo", c."ratePerUnit" FROM "Currency" c JOIN "Game" g ON g.id=c."gameId" ORDER BY g.slug, c."sortOrder";
 
-\echo '===== [E] 트리거 동작 테스트 (롤백됨) ====='
-INSERT INTO "User"(id, nickname, "createdAt") VALUES ('zz-trigger-test','트리거테스트', now());
-SELECT id, "username" FROM "User" WHERE id='zz-trigger-test';
