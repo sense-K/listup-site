@@ -29,7 +29,8 @@ jobs:
           check "$U" 200 "끌올"
           check "$U" 200 "파워 판매자"
           check "$U" 200 "공식 파트너"
-          check "$U" 200 "대행" gone
+          check "$U" 200 "우수대행" gone
+          check "$U" 200 "파워대행" gone
           echo "== 거래소: 유형 탭 제거 =="
           check "https://resetlist.kr/trade/" 200 "trade-type-tab" gone
           check "https://resetlist.kr/trade/" 200 "setTypeFilter" gone
