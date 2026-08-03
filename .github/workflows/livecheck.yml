@@ -10,33 +10,31 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'RUNLIVE')
     runs-on: ubuntu-latest
     steps:
-      - name: 상점 통합 + 푸터 + 회귀 검증
+      - name: 대시보드 재설계 검증
         run: |
           check() {
-            local url="$1" expect="$2" needle="$3"
+            url="$1"; expect="$2"; needle="$3"; mode="${4:-want}"
             code=$(curl -s -o /tmp/body -w "%{http_code}" --max-time 20 "$url")
             size=$(wc -c < /tmp/body); hit="-"
             if [ -n "$needle" ]; then grep -q "$needle" /tmp/body && hit="FOUND" || hit="MISSING"; fi
-            echo "[$code/$expect] size=$size  needle($needle)=$hit  $url"
-            [ "$code" != "$expect" ] && echo "::error::$url -> $code (expect $expect)"
-            [ -n "$needle" ] && [ "$hit" = "MISSING" ] && echo "::error::$url missing '$needle'"
+            echo "[$code/$expect] size=$size  $mode($needle)=$hit  $url"
+            [ "$code" != "$expect" ] && echo "::error::$url -> $code"
+            if [ "$mode" = "want" ] && [ "$hit" = "MISSING" ]; then echo "::error::missing '$needle'"; fi
+            if [ "$mode" = "gone" ] && [ "$hit" = "FOUND" ]; then echo "::error::should be removed: '$needle'"; fi
             return 0
           }
-          echo "== 상점 통합(관리 영역) =="
-          check "https://resetlist.kr/shop/shop0002" 200 "판매 관리"
-          check "https://resetlist.kr/shop/shop0002" 200 "구매 내역"
-          check "https://resetlist.kr/shop/shop0002" 200 "상점 설정"
-          check "https://resetlist.kr/shop/shop0002" 200 "인증"
-          echo "== 마이페이지 리다이렉트 스텁 =="
-          check "https://resetlist.kr/mypage/" 200 "/shop/"
-          echo "== 푸터(config.js) =="
-          check "https://resetlist.kr/js/config.js" 200 "통신판매중개자"
-          check "https://resetlist.kr/js/config.js" 200 "footer-col"
-          check "https://resetlist.kr/js/config.js" 200 "/shop/"
-          echo "== 푸터 링크 실제 존재 확인 =="
-          for p in /trade/ /trade/register/ /trade/price/ /contact/ /game/genshin/characters/ /game/starrail/characters/ /game/zzz/characters/ /game/nikke/characters/ /game/wuwa/characters/ /game/bluearchive/students/ /game/genshin/uid/; do
-            check "https://resetlist.kr$p" 200 ""
-          done
+          U="https://resetlist.kr/shop/shop0002"
+          echo "== 새 대시보드 요소 =="
+          check "$U" 200 "지금 처리할 일"
+          check "$U" 200 "상점 설정"
+          check "$U" 200 "mgrSellerConfirm"
+          check "$U" 200 "mgrRenderSummary"
+          check "$U" 200 "수령 확인"
+          echo "== 제거된 UI (없어야 정상) =="
+          check "$U" 200 "mgrSwitchTab" gone
+          check "$U" 200 "상점 관리 접기" gone
+          check "$U" 200 "이 상점의 주인이에요" gone
           echo "== 회귀 =="
           check "https://resetlist.kr/" 200 "플레이센스"
           check "https://resetlist.kr/trade/" 200 "돌계"
+          check "https://resetlist.kr/mypage/" 200 "/shop/"
