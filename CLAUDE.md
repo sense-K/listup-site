@@ -999,7 +999,7 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 
 ### 스키마 (반영 완료)
 - `User`(=상점 1:1): `username`(영문 아이디, URL용, 유니크, 기존 유저 shop0001~ 백필, 신규는 트리거 `trg_user_default_username`이 shop0300~ 자동발급), `shopBio`, `isVerified`, `sellerGrade`, `deliveryTime`, `refundPolicy`, `supportRecovery`, `businessHours`. 상점 이름 = 기존 `nickname`.
-- `Listing`: `type`('reroll'=리세계/'currency'=돌계, CHECK 제약), `stock`(재고), `isAlwaysOn`(상시판매).
+- `Listing`: `type`('reroll'=리세계/'currency'=돌계, CHECK 제약) — **등록 화면에서 사용자가 고르지 않고 내용으로 자동 판별**(캐릭터 없이 재화만 있으면 'currency', 그 외 'reroll'). 거래소 유형 탭 필터용으로만 쓰임. `stock`(재고), `isAlwaysOn`(상시판매).
 - 돌계 재화: `Currency`(gameId별) + `ListingCurrency(amount)`. `ratePerUnit`=1연당 재화량 → "약 N연"=floor(amount/ratePerUnit). 시드: 원신 원석160/스타레일 성옥160/젠레스 폴리크롬160/명조 성성석160/니케 쥬얼300/블아 청휘석120.
 - **보안 트리거** `trg_protect_user_admin_cols`: PostgREST 경유 비관리자(zzabhm@gmail.com 외)의 `isVerified`/`sellerGrade`/`role`/`trustScore` 변경 무시(셀프 인증배지 차단). psql 경로는 통과 → 인증 부여는 SQL Runner로.
 
@@ -1007,7 +1007,7 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 - `/shop/{username}` — 상점 SSR (`functions/shop/[username].js`, `_routes.json` include `/shop/*`). 헤더(배지·평점·정책칩)+게임탭+매물 그리드.
 - `/trade/` — 유형 탭(전체/리세계/돌계). `listings.js`의 `loadListings({typeFilter})`.
 - 카드: 돌계 배지(#0ea5e9)+재화 라인(약N연), 재고 칩(stock>1), 🏪 상점 미니라인(+✓인증).
-- `/trade/register/` — 게임→**유형 선택**→(리세계: 캐릭터 / 돌계: 재화 필수입력)→가격+재고+상시판매. 돌계 미지원 게임(Currency 없음)은 안내 후 리세계 복귀.
+- `/trade/register/` — **3단계**: 게임/서버 → 계정 구성(캐릭터 + 재화를 한 화면에서 자유롭게, 최소 1개) → 가격+재고+상시판매. 리세계/돌계 유형 선택 단계는 없앰(2026-08-03) — 리세계에도 재화가 있고 돌계에도 캐릭이 있어서.
 - `/mypage/` — **`/shop/{username}` 리다이렉트 스텁**(비로그인은 `/auth/`). 마이페이지 기능은 상점 페이지로 통합됨.
 - **상점 = 마이페이지 통합**: `/shop/{username}` 접속자가 주인이면(클라이언트에서 `db.auth.getSession()`으로 판정) 공개 상점 아래 **관리 영역**(판매 관리 / 구매 내역 / 상점 설정) 노출. 함수는 `mgr*` 접두어(mgrInit·mgrBuyerConfirm=수령확인·mgrSaveShopSettings·mgrDeleteListing 등). 네비바의 내 아이디 클릭 → `/shop/{username}`(username 없으면 `/mypage/` 폴백).
 - 상점 설정: username(영문, `^[a-z0-9-]{3,20}$`, 예약어 차단)·shopBio·정책 수정, 상점 링크 복사. isVerified/sellerGrade는 읽기전용.
@@ -1023,13 +1023,14 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 | 등급 | 조건 |
 |---|---|
 | (없음) | 거래 완료 10건 미만 |
-| 우수대행 | 거래 완료 10건 이상 · 평점 4.0 이상 |
-| 파워대행 | 거래 완료 30건 이상 · 평점 4.5 이상 · 최근 30일 내 판매 활동 |
-| 공식파트너 | 운영자 직접 선정 (자동화가 건드리지 않음 — 강등 예외) |
+| 우수 판매자 | 거래 완료 10건 이상 · 평점 4.0 이상 |
+| 파워 판매자 | 거래 완료 30건 이상 · 평점 4.5 이상 · 최근 30일 내 판매 활동 |
+| 공식 파트너 | 운영자 직접 선정 (자동화가 건드리지 않음 — 강등 예외) |
 
 - 함수 `recompute_seller_grades()` + pg_cron `auto-seller-grade` (매일 18:10 UTC = 03:10 KST). 조건 미달 시 자동 강등.
   - 집계 기준: `Trade.status='completed' AND sellerId=u.id` 건수, `Review.sellerId=u.id` 평균 평점, 최근 30일 `Listing` 활동.
-- 공식파트너 수동 부여: `UPDATE "User" SET "sellerGrade"='공식파트너' WHERE username='...'` ([sql] 경유).
+- 공식 파트너 수동 부여: `UPDATE "User" SET "sellerGrade"='공식 파트너' WHERE username='...'` ([sql] 경유).
+- **등급 명칭에 '대행'을 쓰지 말 것** — 개인↔개인 거래도 있으므로 '판매자'로 통일 (2026-08-03).
 - 노출 위치: 상점 헤더 배지 / 거래소 카드 `.card-shop-mini` / listing 상세 판매자 행 / 상점설정 모달(조건 안내 토글 `#badge-help-grade`).
 
 ### 운영
