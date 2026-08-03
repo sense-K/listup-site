@@ -1,35 +1,28 @@
--- 상점모델 2차: RLS 점검 + username 자동발급 트리거 + 돌계 재화 시드. [sql-dry]
-\echo '===== [A] User / ListingCurrency / Currency RLS 정책 현황 ====='
-SELECT tablename, policyname, cmd, roles, qual, with_check FROM pg_policies
-WHERE tablename IN ('User','ListingCurrency','Currency') ORDER BY tablename, cmd;
+-- 보안: 인증배지 셀프부여 차단 트리거 + phase2 반영 확인. [sql-dry] 먼저.
+\echo '===== phase2 반영 확인 (트리거/시드가 실DB에 있는지) ====='
+SELECT tgname FROM pg_trigger WHERE tgname='trg_user_default_username';
+SELECT count(*) AS seeded_currencies FROM "Currency" c JOIN "Game" g ON g.id=c."gameId"
+WHERE (g.slug,c."nameKo") IN (('genshin','원석'),('starrail','성옥'),('zzz','폴리크롬'),('wuwa','성성석'),('nikke','쥬얼'),('bluearchive','청휘석'));
 
-\echo '===== [B] username 자동발급 트리거 생성 ====='
-CREATE SEQUENCE IF NOT EXISTS user_username_seq START 300;
-CREATE OR REPLACE FUNCTION set_default_username() RETURNS trigger AS $fn$
+\echo '===== 관리자 전용 컬럼 보호 트리거 생성 ====='
+CREATE OR REPLACE FUNCTION protect_user_admin_columns() RETURNS trigger AS $fn$
 BEGIN
-  IF NEW."username" IS NULL OR NEW."username" = '' THEN
-    NEW."username" := 'shop' || lpad(nextval('user_username_seq')::text, 4, '0');
+  -- PostgREST 경유 요청(anon/authenticated)에서 관리자 이메일이 아니면 민감 컬럼 변경 무시
+  IF current_setting('role', true) IN ('anon','authenticated')
+     AND coalesce(auth.email(),'') <> 'zzabhm@gmail.com' THEN
+    NEW."isVerified"  := OLD."isVerified";
+    NEW."sellerGrade" := OLD."sellerGrade";
+    NEW."role"        := OLD."role";
+    NEW."trustScore"  := OLD."trustScore";
   END IF;
   RETURN NEW;
 END $fn$ LANGUAGE plpgsql;
-DROP TRIGGER IF EXISTS trg_user_default_username ON "User";
-CREATE TRIGGER trg_user_default_username BEFORE INSERT ON "User"
-FOR EACH ROW EXECUTE FUNCTION set_default_username();
+DROP TRIGGER IF EXISTS trg_protect_user_admin_cols ON "User";
+CREATE TRIGGER trg_protect_user_admin_cols BEFORE UPDATE ON "User"
+FOR EACH ROW EXECUTE FUNCTION protect_user_admin_columns();
 
-\echo '===== [C] 돌계 재화 시드 (있으면 스킵) ====='
-INSERT INTO "Currency"(id, "gameId", "nameKo", "ratePerUnit", "isActive", "sortOrder")
-SELECT gen_random_uuid(), g.id, v.nm, v.rate, true, 0
-FROM (VALUES
-  ('genshin','원석',160),
-  ('starrail','성옥',160),
-  ('zzz','폴리크롬',160),
-  ('wuwa','성성석',160),
-  ('nikke','쥬얼',300),
-  ('bluearchive','청휘석',120)
-) AS v(slug,nm,rate)
-JOIN "Game" g ON g.slug = v.slug
-WHERE NOT EXISTS (SELECT 1 FROM "Currency" c WHERE c."gameId"=g.id AND c."nameKo"=v.nm);
+\echo '===== 트리거 존재 확인 ====='
+SELECT tgname FROM pg_trigger WHERE tgname IN ('trg_protect_user_admin_cols','trg_user_default_username');
 
-\echo '===== [D] 시드 결과 ====='
-SELECT g.slug, c."nameKo", c."ratePerUnit" FROM "Currency" c JOIN "Game" g ON g.id=c."gameId" ORDER BY g.slug, c."sortOrder";
-
+\echo '===== psql(관리자 경로) 업데이트는 통과하는지 테스트 (롤백됨) ====='
+UPDATE "User" SET "isVerified" = true WHERE "username" = 'shop0002' RETURNING "username","isVerified";
