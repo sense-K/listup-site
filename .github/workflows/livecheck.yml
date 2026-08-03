@@ -24,41 +24,29 @@ jobs:
             return 0
           }
           U="https://resetlist.kr/shop/shop0002"
-          echo "== 상점: 등록 버튼 + 등급 안내 =="
-          check "$U" 200 "판매글 등록"
-          check "$U" 200 "/trade/register/"
+          echo "== 상점: 끌올 버튼 + 등급 =="
+          check "$U" 200 "mgrBump"
+          check "$U" 200 "끌올"
           check "$U" 200 "파워 판매자"
           check "$U" 200 "공식 파트너"
-          check "$U" 200 "mgrToggleBadgeHelp"
-          echo "== 인증 배지 · 대행 표현 제거 =="
-          check "$U" 200 "인증 상점" gone
-          check "$U" 200 "shop-badge-verified" gone
-          check "$U" 200 "isVerified" gone
           check "$U" 200 "대행" gone
-          echo "== 랜딩 히어로 버튼 =="
+          echo "== 거래소: 유형 탭 제거 =="
+          check "https://resetlist.kr/trade/" 200 "trade-type-tab" gone
+          check "https://resetlist.kr/trade/" 200 "setTypeFilter" gone
+          echo "== 랜딩: 업데이트 안내 섹션 =="
           check "https://resetlist.kr/" 200 "내 상점 가기"
-          check "https://resetlist.kr/" 200 "내 계정 판매하기" gone
-          echo "== 판매 등록: 유형 선택 제거 =="
-          R="https://resetlist.kr/trade/register/"
-          check "$R" 200 "계정에 뭐가 들어있나요"
-          check "$R" 200 "proceedFromContents"
-          check "$R" 200 "panel-type" gone
-          check "$R" 200 "selectType" gone
-          check "$R" 200 "어떤 유형의 계정인가요" gone
+          check "https://resetlist.kr/" 200 "update-notice-section"
+          check "https://resetlist.kr/" 200 "끌어올리기"
+          echo "== SEO: 대행/돌계 키워드 =="
+          check "https://resetlist.kr/trade/" 200 "돌계"
+          check "https://resetlist.kr/trade/genshin/" 200 "원신 대행"
+          check "https://resetlist.kr/trade/nikke/" 200 "돌계"
+          echo "== 404였던 명조 시세 =="
+          check "https://resetlist.kr/trade/price/wuwa/" 200 "명조"
+          echo "== listings.js: bumpedAt 정렬 =="
           curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/js/listings.js?cb=${GITHUB_RUN_ID}" > /tmp/l.js
-          echo "listings.js size=$(wc -c < /tmp/l.js)"
-          grep -q "isVerified" /tmp/l.js && echo "::error::listings.js에 isVerified 남음" || echo "listings.js clean"
-          grep -q "sellerGrade" /tmp/l.js && echo "listings.js sellerGrade OK" || echo "::error::listings.js sellerGrade 없음"
-          echo "== 헤더에서 시세 제거 (config.js) =="
-          curl -s --max-time 20 "https://resetlist.kr/js/config.js" > /tmp/cfg.js
-          NAV=$(sed -n '1,120p' /tmp/cfg.js | grep -c "trade/price" || true)
-          ALL=$(grep -c "trade/price" /tmp/cfg.js || true)
-          echo "navbar 영역 시세링크=$NAV (0이어야) / 파일 전체=$ALL (푸터에 1 남아야)"
-          [ "$NAV" != "0" ] && echo "::error::헤더에 시세 링크 남아있음"
-          [ "$ALL" = "0" ] && echo "::error::푸터 시세 링크까지 사라짐"
-          echo "== 시세 페이지는 살아있어야 =="
-          check "https://resetlist.kr/trade/price/" 200 ""
-          check "https://resetlist.kr/trade/price/genshin/" 200 ""
+          grep -q "bumpedAt" /tmp/l.js && echo "listings.js bumpedAt OK" || echo "::error::listings.js bumpedAt 없음"
+          grep -q "typeFilter" /tmp/l.js && echo "::error::listings.js typeFilter 남음" || echo "listings.js typeFilter clean"
           echo "== 회귀 =="
           check "https://resetlist.kr/" 200 "플레이센스"
           check "https://resetlist.kr/trade/" 200 "돌계"
