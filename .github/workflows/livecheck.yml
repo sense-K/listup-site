@@ -24,12 +24,19 @@ jobs:
             return 0
           }
           U="https://resetlist.kr/shop/shop0002"
-          echo "== 상점: 등록 버튼 + 배지 안내 =="
+          echo "== 상점: 등록 버튼 + 등급 안내 =="
           check "$U" 200 "판매글 등록"
           check "$U" 200 "/trade/register/"
-          check "$U" 200 "인증 상점이란"
           check "$U" 200 "파워대행"
+          check "$U" 200 "공식파트너"
           check "$U" 200 "mgrToggleBadgeHelp"
+          echo "== 인증 배지 흔적 제거 =="
+          check "$U" 200 "인증 상점" gone
+          check "$U" 200 "shop-badge-verified" gone
+          check "$U" 200 "isVerified" gone
+          curl -s --max-time 20 "https://resetlist.kr/js/listings.js" > /tmp/l.js
+          grep -q "isVerified" /tmp/l.js && echo "::error::listings.js에 isVerified 남음" || echo "listings.js clean"
+          grep -q "sellerGrade" /tmp/l.js && echo "listings.js sellerGrade OK" || echo "::error::listings.js sellerGrade 없음"
           echo "== 헤더에서 시세 제거 (config.js) =="
           curl -s --max-time 20 "https://resetlist.kr/js/config.js" > /tmp/cfg.js
           NAV=$(sed -n '1,120p' /tmp/cfg.js | grep -c "trade/price" || true)
