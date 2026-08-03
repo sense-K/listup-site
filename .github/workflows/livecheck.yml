@@ -34,7 +34,8 @@ jobs:
           check "$U" 200 "인증 상점" gone
           check "$U" 200 "shop-badge-verified" gone
           check "$U" 200 "isVerified" gone
-          curl -s --max-time 20 "https://resetlist.kr/js/listings.js" > /tmp/l.js
+          curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/js/listings.js?cb=${GITHUB_RUN_ID}" > /tmp/l.js
+          echo "listings.js size=$(wc -c < /tmp/l.js)"
           grep -q "isVerified" /tmp/l.js && echo "::error::listings.js에 isVerified 남음" || echo "listings.js clean"
           grep -q "sellerGrade" /tmp/l.js && echo "listings.js sellerGrade OK" || echo "::error::listings.js sellerGrade 없음"
           echo "== 헤더에서 시세 제거 (config.js) =="
