@@ -61,7 +61,7 @@ export async function onRequest({ params }) {
   try {
     const users = await supaGet(
       `User?username=eq.${encodeURIComponent(username)}` +
-      `&select=id,username,nickname,shopBio,isVerified,sellerGrade,deliveryTime,refundPolicy,supportRecovery,businessHours,tradeCount,avgRating,profileImage,createdAt&limit=1`
+      `&select=id,username,nickname,shopBio,sellerGrade,deliveryTime,refundPolicy,supportRecovery,businessHours,tradeCount,avgRating,profileImage,createdAt&limit=1`
     )
     const user = users?.[0]
     if (!user) {
@@ -94,8 +94,6 @@ export async function onRequest({ params }) {
     const avgRating = user.avgRating != null ? Number(user.avgRating).toFixed(1) : null
     const tradeCount = user.tradeCount ?? 0
 
-    const verifiedBadge = user.isVerified
-      ? `<span class="shop-badge shop-badge-verified">✓ 인증</span>` : ''
     const gradeBadge = user.sellerGrade
       ? `<span class="shop-badge shop-badge-grade">🏅 ${esc(user.sellerGrade)}</span>` : ''
 
@@ -181,7 +179,6 @@ export async function onRequest({ params }) {
     .shop-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
     .shop-name { font-size: 22px; font-weight: 900; color: #111; }
     .shop-badge { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
-    .shop-badge-verified { background: #d1fae5; color: #0f7a52; }
     .shop-badge-grade { background: linear-gradient(135deg,#fde68a,#f59e0b); color: #78350f; }
     .shop-bio { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 12px; white-space: pre-wrap; }
     .shop-stats { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: #666; margin-bottom: 10px; }
@@ -465,7 +462,6 @@ export async function onRequest({ params }) {
     <div class="shop-hero-body">
       <div class="shop-name-row">
         <span class="shop-name">${esc(nickname)}</span>
-        ${verifiedBadge}
         ${gradeBadge}
       </div>
       ${user.shopBio ? `<p class="shop-bio">${esc(user.shopBio)}</p>` : ''}
@@ -587,7 +583,7 @@ export async function onRequest({ params }) {
 
       const authUser = session.user
       const { data: me } = await db.from('User')
-        .select('id, nickname, username, shopBio, deliveryTime, refundPolicy, supportRecovery, businessHours, isVerified, sellerGrade')
+        .select('id, nickname, username, shopBio, deliveryTime, refundPolicy, supportRecovery, businessHours, sellerGrade')
         .eq('id', authUser.id).single()
 
       if (!me || (me.username || '').toLowerCase() !== PAGE_USERNAME) return // 남의 상점을 구경 중
@@ -824,43 +820,28 @@ export async function onRequest({ params }) {
     const refundPolicy = me.refundPolicy ?? ''
     const supportRecovery = !!me.supportRecovery
     const businessHours = me.businessHours ?? ''
-    const isVerified = !!me.isVerified
     const sellerGrade = me.sellerGrade ?? ''
 
-    const badgeRow = isVerified
+    const badgeRow = sellerGrade
       ? \`<div class="shop-mgr-badges">
-          <button type="button" class="badge-info-btn" onclick="mgrToggleBadgeHelp('verified')"
-            title="인증 상점이란? (눌러서 조건 보기)">
-            <span class="shop-verified-badge" style="background:#16a34a;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">✓ 인증 상점 &#9432;</span>
+          <button type="button" class="badge-info-btn" onclick="mgrToggleBadgeHelp('grade')" title="등급 조건 보기">
+            <span class="shop-grade-badge" style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">🏅 \${mgrEscapeHtml(sellerGrade)} &#9432;</span>
           </button>
-          \${sellerGrade ? \`<button type="button" class="badge-info-btn" onclick="mgrToggleBadgeHelp('grade')" title="등급 조건 보기">
-            <span class="shop-grade-badge" style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">\${mgrEscapeHtml(sellerGrade)} &#9432;</span>
-          </button>\` : ''}
         </div>\`
       : \`<div class="shop-mgr-verify-hint">
-           아직 인증 배지가 없어요 ·
-           <button type="button" class="badge-info-btn" style="text-decoration:underline;font-weight:700;" onclick="mgrToggleBadgeHelp('verified')">받는 조건 보기</button>
+           아직 판매자 등급이 없어요 ·
+           <button type="button" class="badge-info-btn" style="text-decoration:underline;font-weight:700;" onclick="mgrToggleBadgeHelp('grade')">등급 조건 보기</button>
          </div>\`
 
     const badgesHtml = badgeRow + \`
-      <div class="badge-help" id="badge-help-verified">
-        <h5>✓ 인증 상점이란?</h5>
-        <p style="margin:0 0 8px;">운영자가 판매자 신원과 거래 이력을 확인한 상점이에요. 구매자에게 "검증된 판매자"로 표시됩니다.</p>
-        <ul>
-          <li>운영자에게 신원·연락처 확인을 완료</li>
-          <li>플레이센스에서 정상 거래 완료 이력이 있음</li>
-          <li>사기·분쟁 신고 이력이 없음</li>
-        </ul>
-        <div class="apply">신청은 <a href="/contact/" style="color:#6c47ff;font-weight:700;">문의하기</a>로 연락 주세요. 운영자 심사 후 부여됩니다.</div>
-      </div>
       <div class="badge-help" id="badge-help-grade">
         <h5>🏅 판매자 등급이란?</h5>
-        <p style="margin:0 0 8px;">거래 실적과 평점에 따라 운영자가 부여하는 등급이에요.</p>
-        <div class="grade-row"><span class="grade-name">신규</span><span>거래 완료 10건 미만</span></div>
+        <p style="margin:0 0 8px;">거래 실적과 평점에 따라 <b>매일 자동으로</b> 반영되는 등급이에요. 따로 신청하지 않아도 조건을 채우면 붙습니다.</p>
+        <div class="grade-row"><span class="grade-name">등급 없음</span><span>거래 완료 10건 미만</span></div>
         <div class="grade-row"><span class="grade-name">우수대행</span><span>거래 완료 10건 이상 · 평점 4.0 이상</span></div>
         <div class="grade-row"><span class="grade-name">파워대행</span><span>거래 완료 30건 이상 · 평점 4.5 이상 · 최근 30일 내 판매 활동</span></div>
         <div class="grade-row"><span class="grade-name">공식파트너</span><span>운영자가 직접 선정한 대행</span></div>
-        <div class="apply">등급은 조건 충족 시 운영자 확인 후 반영돼요.</div>
+        <div class="apply">집계 기준은 <b>거래 완료된 판매 건수</b>와 <b>받은 후기 평균 평점</b>이에요. 조건에서 내려가면 등급도 자동으로 조정돼요.</div>
       </div>\`
 
     return \`

@@ -1016,8 +1016,23 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 ### 푸터 (2026-08-03 재작업)
 `js/config.js` `renderFooter()` 4열 그리드(브랜드/거래/게임정보/고객지원) + 통신판매중개자 면책 고지. CSS는 `css/style.css` `.footer-*`(PC4열→태블릿2열→모바일). **푸터 링크는 실존 경로만** — 이용약관·개인정보처리방침 페이지는 아직 없어 링크하지 않음(만들면 추가할 것).
 
+### 판매자 등급 (2026-08-03 — 인증 배지는 UI에서 제거, 등급만 운영)
+`isVerified` 컬럼·보호 트리거는 DB에 남아있지만 **UI 어디에도 노출하지 않음**. 이유: "운영자가 신원 확인"이라는 근거가 실체 없이 신뢰도만 과장하기 때문. 나중에 실제 인증수단(사업자등록번호 진위확인 / 계좌 1원 인증 / 휴대폰 본인인증)을 붙일 때 다시 켤 것.
+
+노출되는 배지는 `sellerGrade` 하나뿐:
+| 등급 | 조건 |
+|---|---|
+| (없음) | 거래 완료 10건 미만 |
+| 우수대행 | 거래 완료 10건 이상 · 평점 4.0 이상 |
+| 파워대행 | 거래 완료 30건 이상 · 평점 4.5 이상 · 최근 30일 내 판매 활동 |
+| 공식파트너 | 운영자 직접 선정 (자동화가 건드리지 않음 — 강등 예외) |
+
+- 함수 `recompute_seller_grades()` + pg_cron `auto-seller-grade` (매일 18:10 UTC = 03:10 KST). 조건 미달 시 자동 강등.
+  - 집계 기준: `Trade.status='completed' AND sellerId=u.id` 건수, `Review.sellerId=u.id` 평균 평점, 최근 30일 `Listing` 활동.
+- 공식파트너 수동 부여: `UPDATE "User" SET "sellerGrade"='공식파트너' WHERE username='...'` ([sql] 경유).
+- 노출 위치: 상점 헤더 배지 / 거래소 카드 `.card-shop-mini` / listing 상세 판매자 행 / 상점설정 모달(조건 안내 토글 `#badge-help-grade`).
+
 ### 운영
-- 인증 배지 부여: `UPDATE "User" SET "isVerified"=true, "sellerGrade"='파워대행' WHERE username='...'` ([sql] 경유).
 - 돌계 신규 게임 지원 = Currency 행 추가만 하면 등록 UI 자동 활성화.
 - **⚠️ `[sql]` 반영 전 `ops/sql/run.sql`에 테스트용 UPDATE가 남아있지 않은지 확인할 것** (dry-run용 구문을 지우지 않고 반영해 의도치 않게 DB가 바뀐 사고 있었음).
 - 라이브 검증: `.github/workflows/livecheck.yml` — 커밋 메시지에 `RUNLIVE` 넣어 push하면 배포본 주요 URL·문구를 러너에서 확인.

@@ -1170,8 +1170,8 @@ a { text-decoration: none; color: inherit; }
   color: var(--text-light);
   margin-top: 6px;
 }
-.card-shop-mini .verified {
-  color: #16a34a;
+.card-shop-mini .grade {
+  color: #6c47ff;
   font-weight: 800;
 }
 

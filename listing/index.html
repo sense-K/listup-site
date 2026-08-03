@@ -61,8 +61,8 @@
     /* 돌계 배지 */
     .currency-type-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; color: #fff; background: #0ea5e9; padding: 4px 10px; border-radius: 999px; }
 
-    /* 인증 판매자 배지 */
-    .shop-verified-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 800; color: #0f7a52; background: #d1fae5; padding: 2px 7px; border-radius: 999px; margin-left: 4px; }
+    /* 판매자 등급 배지 */
+    .shop-grade-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 800; color: #5b34d6; background: #ece7ff; padding: 2px 7px; border-radius: 999px; margin-left: 4px; }
 
     /* 상점 방문 링크 */
     .shop-visit-row { padding: 4px 0 10px; }
@@ -187,7 +187,7 @@
         id, price, description, kakaoOpenChatUrl, createdAt, viewCount, status, userId, gameId, type, stock,
         game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
         server:Server(nameKo),
-        user:User(username, nickname, tradeCount, avgRating, isVerified),
+        user:User(username, nickname, tradeCount, avgRating, sellerGrade),
         characters:ListingCharacter(count, character:Character(nameKo, tier, imageUrl, metadata)),
         currencies:ListingCurrency(amount, currency:Currency(nameKo, imageUrl, sortOrder, ratePerUnit))
       `)
@@ -240,7 +240,7 @@
     const serverName = l.server?.nameKo ?? ''
     const nickname = l.user?.nickname ?? '익명'
     const username = l.user?.username ?? ''
-    const isVerified = !!l.user?.isVerified
+    const sellerGrade = l.user?.sellerGrade ?? ''
     const tradeCount = l.user?.tradeCount ?? 0
     const avgRating = l.user?.avgRating ? Number(l.user.avgRating).toFixed(1) : null
     const isCurrencyListing = l.type === 'currency'
@@ -345,7 +345,7 @@
               <div>
                 <span>
                   <a class="detail-seller-name" href="/user/?id=${l.userId}" style="text-decoration:none;color:inherit;">${nickname}</a>
-                  ${isVerified ? '<span class="shop-verified-badge">✓ 인증</span>' : ''}
+                  ${sellerGrade ? `<span class="shop-grade-badge">🏅 ${sellerGrade}</span>` : ''}
                   ${trustBadge}
                 </span>
                 <div class="detail-seller-meta">${timeAgo(l.createdAt)} 등록</div>
@@ -373,7 +373,7 @@
   }
 
   function trustBadgeHtml(tradeCount) {
-    if (tradeCount >= 30) return '<span class="trust-badge lv4">🥇 인증 판매자</span>'
+    if (tradeCount >= 30) return '<span class="trust-badge lv4">🥇 베테랑 판매자</span>'
     if (tradeCount >= 10) return '<span class="trust-badge lv3">🥈 신뢰 판매자</span>'
     if (tradeCount >= 3)  return '<span class="trust-badge lv2">🥉 거래 경험</span>'
     return '<span class="trust-badge lv1">신규</span>'

@@ -488,7 +488,7 @@ function renderFooter() {
           <div class="footer-col">
             <div class="footer-link-title">고객지원</div>
             <a href="/contact/">문의하기</a>
-            <p class="footer-note">거래 전 판매자의 인증 배지와 거래 후기를 꼭 확인하세요.</p>
+            <p class="footer-note">거래 전 판매자의 등급과 거래 후기를 꼭 확인하세요.</p>
           </div>
         </div>
         <div class="footer-bottom">

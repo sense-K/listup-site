@@ -17,7 +17,7 @@ function renderListingCard(listing) {
   const gameArtUrl = listing.game?.artImageUrl ?? ''
   const serverName = listing.server?.nameKo ?? ''
   const nickname = listing.user?.nickname ?? '익명'
-  const isVerified = !!listing.user?.isVerified
+  const sellerGrade = listing.user?.sellerGrade ?? ''
   const artClass = getArtClass(gameSlug)
 
   const isCurrency = listing.type === 'currency'
@@ -64,8 +64,8 @@ function renderListingCard(listing) {
     </div>`
   }).join('') : ''
 
-  // 상점 미니 라인 (판매자 닉네임 + 인증뱃지) — 카드 전체가 <a>라서 텍스트로만 표시
-  const shopMiniHtml = `<div class="card-shop-mini">🏪 ${nickname}${isVerified ? ` <span class="verified">✓</span>` : ''}</div>`
+  // 상점 미니 라인 (판매자 닉네임 + 등급) — 카드 전체가 <a>라서 텍스트로만 표시
+  const shopMiniHtml = `<div class="card-shop-mini">🏪 ${nickname}${sellerGrade ? ` <span class="grade">🏅 ${sellerGrade}</span>` : ''}</div>`
 
   const isSold = listing.status === 'sold'
   const isTrading = listing.status === 'trading'
@@ -175,7 +175,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       id, price, discountAmount, description, createdAt, viewCount, status, type, stock,
       game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
       server:Server(nameKo),
-      user:User(nickname, username, isVerified),
+      user:User(nickname, username, sellerGrade),
       characters:ListingCharacter(
         count,
         character:Character(nameKo, tier, imageUrl, metadata)
