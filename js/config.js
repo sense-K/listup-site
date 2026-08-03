@@ -57,7 +57,6 @@ function renderNavbar(activePage = '') {
               <a href="/trade/register/" class="nav-dropdown-item">✏️ 판매 등록하기</a>
             </div>
           </div>
-          <a href="/trade/price/" class="muted">시세</a>
           <a href="/contact/" class="muted">문의하기</a>
         </div>
         <div class="navbar-actions" id="navbar-actions">
@@ -82,8 +81,6 @@ function renderNavbar(activePage = '') {
           <a href="/trade/" class="mobile-menu-link" style="font-size:14px;padding:8px 0;">🏪 거래소 바로가기</a>
           <a href="/trade/register/" class="mobile-menu-link" style="font-size:14px;padding:8px 0;">✏️ 판매 등록하기</a>
         </div>
-        <div class="mobile-menu-divider"></div>
-        <a href="/trade/price/" class="mobile-menu-link">시세</a>
         <div class="mobile-menu-divider"></div>
         <a href="/contact/" class="mobile-menu-link">문의하기</a>
         <div class="mobile-menu-divider"></div>

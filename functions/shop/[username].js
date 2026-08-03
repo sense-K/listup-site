@@ -190,14 +190,43 @@ export async function onRequest({ params }) {
     .shop-chip { font-size: 12px; font-weight: 700; color: #6c47ff; background: #f3f0ff; padding: 5px 11px; border-radius: 999px; }
     .shop-hours { font-size: 12px; color: #999; }
 
-    /* 주인 전용: 상점 설정 버튼 (헤더 우측) */
+    /* 주인 전용: 헤더 우측 액션 (판매글 등록 · 상점 설정) */
+    .shop-owner-actions {
+      display: none; gap: 8px; flex-shrink: 0; margin-left: auto; align-self: flex-start; flex-wrap: wrap;
+    }
+    .shop-register-btn {
+      display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+      background: #6c47ff; color: #fff; border-radius: 10px;
+      padding: 9px 16px; font-size: 13px; font-weight: 700; transition: background 0.15s; white-space: nowrap;
+    }
+    .shop-register-btn:hover { background: #5a37e0; }
     .shop-settings-btn {
-      display: none; align-items: center; gap: 6px; flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
       background: #111; color: #fff; border: none; border-radius: 10px;
       padding: 9px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.15s;
-      margin-left: auto; align-self: flex-start;
+      white-space: nowrap;
     }
     .shop-settings-btn:hover { background: #2a2a2a; }
+    @media (max-width: 560px) {
+      .shop-owner-actions { width: 100%; margin-left: 0; }
+      .shop-register-btn, .shop-settings-btn { flex: 1; justify-content: center; }
+    }
+
+    /* 배지 설명 (설정 모달) */
+    .badge-info-btn {
+      background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: inherit;
+    }
+    .badge-help {
+      margin-top: 10px; background: #f8f7ff; border: 1px solid #e5e0ff; border-radius: 10px;
+      padding: 12px 14px; font-size: 12px; color: #444; line-height: 1.6; display: none;
+    }
+    .badge-help.open { display: block; }
+    .badge-help h5 { margin: 0 0 4px; font-size: 12.5px; font-weight: 800; color: #111; }
+    .badge-help ul { margin: 0 0 10px; padding-left: 16px; }
+    .badge-help li { margin: 2px 0; }
+    .badge-help .grade-row { display: flex; gap: 6px; margin: 3px 0; align-items: baseline; }
+    .badge-help .grade-name { font-weight: 800; color: #6c47ff; min-width: 62px; }
+    .badge-help .apply { color: #666; border-top: 1px dashed #ddd; padding-top: 8px; margin-top: 4px; }
 
     /* 게임 탭 + 상태 필터 */
     .shop-filters-row { margin-bottom: 20px; }
@@ -274,8 +303,8 @@ export async function onRequest({ params }) {
     }
 
     /* ===== 주인 전용: 대시보드 영역 ===== */
-    #shop-settings-btn, #shop-summary-strip, #shop-action-section, #shop-purchases-section { display: none; }
-    body.is-owner-view #shop-settings-btn { display: inline-flex; }
+    #shop-owner-actions, #shop-summary-strip, #shop-action-section, #shop-purchases-section { display: none; }
+    body.is-owner-view #shop-owner-actions { display: flex; }
     body.is-owner-view #shop-summary-strip { display: grid; }
     body.is-owner-view #shop-action-section { display: block; }
     body.is-owner-view #shop-purchases-section { display: block; }
@@ -448,7 +477,10 @@ export async function onRequest({ params }) {
       ${policyChips ? `<div class="shop-chips">${policyChips}</div>` : ''}
       ${user.businessHours ? `<div class="shop-hours">🕒 영업시간 ${esc(user.businessHours)}</div>` : ''}
     </div>
-    <button class="shop-settings-btn" id="shop-settings-btn" onclick="mgrOpenSettings()">⚙ 상점 설정</button>
+    <div class="shop-owner-actions" id="shop-owner-actions">
+      <a href="/trade/register/" class="shop-register-btn">＋ 판매글 등록</a>
+      <button class="shop-settings-btn" id="shop-settings-btn" onclick="mgrOpenSettings()">⚙ 상점 설정</button>
+    </div>
   </section>
 
   <div class="shop-summary-strip" id="shop-summary-strip"></div>
@@ -795,12 +827,41 @@ export async function onRequest({ params }) {
     const isVerified = !!me.isVerified
     const sellerGrade = me.sellerGrade ?? ''
 
-    const badgesHtml = isVerified
+    const badgeRow = isVerified
       ? \`<div class="shop-mgr-badges">
-          <span class="shop-verified-badge" style="background:#16a34a;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">✓ 인증 상점</span>
-          \${sellerGrade ? \`<span class="shop-grade-badge" style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">\${mgrEscapeHtml(sellerGrade)}</span>\` : ''}
+          <button type="button" class="badge-info-btn" onclick="mgrToggleBadgeHelp('verified')"
+            title="인증 상점이란? (눌러서 조건 보기)">
+            <span class="shop-verified-badge" style="background:#16a34a;color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">✓ 인증 상점 &#9432;</span>
+          </button>
+          \${sellerGrade ? \`<button type="button" class="badge-info-btn" onclick="mgrToggleBadgeHelp('grade')" title="등급 조건 보기">
+            <span class="shop-grade-badge" style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">\${mgrEscapeHtml(sellerGrade)} &#9432;</span>
+          </button>\` : ''}
         </div>\`
-      : \`<div class="shop-mgr-verify-hint">인증 배지는 운영자 심사 후 부여돼요</div>\`
+      : \`<div class="shop-mgr-verify-hint">
+           아직 인증 배지가 없어요 ·
+           <button type="button" class="badge-info-btn" style="text-decoration:underline;font-weight:700;" onclick="mgrToggleBadgeHelp('verified')">받는 조건 보기</button>
+         </div>\`
+
+    const badgesHtml = badgeRow + \`
+      <div class="badge-help" id="badge-help-verified">
+        <h5>✓ 인증 상점이란?</h5>
+        <p style="margin:0 0 8px;">운영자가 판매자 신원과 거래 이력을 확인한 상점이에요. 구매자에게 "검증된 판매자"로 표시됩니다.</p>
+        <ul>
+          <li>운영자에게 신원·연락처 확인을 완료</li>
+          <li>플레이센스에서 정상 거래 완료 이력이 있음</li>
+          <li>사기·분쟁 신고 이력이 없음</li>
+        </ul>
+        <div class="apply">신청은 <a href="/contact/" style="color:#6c47ff;font-weight:700;">문의하기</a>로 연락 주세요. 운영자 심사 후 부여됩니다.</div>
+      </div>
+      <div class="badge-help" id="badge-help-grade">
+        <h5>🏅 판매자 등급이란?</h5>
+        <p style="margin:0 0 8px;">거래 실적과 평점에 따라 운영자가 부여하는 등급이에요.</p>
+        <div class="grade-row"><span class="grade-name">신규</span><span>거래 완료 10건 미만</span></div>
+        <div class="grade-row"><span class="grade-name">우수대행</span><span>거래 완료 10건 이상 · 평점 4.0 이상</span></div>
+        <div class="grade-row"><span class="grade-name">파워대행</span><span>거래 완료 30건 이상 · 평점 4.5 이상 · 최근 30일 내 판매 활동</span></div>
+        <div class="grade-row"><span class="grade-name">공식파트너</span><span>운영자가 직접 선정한 대행</span></div>
+        <div class="apply">등급은 조건 충족 시 운영자 확인 후 반영돼요.</div>
+      </div>\`
 
     return \`
       <div class="shop-mgr-nick-row">
@@ -874,6 +935,15 @@ export async function onRequest({ params }) {
   function mgrCloseSettings() {
     document.getElementById('shop-settings-modal').classList.remove('open')
     document.body.style.overflow = ''
+  }
+
+  // 배지 설명 토글 (데스크톱 hover는 title, 모바일/클릭은 이 토글)
+  function mgrToggleBadgeHelp(kind) {
+    const target = document.getElementById('badge-help-' + kind)
+    if (!target) return
+    const wasOpen = target.classList.contains('open')
+    document.querySelectorAll('.badge-help').forEach(el => el.classList.remove('open'))
+    if (!wasOpen) target.classList.add('open')
   }
 
   document.addEventListener('keydown', e => {
