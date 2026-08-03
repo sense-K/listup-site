@@ -17,7 +17,11 @@ function renderListingCard(listing) {
   const gameArtUrl = listing.game?.artImageUrl ?? ''
   const serverName = listing.server?.nameKo ?? ''
   const nickname = listing.user?.nickname ?? '익명'
+  const sellerGrade = listing.user?.sellerGrade ?? ''
   const artClass = getArtClass(gameSlug)
+
+  const isCurrency = listing.type === 'currency'
+  const stock = listing.stock ?? 1
 
   const chars = listing.characters ?? []
   const currencies = (listing.currencies ?? []).filter(lc => lc.currency && lc.amount > 0)
@@ -45,6 +49,24 @@ function renderListingCard(listing) {
     ? `<span class="card-discount">↓ ${formatPrice(listing.discountAmount)} 할인</span>`
     : ''
 
+  // 돌계(재화) 배지 + 재고 칩
+  const dollBadge = isCurrency ? `<span class="badge-type-doll">돌계</span>` : ''
+  const stockChip = stock > 1 ? `<span class="stock-chip">재고 ${stock}</span>` : ''
+
+  // 돌계 카드: 캐릭터 칩 대신 재화 라인(재화 이미지 + 이름 + 수량 + 환산 연차)
+  const currencyLinesHtml = isCurrency ? currencies.map(lc => {
+    const c = lc.currency
+    const rate = c?.ratePerUnit
+    const approx = (rate && rate > 0) ? ` · 약 ${Math.floor(lc.amount / rate).toLocaleString()}연` : ''
+    return `<div class="card-currency-line">
+      ${c?.imageUrl ? `<img src="${c.imageUrl}" alt="${c.nameKo ?? '재화'}">` : `<span class="card-currency-line-icon">💎</span>`}
+      <span class="card-currency-line-text">${c?.nameKo ?? '재화'} ${(lc.amount ?? 0).toLocaleString()}${approx}</span>
+    </div>`
+  }).join('') : ''
+
+  // 상점 미니 라인 (판매자 닉네임 + 등급) — 카드 전체가 <a>라서 텍스트로만 표시
+  const shopMiniHtml = `<div class="card-shop-mini">🏪 ${nickname}${sellerGrade ? ` <span class="grade">🏅 ${sellerGrade}</span>` : ''}</div>`
+
   const isSold = listing.status === 'sold'
   const isTrading = listing.status === 'trading'
   const hotBadge = !isSold && !isTrading && listing.viewCount > 50 ? `<div class="badge-hot">🔥 HOT</div>` : ''
@@ -64,13 +86,14 @@ function renderListingCard(listing) {
         ${gameArtUrl ? `<img class="card-art-img" src="${gameArtUrl}" alt="${gameName}">` : ''}
         <div class="card-art-overlay"></div>
         ${isSold ? `<div class="card-art-blur"></div>` : ''}
+        ${dollBadge}
         ${hotBadge}
         ${tradingOverlay}
         ${soldOverlay}
         ${gameName ? `<span class="card-art-game-name">${gameName}</span>` : ''}
       </div>
       <div class="card-body">
-        ${currencies.length > 0 ? `
+        ${(currencies.length > 0 && !isCurrency) ? `
         <div class="card-currencies">
           ${currencies.map(lc => {
             const c = lc.currency
@@ -80,21 +103,27 @@ function renderListingCard(listing) {
             </span>`
           }).join('')}
         </div>` : ''}
-        <div class="card-chars">${charBadges}${extraBadge}</div>
+        ${isCurrency
+          ? `<div class="card-currency-lines">${currencyLinesHtml}</div>`
+          : `<div class="card-chars">${charBadges}${extraBadge}</div>`}
         ${listing.description ? `<p class="card-desc">${listing.description.replace(/\r?\n/g, ' ').trim()}</p>` : ''}
         <div class="card-footer">
           <div>
             <span class="card-price">${formatPrice(listing.price)}</span>
             ${discountHtml}
           </div>
-          ${serverName ? `<span class="card-server-chip">${serverName}</span>` : ''}
+          <div class="card-footer-chips">
+            ${stockChip}
+            ${serverName ? `<span class="card-server-chip">${serverName}</span>` : ''}
+          </div>
         </div>
+        ${shopMiniHtml}
       </div>
   ` + wrapClose
 }
 
 // ===== 매물 목록 로드 =====
-async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest', append = false, moreBtn = null, characterIds = null, characterFilter = null }) {
+async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9, sort = 'latest', append = false, moreBtn = null, characterIds = null, characterFilter = null, typeFilter = 'all' }) {
   const el = document.getElementById(container)
   if (!el) return
 
@@ -141,17 +170,17 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
       }
     }
 
-    // 판매중(active/trading) 먼저, 판매완료(sold) 나중 — 각 그룹 내에서 선택 정렬 적용
+    // 상태 구분 없이 최신순으로 한 번에 노출 (거래중·판매완료가 섞여 활발해 보이도록)
     const SELECT_FIELDS = `
-      id, price, discountAmount, description, createdAt, viewCount, status,
+      id, price, discountAmount, description, createdAt, viewCount, status, type, stock,
       game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
       server:Server(nameKo),
-      user:User(nickname),
+      user:User(nickname, username, sellerGrade),
       characters:ListingCharacter(
         count,
         character:Character(nameKo, tier, imageUrl, metadata)
       ),
-      currencies:ListingCurrency(amount, currency:Currency(nameKo, imageUrl, sortOrder))
+      currencies:ListingCurrency(amount, currency:Currency(nameKo, imageUrl, sortOrder, ratePerUnit))
     `
     const orderCol = sort === 'price' ? 'price' : 'createdAt'
     const orderAsc = sort === 'price'
@@ -162,20 +191,17 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 9
         .order(orderCol, { ascending: orderAsc })
       if (gameId) q = q.eq('gameId', gameId)
       if (serverId) q = q.eq('serverId', serverId)
+      if (typeFilter && typeFilter !== 'all') q = q.eq('type', typeFilter)
       if (filteredListingIds) q = q.in('id', filteredListingIds)
       return q
     }
 
-    // 두 그룹을 병렬 fetch (각각 최대 200개)
-    const [{ data: activeData, error: e1 }, { data: soldData, error: e2 }] = await Promise.all([
-      buildBase(['active', 'trading']).limit(200),
-      buildBase(['sold']).limit(200),
-    ])
-    const error = e1 || e2
+    // 판매중·거래중·판매완료를 한 번에 최신순(또는 가격순)으로 fetch — 상태별로 묶지 않음
+    const { data: mixedData, error } = await buildBase(['active', 'trading', 'sold']).limit(400)
     if (error) throw error
 
-    // 판매중 → 판매완료 순으로 합치고 페이지네이션
-    const allListings = [...(activeData ?? []), ...(soldData ?? [])]
+    // 정렬 그대로(최신순/가격순) 사용 → 거래완료가 뒤로 몰리지 않고 중간중간 섞여 노출됨
+    const allListings = mixedData ?? []
     const start = (page - 1) * limit
     const listings = allListings.slice(start, start + limit + 1)  // limit+1 for hasMore check
 

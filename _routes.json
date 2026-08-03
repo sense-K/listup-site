@@ -4,6 +4,7 @@
     "/api/*",
     "/game/*",
     "/trade/*",
+    "/shop/*",
     "/sitemap.xml"
   ],
   "exclude": [

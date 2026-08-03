@@ -57,7 +57,6 @@ function renderNavbar(activePage = '') {
               <a href="/trade/register/" class="nav-dropdown-item">✏️ 판매 등록하기</a>
             </div>
           </div>
-          <a href="/trade/price/" class="muted">시세</a>
           <a href="/contact/" class="muted">문의하기</a>
         </div>
         <div class="navbar-actions" id="navbar-actions">
@@ -82,8 +81,6 @@ function renderNavbar(activePage = '') {
           <a href="/trade/" class="mobile-menu-link" style="font-size:14px;padding:8px 0;">🏪 거래소 바로가기</a>
           <a href="/trade/register/" class="mobile-menu-link" style="font-size:14px;padding:8px 0;">✏️ 판매 등록하기</a>
         </div>
-        <div class="mobile-menu-divider"></div>
-        <a href="/trade/price/" class="mobile-menu-link">시세</a>
         <div class="mobile-menu-divider"></div>
         <a href="/contact/" class="mobile-menu-link">문의하기</a>
         <div class="mobile-menu-divider"></div>
@@ -155,21 +152,22 @@ async function initNavbarAuth() {
   const mobileEl = document.getElementById('mobile-menu-actions')
   if (!el) return
   if (session?.user) {
-    let { data: user } = await db.from('User').select('nickname').eq('id', session.user.id).maybeSingle()
+    let { data: user } = await db.from('User').select('nickname, username').eq('id', session.user.id).maybeSingle()
     if (!user) {
       const meta = session.user.user_metadata
       const nickname = meta?.full_name ?? meta?.name ?? session.user.email?.split('@')[0] ?? '사용자'
       await db.from('User').insert({ id: session.user.id, nickname, isPhoneVerified: false, createdAt: new Date().toISOString() })
-      user = { nickname }
+      user = { nickname, username: null }
     }
     const nickname = user?.nickname ?? '사용자'
+    const shopPath = user?.username ? `/shop/${user.username}` : '/mypage/'
     el.innerHTML = `
-      <a href="/mypage/" style="font-size:13px;color:#888;font-weight:600;">${nickname}</a>
+      <a href="${shopPath}" style="font-size:13px;color:#888;font-weight:600;">${nickname}</a>
       <button class="login-btn" onclick="authSignOut()" style="background:none;border:none;cursor:pointer;">로그아웃</button>
     `
     if (mobileEl) {
       mobileEl.innerHTML = `
-        <a href="/mypage/" class="btn btn-primary" style="text-align:center;">마이페이지 (${nickname})</a>
+        <a href="${shopPath}" class="btn btn-primary" style="text-align:center;">내 상점 (${nickname})</a>
         <button class="mobile-logout-btn" onclick="authSignOut()">로그아웃</button>
       `
     }
@@ -466,14 +464,36 @@ function renderFooter() {
     <footer class="site-footer">
       <div class="site-footer-inner">
         <div class="footer-top">
-          <div class="footer-brand">
-            <span class="footer-logo">플레이센스</span>
-            <p class="footer-desc">모바일 게임 공략 · 빌드 · 거래 플랫폼</p>
+          <div class="footer-col footer-brand">
+            <a href="/" class="footer-logo">플레이센스</a>
+            <p class="footer-desc">리세계정 직거래부터 캐릭터 도감·시세·공략까지, 한 곳에서.</p>
+            <a href="mailto:zzabhm@gmail.com" class="footer-email">zzabhm@gmail.com</a>
+          </div>
+          <div class="footer-col">
+            <div class="footer-link-title">거래</div>
+            <a href="/trade/">거래소</a>
+            <a href="/trade/register/">판매 등록</a>
+            <a href="/trade/price/">시세</a>
+          </div>
+          <div class="footer-col">
+            <div class="footer-link-title">게임 정보</div>
+            <a href="/game/genshin/characters/">원신 캐릭터 도감</a>
+            <a href="/game/genshin/uid/">원신 UID 조회</a>
+            <a href="/game/starrail/characters/">스타레일 캐릭터 도감</a>
+            <a href="/game/zzz/characters/">젠레스 존 제로 도감</a>
+            <a href="/game/nikke/characters/">니케 캐릭터 도감</a>
+            <a href="/game/wuwa/characters/">명조 캐릭터 도감</a>
+            <a href="/game/bluearchive/students/">블루아카이브 학생 도감</a>
+          </div>
+          <div class="footer-col">
+            <div class="footer-link-title">고객지원</div>
+            <a href="/contact/">문의하기</a>
+            <p class="footer-note">거래 전 판매자의 등급과 거래 후기를 꼭 확인하세요.</p>
           </div>
         </div>
         <div class="footer-bottom">
-          <span>© 2025 플레이센스. All rights reserved.</span>
-          <a href="mailto:zzabhm@gmail.com" style="color:inherit;opacity:0.6;font-size:12px;text-decoration:none;">zzabhm@gmail.com</a>
+          <span>© 2026 플레이센스. All rights reserved.</span>
+          <span class="footer-disclaimer">플레이센스는 통신판매중개자로서 거래 당사자가 아니며, 개인 간 거래에 대한 책임을 지지 않습니다.</span>
         </div>
       </div>
     </footer>

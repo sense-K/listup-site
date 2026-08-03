@@ -2,10 +2,34 @@
 
 모바일 게임 리세계 계정 직거래 플랫폼. 원신, 블루아카이브, 니케, 쿠키런킹덤, 젠레스 존 제로, 세븐나이츠 리버스, 이환, 트릭컬 리바이브 지원.
 
+## 에이전트 팀 운영 방식
+이 프로젝트는 역할별 전문 에이전트로 작업한다 (`.claude/agents/`).
+- **매니저(오케스트레이터)** — 이 채팅의 Claude Code 본체. 형의 지시를 받아 직접 처리하거나 전문가에게 배분하고, 결과를 검증·통합해 형에게 보고하는 총괄. (별도 에이전트 파일 아님 — 나 자신)
+- **planner(기획자)** — 요청을 작업으로 분해하고 담당·완료기준을 정한다. 계획만, 코드는 안 고침 (opus)
+- **frontend-dev** — 화면/기능 구현 (바닐라 HTML/CSS/JS, Supabase 연동, 도감·거래소·거래플로우·admin·Pages Functions)
+- **seo-specialist** — 메타태그·OG·canonical·JSON-LD·sitemap.xml·robots·게임별 키워드
+- **design-reviewer** — 레이아웃/색/반응형/CSS 일관성 시각 점검 (실제 브라우저)
+- **qa-tester** — 거래 플로우·RLS 격리·도감·UID 조회가 실제 동작하는지 Playwright 검증
+
+기능 요청이 오면: ① 필요 시 planner로 계획 → ② 서로 독립적인 작업은 여러 전문가를 **동시에** 투입 → ③ 구현 후 design-reviewer/qa-tester로 검증 → ④ 결과 통합 보고. 사소하고 명백한 단건 수정은 팀을 거치지 않고 바로 처리한다.
+
+## 매니저 운영 환경 (배포 · Supabase 접근)
+이 클라우드 세션은 egress 정책상 **Supabase 호스트가 차단**됨(직접 REST/DB 접근 불가). 그래서 배포·DB 작업은 네트워크가 열린 **GitHub Actions 러너를 경유**한다.
+
+- **배포** (`.github/workflows/deploy.yml`): 커밋 메시지에 `[deploy]` 태그를 넣어 push → Actions가 `wrangler pages deploy`로 Cloudflare Pages에 배포. (정적 사이트라 빌드 없음)
+  - 필요: Secret `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` + Variable `CF_PAGES_PROJECT`
+- **Supabase 쓰기/조회** (`.github/workflows/supabase.yml`): 실행할 SQL을 `ops/sql/run.sql`에 담고
+  - `[sql]` 태그 커밋 → DB 반영 / `[sql-dry]` 태그 커밋 → 실행 후 ROLLBACK(검증만)
+  - 필요: Secret `SUPABASE_DB_URL` (Supabase → Settings → Database → **Session pooler** 연결 문자열, IPv4 호환)
+  - anon key로 안 되는 관리자 작업(테이블 생성, RLS, `Listing` INSERT 등)은 전부 이 경로로.
+  - 결과는 Actions 실행 로그에서 확인. 작업 후 `run.sql`은 중립 기본값(`select now()...`)으로 되돌린다.
+- **읽기 전용 확인**: 배포본 `https://resetlist.kr`는 CF 엣지에서 서빙되므로 curl/Playwright로 확인 가능(Supabase 호출은 브라우저/엣지에서 발생).
+- Edge Function(`trade-notify`, 슬러그 `quick-responder`)은 **Supabase 대시보드에서 수동 Deploy** 필요 (git push로 반영 안 됨).
+
 ## 기술 스택
 - 바닐라 HTML/CSS/JS (프레임워크 없음)
 - Supabase (DB + Auth)
-- Cloudflare Pages (배포) — GitHub `sense-K/listup-site` main 브랜치 push 시 자동 배포
+- Cloudflare Pages (배포) — GitHub `sense-K/resetlist`. 매니저는 `[deploy]` 태그 커밋으로 배포 (위 "매니저 운영 환경" 참고)
 - Cloudflare Pages Functions — 동적 OG 태그 주입 (`functions/` 폴더)
 - 도메인: resetlist.kr
 
@@ -967,3 +991,49 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 - cgfw/* 경로 화이트리스트, CORS 포함
 - 우마무스메/엔드필드는 인증 차단으로 미사용
 - 향후 다른 DotGG 지원 게임에 활용 가능
+
+## 대행(상점) 모델 (2026-08-03 구축)
+
+### 개념
+개인↔개인 직거래 → **"대행(전문 판매자) 상점 마켓"** 으로 확장. 회원가입 시 **전원 상점 자동 보유**, 매물은 자기 상점에 귀속, 노출은 전역(상점/게임/캐릭터). 개인/대행 UI 구분 없음 — **인증 배지·등급으로만 차등**.
+
+### 스키마 (반영 완료)
+- `User`(=상점 1:1): `username`(영문 아이디, URL용, 유니크, 기존 유저 shop0001~ 백필, 신규는 트리거 `trg_user_default_username`이 shop0300~ 자동발급), `shopBio`, `isVerified`, `sellerGrade`, `deliveryTime`, `refundPolicy`, `supportRecovery`, `businessHours`. 상점 이름 = 기존 `nickname`.
+- `Listing`: `type`('reroll'=리세계/'currency'=돌계, CHECK 제약) — **등록 화면에서 사용자가 고르지 않고 내용으로 자동 판별**(캐릭터 없이 재화만 있으면 'currency', 그 외 'reroll'). 거래소 유형 탭 필터용으로만 쓰임. `stock`(재고), `isAlwaysOn`(상시판매).
+- 돌계 재화: `Currency`(gameId별) + `ListingCurrency(amount)`. `ratePerUnit`=1연당 재화량 → "약 N연"=floor(amount/ratePerUnit). 시드: 원신 원석160/스타레일 성옥160/젠레스 폴리크롬160/명조 성성석160/니케 쥬얼300/블아 청휘석120.
+- **보안 트리거** `trg_protect_user_admin_cols`: PostgREST 경유 비관리자(zzabhm@gmail.com 외)의 `isVerified`/`sellerGrade`/`role`/`trustScore` 변경 무시(셀프 인증배지 차단). psql 경로는 통과 → 인증 부여는 SQL Runner로.
+
+### 페이지
+- `/shop/{username}` — 상점 SSR (`functions/shop/[username].js`, `_routes.json` include `/shop/*`). 헤더(배지·평점·정책칩)+게임탭+매물 그리드.
+- `/trade/` — 유형 탭(전체/리세계/돌계). `listings.js`의 `loadListings({typeFilter})`.
+- 카드: 돌계 배지(#0ea5e9)+재화 라인(약N연), 재고 칩(stock>1), 🏪 상점 미니라인(+✓인증).
+- `/trade/register/` — **3단계**: 게임/서버 → 계정 구성(캐릭터 + 재화를 한 화면에서 자유롭게, 최소 1개) → 가격+재고+상시판매. 리세계/돌계 유형 선택 단계는 없앰(2026-08-03) — 리세계에도 재화가 있고 돌계에도 캐릭이 있어서.
+- `/mypage/` — **`/shop/{username}` 리다이렉트 스텁**(비로그인은 `/auth/`). 마이페이지 기능은 상점 페이지로 통합됨.
+- **상점 = 마이페이지 통합**: `/shop/{username}` 접속자가 주인이면(클라이언트에서 `db.auth.getSession()`으로 판정) 공개 상점 아래 **관리 영역**(판매 관리 / 구매 내역 / 상점 설정) 노출. 함수는 `mgr*` 접두어(mgrInit·mgrBuyerConfirm=수령확인·mgrSaveShopSettings·mgrDeleteListing 등). 네비바의 내 아이디 클릭 → `/shop/{username}`(username 없으면 `/mypage/` 폴백).
+- 상점 설정: username(영문, `^[a-z0-9-]{3,20}$`, 예약어 차단)·shopBio·정책 수정, 상점 링크 복사. isVerified/sellerGrade는 읽기전용.
+- `/listing/` — 판매자 영역에 상점 카드(인증배지 + "상점 방문하기" → /shop/{username}), 돌계 배지·재화 표시.
+
+### 푸터 (2026-08-03 재작업)
+`js/config.js` `renderFooter()` 4열 그리드(브랜드/거래/게임정보/고객지원) + 통신판매중개자 면책 고지. CSS는 `css/style.css` `.footer-*`(PC4열→태블릿2열→모바일). **푸터 링크는 실존 경로만** — 이용약관·개인정보처리방침 페이지는 아직 없어 링크하지 않음(만들면 추가할 것).
+
+### 판매자 등급 (2026-08-03 — 인증 배지는 UI에서 제거, 등급만 운영)
+`isVerified` 컬럼·보호 트리거는 DB에 남아있지만 **UI 어디에도 노출하지 않음**. 이유: "운영자가 신원 확인"이라는 근거가 실체 없이 신뢰도만 과장하기 때문. 나중에 실제 인증수단(사업자등록번호 진위확인 / 계좌 1원 인증 / 휴대폰 본인인증)을 붙일 때 다시 켤 것.
+
+노출되는 배지는 `sellerGrade` 하나뿐:
+| 등급 | 조건 |
+|---|---|
+| (없음) | 거래 완료 10건 미만 |
+| 우수 판매자 | 거래 완료 10건 이상 · 평점 4.0 이상 |
+| 파워 판매자 | 거래 완료 30건 이상 · 평점 4.5 이상 · 최근 30일 내 판매 활동 |
+| 공식 파트너 | 운영자 직접 선정 (자동화가 건드리지 않음 — 강등 예외) |
+
+- 함수 `recompute_seller_grades()` + pg_cron `auto-seller-grade` (매일 18:10 UTC = 03:10 KST). 조건 미달 시 자동 강등.
+  - 집계 기준: `Trade.status='completed' AND sellerId=u.id` 건수, `Review.sellerId=u.id` 평균 평점, 최근 30일 `Listing` 활동.
+- 공식 파트너 수동 부여: `UPDATE "User" SET "sellerGrade"='공식 파트너' WHERE username='...'` ([sql] 경유).
+- **등급 명칭에 '대행'을 쓰지 말 것** — 개인↔개인 거래도 있으므로 '판매자'로 통일 (2026-08-03).
+- 노출 위치: 상점 헤더 배지 / 거래소 카드 `.card-shop-mini` / listing 상세 판매자 행 / 상점설정 모달(조건 안내 토글 `#badge-help-grade`).
+
+### 운영
+- 돌계 신규 게임 지원 = Currency 행 추가만 하면 등록 UI 자동 활성화.
+- **⚠️ `[sql]` 반영 전 `ops/sql/run.sql`에 테스트용 UPDATE가 남아있지 않은지 확인할 것** (dry-run용 구문을 지우지 않고 반영해 의도치 않게 DB가 바뀐 사고 있었음).
+- 라이브 검증: `.github/workflows/livecheck.yml` — 커밋 메시지에 `RUNLIVE` 넣어 push하면 배포본 주요 URL·문구를 러너에서 확인.

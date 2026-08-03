@@ -186,6 +186,16 @@
     }
     .selected-char-tag button:hover { color: #fff; }
 
+    /* 재고/상시판매 */
+    .stock-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .stock-input-box { width: 90px; }
+    .always-on-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: #444; cursor: pointer;
+    }
+    .always-on-label input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+    .always-on-hint { color: #aaa; font-size: 11px; cursor: help; }
+
     /* 재화 입력 */
     .currency-section {
       margin-top: 16px;
@@ -414,14 +424,15 @@
         <option value="">서버 선택</option>
       </select>
     </div>
-    <button class="btn btn-primary btn-full" onclick="goStep(2)" style="margin-top:4px;">다음 →</button>
+    <button class="btn btn-primary btn-full" onclick="proceedFromGame()" style="margin-top:4px;">다음 →</button>
     <a href="/trade/bulk/" class="bulk-link-btn">📦 여러 계정 한번에 올리기 →</a>
     <p class="bulk-contact-hint">더 많은 계정을 한번에 등록하길 원하시나요? <a href="/contact/">문의하기</a>로 알려주세요</p>
   </div>
 
-  <!-- STEP 2: 캐릭터 선택 -->
+  <!-- STEP: 계정 구성 (캐릭터 + 재화, 둘 다 자유롭게) -->
   <div class="step-panel" id="panel-2">
-    <div class="section-title" style="margin-bottom:12px;">보유 캐릭터를 선택하세요</div>
+    <div class="section-title" style="margin-bottom:6px;">계정에 뭐가 들어있나요?</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">보유 캐릭터와 재화를 자유롭게 넣어주세요. 캐릭터만, 재화만, 둘 다 넣어도 괜찮아요. (최소 1개는 입력해주세요)</div>
 
     <!-- UID 자동 불러오기 (원신 선택 시에만 표시) -->
     <div id="uid-lookup-section" style="display:none;background:#f8f5ff;border:1.5px solid #e0d4ff;border-radius:12px;padding:14px;margin-bottom:16px;">
@@ -454,17 +465,17 @@
 
     <!-- 재화 입력 (게임에 재화가 있을 때만 표시) -->
     <div class="currency-section" id="currency-section" style="display:none;">
-      <div class="currency-section-title">💎 보유 재화 <span style="font-weight:400;color:#aaa;font-size:12px;">(선택)</span></div>
+      <div class="currency-section-title">💎 보유 재화 <span style="font-weight:400;color:#aaa;font-size:12px;">(수량만 적으면 돼요)</span></div>
       <div class="currency-grid" id="currency-grid"></div>
     </div>
 
     <div style="display:flex;gap:8px;margin-top:16px;">
-      <button class="btn btn-outline" onclick="goStep(1)" style="flex:1;">← 이전</button>
-      <button class="btn btn-primary" onclick="goStep(3)" style="flex:2;">다음 →</button>
+      <button class="btn btn-outline" onclick="goToStep('game')" style="flex:1;">← 이전</button>
+      <button class="btn btn-primary" onclick="proceedFromContents()" style="flex:2;">다음 →</button>
     </div>
   </div>
 
-  <!-- STEP 3: 가격/연락처 -->
+  <!-- STEP: 가격/연락처 -->
   <div class="step-panel" id="panel-3">
     <div class="section-title" style="margin-bottom:20px;">가격과 연락처를 입력하세요</div>
 
@@ -478,6 +489,16 @@
       </div>
     </div>
     <div class="form-group">
+      <label class="form-label">재고 수량</label>
+      <div class="stock-row">
+        <input type="number" class="form-input stock-input-box" id="stock-input" value="1" min="1" max="99">
+        <label class="always-on-label" title="판매완료 처리돼도 자동으로 다시 판매중이 되지 않아요. 재고만 표기용">
+          <input type="checkbox" id="always-on-checkbox">
+          상시판매 <span class="always-on-hint">ⓘ</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
       <label class="form-label">계정 설명 <span style="color:var(--text-muted);font-size:12px;">(선택)</span></label>
       <textarea class="form-textarea" id="desc-input" placeholder="계정 상태, 보유 재화 등 자유롭게 적어주세요"></textarea>
     </div>
@@ -488,7 +509,7 @@
     </div>
 
     <div style="display:flex;gap:8px;">
-      <button class="btn btn-outline" onclick="goStep(2)" style="flex:1;">← 이전</button>
+      <button class="btn btn-outline" onclick="goToStep('chars')" style="flex:1;">← 이전</button>
       <button class="btn btn-primary" onclick="submitListing()" style="flex:2;" id="submit-btn">판매글 등록</button>
     </div>
   </div>
@@ -543,7 +564,7 @@
     // 수정 모드: 기존 데이터 불러오기
     if (editListingId) {
       const { data: listing } = await db.from('Listing')
-        .select(`id, price, description, kakaoOpenChatUrl, gameId, serverId,
+        .select(`id, price, description, kakaoOpenChatUrl, gameId, serverId, type, stock, isAlwaysOn,
           game:Game(id, nameKo, slug, emoji, imageUrl),
           server:Server(id, nameKo),
           characters:ListingCharacter(count, character:Character(id, nameKo, tier, imageUrl)),
@@ -577,6 +598,8 @@
           currencyStore[lc.currency.id] = lc.currency
         }
       })
+
+      // 캐릭터 + 재화를 한 화면에서 같이 불러옴 (유형 구분 없음)
       await loadChars()
       renderSelectedChars()
 
@@ -584,12 +607,14 @@
       const isUidGameEdit = listing.game?.slug === 'genshin' || listing.game?.slug === 'zzz' || listing.game?.slug === 'starrail'
       if (uidSection) uidSection.style.display = isUidGameEdit ? 'block' : 'none'
 
-      // 가격/설명/연락처
+      // 가격/재고/설명/연락처
       document.getElementById('price-input').value = listing.price ? Number(listing.price).toLocaleString('ko-KR') : ''
+      document.getElementById('stock-input').value = listing.stock ?? 1
+      document.getElementById('always-on-checkbox').checked = !!listing.isAlwaysOn
       document.getElementById('desc-input').value = listing.description ?? ''
       document.getElementById('contact-input').value = listing.kakaoOpenChatUrl ?? ''
 
-      goStep(2)
+      goToStep('chars')
     }
   }
 
@@ -649,6 +674,26 @@
     renderCurrencyGrid()
   }
 
+  function buildCurrencyRowsHtml(idPrefix) {
+    return allCurrencies.map(c => {
+      const amount = selectedCurrencies[c.id]?.amount ?? ''
+      const iconHtml = c.imageUrl
+        ? `<img class="currency-icon" src="${c.imageUrl}" alt="${c.nameKo}">`
+        : `<div class="currency-icon-placeholder">💎</div>`
+      return `
+        <div class="currency-row">
+          ${iconHtml}
+          <span class="currency-name">${c.nameKo}</span>
+          <input class="currency-input" type="text" inputmode="numeric"
+            id="currency-input-${idPrefix}${c.id}"
+            placeholder="0"
+            value="${amount}"
+            oninput="handleCurrencyInput(this, '${c.id}')">
+        </div>`
+    }).join('')
+  }
+
+  // 보유 재화 입력 (캐릭터와 같은 화면)
   function renderCurrencyGrid() {
     const section = document.getElementById('currency-section')
     const grid = document.getElementById('currency-grid')
@@ -659,27 +704,13 @@
       return
     }
     section.style.display = 'block'
-    grid.innerHTML = allCurrencies.map(c => {
-      const amount = selectedCurrencies[c.id]?.amount ?? ''
-      const iconHtml = c.imageUrl
-        ? `<img class="currency-icon" src="${c.imageUrl}" alt="${c.nameKo}">`
-        : `<div class="currency-icon-placeholder">💎</div>`
-      return `
-        <div class="currency-row">
-          ${iconHtml}
-          <span class="currency-name">${c.nameKo}</span>
-          <input class="currency-input" type="text" inputmode="numeric"
-            id="currency-input-${c.id}"
-            placeholder="0"
-            value="${amount}"
-            oninput="handleCurrencyInput(this, '${c.id}')">
-        </div>`
-    }).join('')
+    grid.innerHTML = buildCurrencyRowsHtml('')
   }
 
   function handleCurrencyInput(input, currencyId) {
     const raw = input.value.replace(/[^0-9]/g, '')
-    input.value = raw ? Number(raw).toLocaleString('ko-KR') : ''
+    const formatted = raw ? Number(raw).toLocaleString('ko-KR') : ''
+    input.value = formatted
     const amount = raw ? parseInt(raw) : 0
     const c = currencyStore[currencyId]
     if (!c) return
@@ -837,30 +868,47 @@
     `).join('')
   }
 
-  function goStep(n) {
-    if (n === 2) {
-      if (!selectedGameId) { alert('게임을 선택해주세요'); return }
-      const serverVal = document.getElementById('server-select').value
-      if (!serverVal) { alert('서버를 선택해주세요'); return }
-      selectedServerId = serverVal
+  // 단계 흐름: game → chars(캐릭터+재화 한 화면) → price
+  const STEP_PANEL_MAP = { game: 'panel-1', chars: 'panel-2', price: 'panel-3' }
+  const STEP_DOT_INDEX = { game: 1, chars: 2, price: 3 }
 
-      const uidSection = document.getElementById('uid-lookup-section')
-      const isUidGame = selectedGame?.slug === 'genshin' || selectedGame?.slug === 'zzz' || selectedGame?.slug === 'starrail'
-      if (uidSection) uidSection.style.display = isUidGame ? 'block' : 'none'
+  function goToStep(step) {
+    if (step === 'price') renderSummary()
 
-      loadChars()
-    }
-    if (n === 3) {
-      renderSummary()
-    }
-    document.querySelectorAll('.step-panel').forEach((p, i) => {
-      p.classList.toggle('active', i + 1 === n)
-    })
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'))
+    document.getElementById(STEP_PANEL_MAP[step])?.classList.add('active')
+
+    const idx = STEP_DOT_INDEX[step] || 1
     document.querySelectorAll('.step').forEach((s, i) => {
       s.classList.remove('active', 'done')
-      if (i + 1 < n) s.classList.add('done')
-      else if (i + 1 === n) s.classList.add('active')
+      if (i + 1 < idx) s.classList.add('done')
+      else if (i + 1 === idx) s.classList.add('active')
     })
+  }
+
+  async function proceedFromGame() {
+    if (!selectedGameId) { alert('게임을 선택해주세요'); return }
+    const serverVal = document.getElementById('server-select').value
+    if (!serverVal) { alert('서버를 선택해주세요'); return }
+    selectedServerId = serverVal
+
+    const uidSection = document.getElementById('uid-lookup-section')
+    const isUidGame = selectedGame?.slug === 'genshin' || selectedGame?.slug === 'zzz' || selectedGame?.slug === 'starrail'
+    if (uidSection) uidSection.style.display = isUidGame ? 'block' : 'none'
+
+    await loadChars()   // 캐릭터 + 재화 함께 로드
+    goToStep('chars')
+  }
+
+  // 캐릭터든 재화든 최소 1개는 있어야 다음으로
+  function proceedFromContents() {
+    const hasChar = Object.keys(selectedChars).length > 0
+    const hasCurrency = Object.values(selectedCurrencies).some(e => e.amount > 0)
+    if (!hasChar && !hasCurrency) {
+      alert('보유 캐릭터를 선택하거나 재화 수량을 입력해주세요')
+      return
+    }
+    goToStep('price')
   }
 
   function renderSummary() {
@@ -1042,9 +1090,21 @@
   async function submitListing() {
     const price = Number(document.getElementById('price-input').value.replace(/,/g, ''))
     const contact = document.getElementById('contact-input').value.trim()
-    if (!selectedServerId) { alert('서버를 선택해주세요'); goStep(1); return }
+    // 유형은 사용자가 고르지 않고 내용으로 자동 판별 (캐릭터 없이 재화만 → 돌계)
+    const hasChar = Object.keys(selectedChars).length > 0
+    const hasCurrency = Object.values(selectedCurrencies).some(e => e.amount > 0)
+    const listingType = (!hasChar && hasCurrency) ? 'currency' : 'reroll'
+    let stock = parseInt(document.getElementById('stock-input').value, 10)
+    if (!stock || stock < 1) stock = 1
+    if (stock > 99) stock = 99
+    const isAlwaysOn = document.getElementById('always-on-checkbox').checked
+
+    if (!selectedServerId) { alert('서버를 선택해주세요'); goToStep('game'); return }
     if (!price || price <= 0) { alert('판매가격을 입력해주세요'); return }
     if (!contact) { alert('카카오 오픈채팅 링크를 입력해주세요'); return }
+    if (!hasChar && !hasCurrency) {
+      alert('보유 캐릭터나 재화를 최소 1개는 입력해주세요'); goToStep('chars'); return
+    }
 
     const btn = document.getElementById('submit-btn')
     btn.disabled = true; btn.textContent = '등록 중...'
@@ -1061,6 +1121,9 @@
         const { error } = await db.from('Listing').update({
           gameId: selectedGameId,
           serverId: selectedServerId,
+          type: listingType,
+          stock,
+          isAlwaysOn,
           price,
           description: desc,
           kakaoOpenChatUrl: contact,
@@ -1092,6 +1155,9 @@
           userId: authUser.id,
           gameId: selectedGameId,
           serverId: selectedServerId,
+          type: listingType,
+          stock,
+          isAlwaysOn,
           price,
           description: desc,
           kakaoOpenChatUrl: contact,

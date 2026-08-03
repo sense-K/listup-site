@@ -1,0 +1,42 @@
+name: CF Stats
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'claude/**']
+
+jobs:
+  stats:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'RUNSTATS')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cloudflare path traffic (30d)
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -u
+          echo "== zone lookup =="
+          curl -s "https://api.cloudflare.com/client/v4/zones?name=resetlist.kr" -H "Authorization: Bearer $CF_TOKEN" > /tmp/z.json
+          echo "success=$(jq -r '.success' /tmp/z.json) errors=$(jq -c '.errors' /tmp/z.json)"
+          ZONE=$(jq -r '.result[0].id // empty' /tmp/z.json)
+          echo "zone_id=${ZONE:-NONE}"
+          if [ -z "$ZONE" ]; then echo "::warning::no zone permission"; exit 0; fi
+          SINCE=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          UNTIL=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          echo "window: $SINCE ~ $UNTIL"
+
+          Q1='query($z:String!,$s:Time!,$u:Time!){viewer{zones(filter:{zoneTag:$z}){rumPageloadEventsAdaptiveGroups(filter:{datetime_geq:$s,datetime_leq:$u},limit:200,orderBy:[count_DESC]){count dimensions{requestPath}}}}}'
+          jq -n --arg q "$Q1" --arg z "$ZONE" --arg s "$SINCE" --arg u "$UNTIL" '{query:$q,variables:{z:$z,s:$s,u:$u}}' > /tmp/p1.json
+          echo ""
+          echo "== RUM pageviews by path =="
+          curl -s https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CF_TOKEN" -H "Content-Type: application/json" --data @/tmp/p1.json > /tmp/r1.json
+          echo "errors=$(jq -c '.errors' /tmp/r1.json)"
+          jq -r '.data.viewer.zones[0].rumPageloadEventsAdaptiveGroups[]? | "\(.count)\t\(.dimensions.requestPath)"' /tmp/r1.json | head -70
+
+          Q2='query($z:String!,$s:Time!,$u:Time!){viewer{zones(filter:{zoneTag:$z}){httpRequestsAdaptiveGroups(filter:{datetime_geq:$s,datetime_leq:$u},limit:200,orderBy:[count_DESC]){count dimensions{clientRequestPath}}}}}'
+          jq -n --arg q "$Q2" --arg z "$ZONE" --arg s "$SINCE" --arg u "$UNTIL" '{query:$q,variables:{z:$z,s:$s,u:$u}}' > /tmp/p2.json
+          echo ""
+          echo "== HTTP requests by path (fallback) =="
+          curl -s https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CF_TOKEN" -H "Content-Type: application/json" --data @/tmp/p2.json > /tmp/r2.json
+          echo "errors=$(jq -c '.errors' /tmp/r2.json)"
+          jq -r '.data.viewer.zones[0].httpRequestsAdaptiveGroups[]? | "\(.count)\t\(.dimensions.clientRequestPath)"' /tmp/r2.json | head -70

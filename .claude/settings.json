@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(git fetch *)",
+      "Bash(git status)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git branch *)",
+      "Bash(python3 -m http.server *)",
+      "Bash(npx wrangler *)",
+      "Bash(npx playwright *)",
+      "Bash(node *)",
+      "Bash(curl -I -s https://resetlist.kr/*)",
+      "Bash(curl -sI https://resetlist.kr/*)",
+      "Bash(curl -s https://resetlist.kr/*)",
+      "Bash(curl -s https://resetlist.kr/robots.txt)",
+      "Bash(curl -s https://resetlist.kr/sitemap.xml)",
+      "Bash(curl -I -s --max-time 15 https://resetlist.kr/*)",
+      "Read(//home/user/resetlist/**)",
+      "Read(//workspace/roundy/**)"
+    ]
+  }
+}
