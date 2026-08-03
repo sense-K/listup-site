@@ -293,6 +293,9 @@ export async function onRequest({ params }) {
     }
     .shop-card-owner-btn:hover { background: #e5e7eb; color: #111; }
     .shop-card-owner-btn.danger:hover { background: #fee2e2; color: #dc2626; }
+    .shop-card-owner-btn.bump { background: #ece7ff; color: #5b34d6; }
+    .shop-card-owner-btn.bump:hover { background: #ddd3ff; color: #4c28c4; }
+    .shop-card-owner-btn.bump:disabled { background: #f3f4f6; color: #aaa; cursor: default; }
 
     @media (max-width: 480px) {
       .shop-name { font-size: 19px; }
@@ -575,6 +578,7 @@ export async function onRequest({ params }) {
   let mgrReviewedListingIds = new Set()
   let mgrStaleSellerConfirmedIds = new Set()
   let mgrStaleTradingIds = new Set()
+  let mgrBumpedAt = {}   // listingId → bumpedAt (끌올 쿨다운 판정)
 
   async function mgrInit() {
     try {
@@ -601,11 +605,15 @@ export async function onRequest({ params }) {
     try {
       const { data: listings } = await db
         .from('Listing')
-        .select(\`id, price, status, createdAt,
+        .select(\`id, price, status, createdAt, bumpedAt,
           game:Game(nameKo, emoji, imageUrl, artImageUrl),
           characters:ListingCharacter(character:Character(nameKo))\`)
         .eq('userId', authUser.id)
         .order('createdAt', { ascending: false })
+
+      // 끌올 쿨다운 판정용 (id → bumpedAt)
+      mgrBumpedAt = {}
+      ;(listings ?? []).forEach(l => { mgrBumpedAt[l.id] = l.bumpedAt || l.createdAt })
 
       // trading/seller_confirmed인데 실제 활성 Trade 없는 경우 보정
       const tradingOrConfirmedIds = (listings ?? [])
@@ -764,10 +772,12 @@ export async function onRequest({ params }) {
       const bar = document.createElement('div')
       bar.className = 'shop-card-owner-actions'
       bar.innerHTML = \`
+        <button class="shop-card-owner-btn bump" id="bump-btn-\${id}" onclick="event.preventDefault();event.stopPropagation();mgrBump('\${id}')">⬆ 끌올</button>
         <button class="shop-card-owner-btn" onclick="event.preventDefault();event.stopPropagation();location.href='/trade/register/?edit=\${id}'">수정</button>
         <button class="shop-card-owner-btn danger" onclick="event.preventDefault();event.stopPropagation();mgrDeleteListing('\${id}')">삭제</button>
       \`
       card.appendChild(bar)
+      mgrRefreshBumpBtn(id)
     })
   }
 
@@ -1060,6 +1070,77 @@ export async function onRequest({ params }) {
       console.error(e)
       alert('오류가 발생했어요: ' + e.message)
     }
+  }
+
+  // --- 끌어올리기 (5분 쿨다운, DB 트리거로도 강제됨) ---
+  const BUMP_COOLDOWN_MS = 5 * 60 * 1000
+  let mgrBumpTimer = null
+
+  function mgrRefreshBumpBtn(id) {
+    const btn = document.getElementById('bump-btn-' + id)
+    if (!btn) return
+    const last = mgrBumpedAt[id] ? new Date(mgrBumpedAt[id]).getTime() : 0
+    const left = last + BUMP_COOLDOWN_MS - Date.now()
+    if (left > 0) {
+      const m = Math.floor(left / 60000)
+      const sec = Math.ceil((left % 60000) / 1000)
+      btn.disabled = true
+      btn.textContent = m > 0 ? \`⬆ \${m}분 후\` : \`⬆ \${sec}초 후\`
+      if (!mgrBumpTimer) mgrBumpTimer = setInterval(mgrRefreshAllBumpBtns, 1000)
+    } else {
+      btn.disabled = false
+      btn.textContent = '⬆ 끌올'
+    }
+  }
+
+  function mgrRefreshAllBumpBtns() {
+    const btns = document.querySelectorAll('[id^="bump-btn-"]')
+    if (btns.length === 0) { clearInterval(mgrBumpTimer); mgrBumpTimer = null; return }
+    let anyWaiting = false
+    btns.forEach(b => {
+      const id = b.id.replace('bump-btn-', '')
+      const last = mgrBumpedAt[id] ? new Date(mgrBumpedAt[id]).getTime() : 0
+      if (last + BUMP_COOLDOWN_MS - Date.now() > 0) anyWaiting = true
+      mgrRefreshBumpBtn(id)
+    })
+    if (!anyWaiting) { clearInterval(mgrBumpTimer); mgrBumpTimer = null }
+  }
+
+  async function mgrBump(id) {
+    const btn = document.getElementById('bump-btn-' + id)
+    const last = mgrBumpedAt[id] ? new Date(mgrBumpedAt[id]).getTime() : 0
+    if (last + BUMP_COOLDOWN_MS > Date.now()) { mgrRefreshBumpBtn(id); return }
+    if (btn) { btn.disabled = true; btn.textContent = '⬆ 올리는 중...' }
+    const now = new Date().toISOString()
+    const { data, error } = await db.from('Listing')
+      .update({ bumpedAt: now }).eq('id', id).select('id, bumpedAt')
+    if (error) {
+      alert(error.message.includes('5분') ? '끌어올리기는 5분에 한 번만 가능해요' : '끌어올리기 실패: ' + error.message)
+      mgrRefreshBumpBtn(id)
+      return
+    }
+    if (!data || data.length === 0) {
+      alert('끌어올리기에 실패했어요. 잠시 후 다시 시도해주세요.')
+      mgrRefreshBumpBtn(id)
+      return
+    }
+    mgrBumpedAt[id] = data[0].bumpedAt ?? now
+    mgrRefreshBumpBtn(id)
+    mgrToast('거래소 맨 위로 올렸어요 ⬆')
+  }
+
+  function mgrToast(msg) {
+    let el = document.getElementById('mgr-toast')
+    if (!el) {
+      el = document.createElement('div')
+      el.id = 'mgr-toast'
+      el.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);background:#111;color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:999px;z-index:9999;opacity:0;transition:all .2s;pointer-events:none;'
+      document.body.appendChild(el)
+    }
+    el.textContent = msg
+    requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateX(-50%) translateY(0)' })
+    clearTimeout(el._t)
+    el._t = setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(10px)' }, 1800)
   }
 
   async function mgrDeleteListing(id) {

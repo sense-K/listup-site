@@ -274,6 +274,104 @@ a { text-decoration: none; color: inherit; }
   to   { transform: translateX(-50%); }
 }
 
+/* 업데이트 안내 (내 상점) 섹션 */
+.update-notice-section {
+  background: linear-gradient(180deg, #faf8ff 0%, #fff 100%);
+  border-bottom: 1px solid #f0ecff;
+  padding: 44px 60px;
+}
+.update-notice-inner { max-width: 1300px; margin: 0 auto; }
+.update-notice-head { margin-bottom: 24px; }
+.update-notice-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #6c47ff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+.update-notice-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--black);
+  line-height: 1.35;
+  word-break: keep-all;
+}
+.update-notice-title b { color: #6c47ff; }
+.update-notice-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+.update-notice-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.update-card {
+  background: #fff;
+  border: 1.5px solid #ece7ff;
+  border-radius: 14px;
+  padding: 18px 16px;
+}
+.update-card-icon { font-size: 24px; margin-bottom: 8px; }
+.update-card-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--black);
+  margin-bottom: 6px;
+  word-break: keep-all;
+}
+.update-card-desc {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  word-break: keep-all;
+}
+.update-card-desc b { color: #5b34d6; font-weight: 800; }
+.update-soon {
+  background: #fff;
+  border: 1.5px dashed #c9b8ff;
+  border-radius: 14px;
+  padding: 20px;
+}
+.update-soon-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--black);
+  margin-bottom: 8px;
+}
+.update-soon-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.75;
+  word-break: keep-all;
+}
+.update-soon-desc b { color: #5b34d6; font-weight: 800; }
+.update-soon-cta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+@media (max-width: 1024px) {
+  .update-notice-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .update-notice-section { padding: 32px 20px; }
+  .update-notice-title { font-size: 20px; }
+}
+@media (max-width: 560px) {
+  .update-notice-grid { grid-template-columns: 1fr; }
+  .update-notice-section { padding: 28px 16px; }
+}
+
 /* 게임 선택 카드 섹션 */
 .game-select-section {
   background: #fff;
