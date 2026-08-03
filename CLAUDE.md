@@ -1008,9 +1008,16 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 - `/trade/` — 유형 탭(전체/리세계/돌계). `listings.js`의 `loadListings({typeFilter})`.
 - 카드: 돌계 배지(#0ea5e9)+재화 라인(약N연), 재고 칩(stock>1), 🏪 상점 미니라인(+✓인증).
 - `/trade/register/` — 게임→**유형 선택**→(리세계: 캐릭터 / 돌계: 재화 필수입력)→가격+재고+상시판매. 돌계 미지원 게임(Currency 없음)은 안내 후 리세계 복귀.
-- `/mypage/` — "내 상점" 탭: username(영문, `^[a-z0-9-]{3,20}$`, 예약어 차단)·shopBio·정책 수정, 상점 링크 복사. isVerified/sellerGrade는 읽기전용.
+- `/mypage/` — **`/shop/{username}` 리다이렉트 스텁**(비로그인은 `/auth/`). 마이페이지 기능은 상점 페이지로 통합됨.
+- **상점 = 마이페이지 통합**: `/shop/{username}` 접속자가 주인이면(클라이언트에서 `db.auth.getSession()`으로 판정) 공개 상점 아래 **관리 영역**(판매 관리 / 구매 내역 / 상점 설정) 노출. 함수는 `mgr*` 접두어(mgrInit·mgrBuyerConfirm=수령확인·mgrSaveShopSettings·mgrDeleteListing 등). 네비바의 내 아이디 클릭 → `/shop/{username}`(username 없으면 `/mypage/` 폴백).
+- 상점 설정: username(영문, `^[a-z0-9-]{3,20}$`, 예약어 차단)·shopBio·정책 수정, 상점 링크 복사. isVerified/sellerGrade는 읽기전용.
 - `/listing/` — 판매자 영역에 상점 카드(인증배지 + "상점 방문하기" → /shop/{username}), 돌계 배지·재화 표시.
+
+### 푸터 (2026-08-03 재작업)
+`js/config.js` `renderFooter()` 4열 그리드(브랜드/거래/게임정보/고객지원) + 통신판매중개자 면책 고지. CSS는 `css/style.css` `.footer-*`(PC4열→태블릿2열→모바일). **푸터 링크는 실존 경로만** — 이용약관·개인정보처리방침 페이지는 아직 없어 링크하지 않음(만들면 추가할 것).
 
 ### 운영
 - 인증 배지 부여: `UPDATE "User" SET "isVerified"=true, "sellerGrade"='파워대행' WHERE username='...'` ([sql] 경유).
 - 돌계 신규 게임 지원 = Currency 행 추가만 하면 등록 UI 자동 활성화.
+- **⚠️ `[sql]` 반영 전 `ops/sql/run.sql`에 테스트용 UPDATE가 남아있지 않은지 확인할 것** (dry-run용 구문을 지우지 않고 반영해 의도치 않게 DB가 바뀐 사고 있었음).
+- 라이브 검증: `.github/workflows/livecheck.yml` — 커밋 메시지에 `RUNLIVE` 넣어 push하면 배포본 주요 URL·문구를 러너에서 확인.
