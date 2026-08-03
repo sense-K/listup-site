@@ -1,4 +1,18 @@
--- ops/sql/run.sql — Supabase SQL Runner가 실행할 SQL.
--- 사용 후에는 이 중립 기본값으로 되돌려 둔다(실수로 [sql] 재실행돼도 무해하도록).
--- 실제 SQL 작업 시: 여기에 내용을 채우고 커밋 메시지에 [sql](반영) 또는 [sql-dry](검증) 태그.
-select now() as checked_at, current_user as run_as;
+-- 최근 30일 조회 데이터. [sql-dry]
+\echo '===== ListingView 컬럼 ====='
+SELECT string_agg(column_name, ', ' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_name='ListingView';
+\echo '===== 전체/최근 조회 건수 ====='
+SELECT count(*) AS total_views,
+  count(*) FILTER (WHERE "viewedAt" > now() - interval '30 days') AS last_30d,
+  count(*) FILTER (WHERE "viewedAt" > now() - interval '7 days')  AS last_7d,
+  min("viewedAt") AS first_view, max("viewedAt") AS last_view
+FROM "ListingView";
+\echo '===== 최근 30일 게임별 매물 조회수 ====='
+SELECT g.slug, count(*) AS views
+FROM "ListingView" v JOIN "Listing" l ON l.id=v."listingId" JOIN "Game" g ON g.id=l."gameId"
+WHERE v."viewedAt" > now() - interval '30 days'
+GROUP BY g.slug ORDER BY views DESC;
+\echo '===== 매물 자체 viewCount 합계 (게임별, 누적) ====='
+SELECT g.slug, sum(l."viewCount") AS total_viewcount, count(*) AS listings
+FROM "Listing" l JOIN "Game" g ON g.id=l."gameId"
+GROUP BY g.slug ORDER BY total_viewcount DESC NULLS LAST;
