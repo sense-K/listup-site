@@ -838,9 +838,9 @@ export async function onRequest({ params }) {
         <h5>🏅 판매자 등급이란?</h5>
         <p style="margin:0 0 8px;">거래 실적과 평점에 따라 <b>매일 자동으로</b> 반영되는 등급이에요. 따로 신청하지 않아도 조건을 채우면 붙습니다.</p>
         <div class="grade-row"><span class="grade-name">등급 없음</span><span>거래 완료 10건 미만</span></div>
-        <div class="grade-row"><span class="grade-name">우수대행</span><span>거래 완료 10건 이상 · 평점 4.0 이상</span></div>
-        <div class="grade-row"><span class="grade-name">파워대행</span><span>거래 완료 30건 이상 · 평점 4.5 이상 · 최근 30일 내 판매 활동</span></div>
-        <div class="grade-row"><span class="grade-name">공식파트너</span><span>운영자가 직접 선정한 대행</span></div>
+        <div class="grade-row"><span class="grade-name">우수 판매자</span><span>거래 완료 10건 이상 · 평점 4.0 이상</span></div>
+        <div class="grade-row"><span class="grade-name">파워 판매자</span><span>거래 완료 30건 이상 · 평점 4.5 이상 · 최근 30일 내 판매 활동</span></div>
+        <div class="grade-row"><span class="grade-name">공식 파트너</span><span>운영자가 직접 선정한 판매자</span></div>
         <div class="apply">집계 기준은 <b>거래 완료된 판매 건수</b>와 <b>받은 후기 평균 평점</b>이에요. 조건에서 내려가면 등급도 자동으로 조정돼요.</div>
       </div>\`
 
