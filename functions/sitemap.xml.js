@@ -64,6 +64,7 @@ const STATIC_URLS = [
   { loc: '/trade/wuwa/',                  priority: '0.9', changefreq: 'daily'   },
   { loc: '/trade/price/wuwa/',            priority: '0.7', changefreq: 'weekly'  },
   { loc: '/game/umamusume/',              priority: '0.8', changefreq: 'weekly'  },
+  { loc: '/game/umamusume/characters/',   priority: '0.8', changefreq: 'weekly'  },
   { loc: '/trade/umamusume/',             priority: '0.9', changefreq: 'daily'   },
   { loc: '/trade/price/umamusume/',       priority: '0.7', changefreq: 'weekly'  },
   { loc: '/contact/',                     priority: '0.4', changefreq: 'monthly' },
@@ -77,6 +78,7 @@ const CHAR_DETAIL_GAMES = {
   wuwa:     '/game/wuwa/characters/',
   nikke:    '/game/nikke/characters/',
   leehwan:  '/game/leehwan/characters/',
+  umamusume:'/game/umamusume/characters/',
 }
 
 async function supaGet(path) {
@@ -102,7 +104,7 @@ export async function onRequest() {
 
   // 1. 캐릭터 상세 페이지용 게임 ID 조회
   const games = await supaGet(
-    `Game?slug=in.(genshin,starrail,zzz,wuwa,nikke,leehwan)&select=id,slug`
+    `Game?slug=in.(genshin,starrail,zzz,wuwa,nikke,leehwan,umamusume)&select=id,slug`
   )
   const gameMap = {}
   ;(games || []).forEach(g => { gameMap[g.id] = g.slug })
@@ -112,7 +114,7 @@ export async function onRequest() {
   if (games && games.length > 0) {
     const gameIds = games.map(g => `"${g.id}"`).join(',')
     const chars = await supaGet(
-      `Character?gameId=in.(${gameIds})&isActive=eq.true&slug=not.is.null&select=slug,gameId&limit=1000`
+      `Character?gameId=in.(${gameIds})&isActive=eq.true&slug=not.is.null&select=slug,gameId&limit=2000`
     )
     charUrls = (chars || [])
       .filter(c => c.slug && gameMap[c.gameId])

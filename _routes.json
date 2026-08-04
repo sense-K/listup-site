@@ -86,6 +86,8 @@
     "/trade/price/*",
     "/game/umamusume",
     "/game/umamusume/",
+    "/game/umamusume/characters",
+    "/game/umamusume/characters/",
     "/trade/umamusume",
     "/trade/umamusume/*"
   ]
