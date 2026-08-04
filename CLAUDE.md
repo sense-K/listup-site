@@ -1054,7 +1054,7 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 ## 캐릭터 자동 동기화 (2026-08-05 구축)
 
 **매일 05:00 KST 에 GitHub Actions(`auto-sync.yml`)가 무인으로 돈다. 관리자가 누를 버튼 없음.**
-- 대상: 원신·스타레일·젠레스·명조·에픽세븐·블루아카 (`ops/import/run.mjs` 의 `SYNC_GAMES`)
+- 대상: 원신·스타레일·젠레스·명조·에픽세븐·블루아카·명일방주 (`ops/import/run.mjs` 의 `SYNC_GAMES`)
 - 구조: 공통 러너 `ops/import/run.mjs` + 게임별 어댑터 `ops/import/games/{slug}.mjs`
   - 어댑터는 "소스에서 캐릭터 배열을 뽑는 함수" 하나만 구현 (fetchCharacters)
   - 새 게임 자동화 추가 = 어댑터 파일 1개 + SYNC_GAMES 에 slug 추가
@@ -1081,11 +1081,30 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 | wuwa | nanoka.cc ww | 방랑자 6종 제외, rank<4 제외 |
 | epicseven | 스토브 epic7_hero.json **ko 배열** | slug 는 hero code. 주인공 c0001/c1005 제외 |
 | bluearchive | SchaleDB kr students.json | tier=학교명(기존 규칙), IsReleased[0] 만 |
+| arknights | Kengxxiao/ArknightsGameData_YoStar ko_KR | 374명. 이미지 yuanyan3060/ArknightsGameResource avatar. 직업→weaponType(뱅가드/가드…), TIER_6→'6성'. 게임은 아직 비활성이지만 활성화 즉시 사용 가능 |
 
-자동화 불가(공개 소스 없음): 이환·몬길·쿠킹덤·세나리·트릭컬·림버스·로스트소드 → 수동 또는 CharacterRequest 승인 방식(계획).
+### 팬사이트 자동화 조사 결과 (2026-08-05, 비활성 게임 포함 전수)
+- **명일방주만 자동화 확정** → 어댑터 구축 + SYNC_GAMES 편입 완료.
+- 나머지는 전부 부적합 판정:
+  - 림버스: 가챠시뮬 repo / LimBooks(noita0130.github.io) / limbuswiki.github.io — 구조 불안정·소규모
+  - 브라운더스트2: BD2DB(souseha.com) / gitbook — API 없음
+  - 트릭컬·엔드필드·몬길·세나리·로스트소드·이환: 나무위키/인벤뿐 (봇차단 + 비정형 → 수집 부적합)
+  - 쿠킹덤: fandom ko api.php 후보 있으나 403 (러너 검증 미완)
+- 결론: 위 게임들은 수동 등록 또는 CharacterRequest 승인 방식(계획).
 
 ### SEO 소개문 숨김 (2026-08-05)
 전 게임 페이지의 `.seo-intro` 는 CSS `display:none` (style.css). HTML 에는 남아 있음.
+
+## 매물 스크린샷 업로드 (2026-08-05 구축)
+- **최대 10장, 장당 10MB** (jpeg/png/webp/gif). 등록·수정 화면(`/trade/register/`) 설명란 아래 `#img-upload-grid`.
+- 스키마: `Listing.images JSONB` (URL 배열, 기본 `[]`)
+- 스토리지: 버킷 `listing-images` (공개 읽기). 업로드 경로 `{userId}/{ts}-{i}.{ext}` —
+  RLS 가 자기 폴더(`auth.uid()` = 첫 폴더명)만 insert/delete 허용.
+- register JS: `listingImages` 배열({url} 기존 | {file, preview} 신규), `uploadListingImages(userId)` 가
+  submit 시 일괄 업로드 → `getPublicUrl` → insert/update 에 `images` 포함. 수정 모드는 기존 URL 로드.
+- 상세(`/listing/`): 설명 위 `.detail-shots` 그리드(5열/모바일3열) + `#shot-lightbox` 라이트박스
+  (←→/ESC 키보드, 카운터). `currentListing.images` 참조.
+- 매물 카드 대표 이미지로는 아직 안 씀 (상세 페이지 갤러리만) — 추후 검토.
 
 ## 대행(상점) 모델 (2026-08-03 구축)
 
