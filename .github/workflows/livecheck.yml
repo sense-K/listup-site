@@ -26,10 +26,11 @@ jobs:
           echo "== 매물 카드: 히어로형 + 중앙 상태 오버레이 =="
           curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/js/listings.js?cb=${GITHUB_RUN_ID}" > /tmp/l.js
           echo "listings.js size=$(wc -c < /tmp/l.js)"
-          for n in card-hero-center hero-status card-hero-img cardTierClass; do
+          for n in card-hero-center hero-status card-hero-img cardTierClass listing.isHot; do
             grep -q "$n" /tmp/l.js && echo "  OK  $n" || echo "::error::listings.js에 $n 없음"
           done
           grep -q "card-flag flag-sold" /tmp/l.js && echo "::error::판매완료가 아직 코너 배지" || echo "  OK  판매완료 코너배지 제거됨"
+          grep -q "viewCount > 50" /tmp/l.js && echo "::error::HOT이 아직 누적 조회수 기준" || echo "  OK  HOT 누적기준 제거됨"
           curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/css/style.css?cb=${GITHUB_RUN_ID}" > /tmp/s.css
           grep -q "card-hero-center" /tmp/s.css && echo "  OK  css card-hero-center" || echo "::error::css에 card-hero-center 없음"
           grep -q "repeat(4, minmax(0, 1fr))" /tmp/s.css && echo "  OK  css 4열 그리드" || echo "::error::css 4열 그리드 없음"
