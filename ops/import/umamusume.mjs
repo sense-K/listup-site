@@ -60,41 +60,80 @@ async function loadKakao() {
 }
 
 function extractCharacters(js) {
-  // `const X = [ ... ];` 또는 `var X = { ... };` 형태를 모두 시도해 가장 큰 컬렉션 채택
+  // 1) 최상위 선언 이름 전부 나열 (어디에 캐릭터가 있는지 보기 위함)
+  const names = [...js.matchAll(/(?:^|\n)\s*(?:const|var|let)\s+([A-Za-z_$][\w$]*)\s*=/g)].map(m => m[1])
+  log(`  최상위 선언: ${JSON.stringify(names)}`)
+
+  // 2) 각 선언을 균형 괄호로 잘라내 평가
   const candidates = []
-  const re = /(?:const|var|let)\s+([A-Za-z_$][\w$]*)\s*=\s*(\[[\s\S]*?\]|\{[\s\S]*?\})\s*;?\s*(?=(?:const|var|let|function|\/\/|\/\*|$))/g
-  let m
-  while ((m = re.exec(js)) !== null) {
-    const [, name, body] = m
+  for (const name of new Set(names)) {
+    const decl = new RegExp(`(?:const|var|let)\\s+${name}\\s*=\\s*`)
+    const at = js.search(decl)
+    if (at < 0) continue
+    const start = js.indexOf('=', at) + 1
+    let i = start
+    while (i < js.length && /\s/.test(js[i])) i++
+    const open = js[i]
+    if (open !== '[' && open !== '{') continue
+    const close = open === '[' ? ']' : '}'
+    let depth = 0, end = -1, inStr = null
+    for (let j = i; j < js.length; j++) {
+      const ch = js[j], prev = js[j - 1]
+      if (inStr) { if (ch === inStr && prev !== '\\') inStr = null; continue }
+      if (ch === '"' || ch === "'" || ch === '`') { inStr = ch; continue }
+      if (ch === open) depth++
+      else if (ch === close) { depth--; if (depth === 0) { end = j; break } }
+    }
+    if (end < 0) continue
+    const body = js.slice(i, end + 1)
     try {
       // eslint-disable-next-line no-new-func
       const val = Function(`"use strict"; return (${body});`)()
-      const arr = Array.isArray(val) ? val : (val && typeof val === 'object' ? Object.values(val) : null)
-      if (Array.isArray(arr) && arr.length > 20 && arr.every(o => o && typeof o === 'object')) {
-        candidates.push({ name, arr })
+      const arr = Array.isArray(val) ? val : (val && typeof val === 'object' ? Object.values(val).flat() : null)
+      if (Array.isArray(arr) && arr.length) {
+        const objs = arr.filter(o => o && typeof o === 'object')
+        if (objs.length) candidates.push({ name, arr: objs })
       }
-    } catch { /* 파싱 실패한 리터럴은 무시 */ }
+    } catch (e) { log(`  (${name} 평가 실패: ${e.message.slice(0, 60)})`) }
   }
   candidates.sort((a, b) => b.arr.length - a.arr.length)
-  for (const c of candidates.slice(0, 4)) {
-    log(`  후보 변수 ${c.name}: ${c.arr.length}건 / 키=${JSON.stringify(Object.keys(c.arr[0] || {}))}`)
+  for (const c of candidates.slice(0, 6)) {
+    log(`  후보 ${c.name}: ${c.arr.length}건 / 키=${JSON.stringify(Object.keys(c.arr[0] || {}))}`)
+    log(`     샘플: ${JSON.stringify(c.arr[0]).slice(0, 300)}`)
   }
-  const best = candidates[0]
+  const best = candidates.find(c => c.arr.some(o => o.name && (o.eng || o.cv || o.icon))) || candidates[0]
   if (!best) return []
-  // 캐릭터로 보이는 것만 (이름 필드 존재)
+  log(`  → 채택: ${best.name} (${best.arr.length}건)`)
   return best.arr.filter(o => o && (o.name || o.eng))
 }
 
 // ---------------------------------------------------------------- 2) umapyoi
 async function loadUmapyoi() {
   log('\n=== 2) umapyoi 이미지 ===')
-  const list = await get(UMAPYOI_LIST, false)
-  log(`umapyoi 캐릭터 수: ${Array.isArray(list) ? list.length : '(배열 아님)'}`)
-  if (Array.isArray(list) && list.length) {
-    log(`키: ${JSON.stringify(Object.keys(list[0]))}`)
-    log(`샘플: ${JSON.stringify(list[0]).slice(0, 400)}`)
-  }
-  return Array.isArray(list) ? list : []
+  const idx = await get(UMAPYOI_LIST, false)
+  log(`인덱스 응답: ${Array.isArray(idx) ? idx.length + '건' : '(배열 아님)'} / 키=${JSON.stringify(Object.keys(idx?.[0] ?? {}))}`)
+  if (!Array.isArray(idx) || !idx.length) return []
+
+  // 인덱스는 {game_id, web_id} 쌍만 준다 → 상세를 개별 호출해야 이름·이미지가 나온다
+  const probeOne = await get(`https://umapyoi.net/api/v1/character/${idx[0].game_id}`, false).catch(e => {
+    log(`  상세 호출 실패: ${e.message}`); return null
+  })
+  if (probeOne) log(`  상세 키: ${JSON.stringify(Object.keys(probeOne))}`)
+  if (probeOne) log(`  상세 샘플: ${JSON.stringify(probeOne).slice(0, 500)}`)
+  if (MODE === 'probe') return probeOne ? [probeOne] : []
+
+  // import 모드: 전체를 동시성 6으로 수집
+  const out = []
+  const queue = [...idx]
+  await Promise.all(Array.from({ length: 6 }, async () => {
+    while (queue.length) {
+      const it = queue.shift()
+      try { out.push(await get(`https://umapyoi.net/api/v1/character/${it.game_id}`, false)) }
+      catch { /* 개별 실패는 건너뜀 */ }
+    }
+  }))
+  log(`  상세 수집: ${out.length}/${idx.length}`)
+  return out
 }
 
 // ---------------------------------------------------------------- 3) 앱 아이콘
@@ -102,15 +141,22 @@ async function loadAppIcon() {
   log('\n=== 3) Google Play 앱 아이콘 ===')
   try {
     const html = await get(PLAY_URL)
-    const m = html.match(/https:\/\/play-lh\.googleusercontent\.com\/[A-Za-z0-9_\-]+=?[sw]\d+[^"'\\]*/g)
+    // Play 상세 페이지의 og:image가 앱 아이콘이다 (피처 그래픽과 혼동 방지)
+    const og = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+    if (og) {
+      const base = og[1].split('=')[0]
+      log(`og:image 원본: ${og[1]}`)
+      const icon = `${base}=s96-rw`
+      log(`선택(og:image 기준): ${icon}`)
+      return icon
+    }
+    log('!! og:image 없음 — 폴백 스캔')
+    const m = html.match(/https:\/\/play-lh\.googleusercontent\.com\/[A-Za-z0-9_\-]+/g)
     if (!m) { log('!! 아이콘 URL 추출 실패'); return null }
     const uniq = [...new Set(m)]
-    log(`후보 ${uniq.length}개, 상위: ${JSON.stringify(uniq.slice(0, 3))}`)
-    // 다른 게임들과 동일하게 =s96-rw 규격으로 정규화
-    const base = uniq[0].split('=')[0]
-    const icon = `${base}=s96-rw`
-    log(`선택: ${icon}`)
-    return icon
+    log(`폴백 후보 ${uniq.length}개: ${JSON.stringify(uniq.slice(0, 3))}`)
+    return `${uniq[0]}=s96-rw`
   } catch (e) {
     log(`!! Play 페이지 실패: ${e.message}`)
     return null
@@ -127,7 +173,10 @@ const appIcon = await loadAppIcon()
 log('\n=== 4) 매칭 ===')
 const umaMap = new Map()
 for (const u of umapyoi) {
-  for (const k of [u.name_en, u.name, u.name_jp]) if (k) umaMap.set(norm(k), u)
+  for (const k of [u.name_en, u.name, u.name_jp, u.name_ko]) if (k) umaMap.set(norm(k), u)
+}
+if (MODE === 'probe' && umapyoi[0]) {
+  log(`  이미지 후보 필드: ${JSON.stringify(Object.entries(umapyoi[0]).filter(([k,v]) => typeof v === 'string' && /http/.test(v)).map(([k]) => k))}`)
 }
 let matched = 0
 const rows = kakao.map(c => {
