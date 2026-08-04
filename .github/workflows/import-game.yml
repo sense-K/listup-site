@@ -12,6 +12,11 @@ name: Game Import (외부 데이터 → Supabase)
 #   [fix-nikke-img]   그 이미지를 실제로 UPDATE
 #   [find-source]     자동 임포터가 없는 게임들의 캐릭터 데이터 소스 탐색 (DB 미변경)
 #
+#   공통 임포터 (ops/import/run.mjs + games/{slug}.mjs 어댑터):
+#     [probe:{slug}]   무엇이 바뀌는지만 출력 (DB 미변경)
+#     [import:{slug}]  실제 INSERT/UPDATE
+#     예) [probe:epicseven]  [import:bluearchive]
+#
 # 필요: Secret SUPABASE_DB_URL
 
 on:
@@ -38,7 +43,9 @@ jobs:
       contains(github.event.head_commit.message, '[fix-uma-img]') ||
       contains(github.event.head_commit.message, '[probe-nikke-img]') ||
       contains(github.event.head_commit.message, '[fix-nikke-img]') ||
-      contains(github.event.head_commit.message, '[find-source]')
+      contains(github.event.head_commit.message, '[find-source]') ||
+      contains(github.event.head_commit.message, '[probe:') ||
+      contains(github.event.head_commit.message, '[import:')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -60,6 +67,19 @@ jobs:
           MSG="${{ github.event.head_commit.message }}"
           SCRIPT=ops/import/umamusume.mjs
           MODE=probe
+          GAME=""
+          # 공통 임포터: [probe:slug] / [import:slug]
+          if echo "$MSG" | grep -qE '\[(probe|import):[a-z0-9-]+\]'; then
+            TAG=$(echo "$MSG" | grep -oE '\[(probe|import):[a-z0-9-]+\]' | head -1)
+            MODE=$(echo "$TAG" | sed -E 's/\[([a-z]+):.*/\1/')
+            GAME=$(echo "$TAG" | sed -E 's/.*:([a-z0-9-]+)\]/\1/')
+            SCRIPT=ops/import/run.mjs
+            echo "game=$GAME" >> $GITHUB_OUTPUT
+            echo "mode=$MODE" >> $GITHUB_OUTPUT
+            echo "script=$SCRIPT" >> $GITHUB_OUTPUT
+            echo ">>> 공통 임포터: $GAME (MODE=$MODE)"
+            exit 0
+          fi
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             MODE="${{ github.event.inputs.mode }}"
             case "${{ github.event.inputs.game }}" in
@@ -81,10 +101,12 @@ jobs:
           fi
           echo "mode=$MODE"     >> $GITHUB_OUTPUT
           echo "script=$SCRIPT" >> $GITHUB_OUTPUT
+          echo "game=$GAME"     >> $GITHUB_OUTPUT
           echo ">>> $SCRIPT (MODE=$MODE)"
 
       - name: Run importer
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           MODE: ${{ steps.mode.outputs.mode }}
+          GAME: ${{ steps.mode.outputs.game }}
         run: node ${{ steps.mode.outputs.script }}
