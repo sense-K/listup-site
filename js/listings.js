@@ -123,6 +123,23 @@ function renderListingCard(listing) {
 
   const shopMiniHtml = `<div class="card-shop-mini">🏪 ${nickname}${sellerGrade ? ` <span class="grade">🏅 ${sellerGrade}</span>` : ''}</div>`
 
+  // 관리자에게만: 이 매물이 마지막으로 목록 상단에 올라온 시각 (등록 or 끌올)
+  // bumpedAt은 등록 시 createdAt과 같고, 끌어올리기 하면 그때로 갱신됨
+  const adminMetaHtml = window.isAdmin ? (() => {
+    const created = listing.createdAt ? new Date(listing.createdAt).getTime() : 0
+    const bumped = listing.bumpedAt ? new Date(listing.bumpedAt).getTime() : created
+    if (!bumped || isNaN(bumped)) return ''   // 시각 정보가 없으면 아무것도 표시하지 않음
+    const wasBumped = created > 0 && bumped - created > 60000   // 1분 이상 차이나면 끌올로 간주
+    const d = new Date(bumped)
+    const pad = n => String(n).padStart(2, '0')
+    const stamp = `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+    return `<div class="card-admin-meta${wasBumped ? ' is-bumped' : ''}">
+      <span class="cam-tag">${wasBumped ? '⬆ 끌올' : '등록'}</span>
+      <span class="cam-time">${stamp}</span>
+      <span class="cam-ago">${timeAgo(bumped)}</span>
+    </div>`
+  })() : ''
+
   const isBlocked = (isSold || isTrading) && !window.isAdmin
   const dimClass = isSold ? ' card-sold' : (isTrading ? ' card-trading' : '')
   const wrapOpen = isBlocked
@@ -158,6 +175,7 @@ function renderListingCard(listing) {
           </div>
         </div>
         ${shopMiniHtml}
+        ${adminMetaHtml}
       </div>
   ` + wrapClose
 }

@@ -1338,6 +1338,32 @@ a { text-decoration: none; color: inherit; }
   font-weight: 800;
 }
 
+/* 관리자 전용: 등록/끌올 갱신 시각 */
+.card-admin-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  padding: 5px 7px;
+  background: #f6f4ff;
+  border: 1px dashed #d6cdf5;
+  border-radius: 7px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: #5b34d6;
+}
+.card-admin-meta .cam-tag {
+  font-weight: 800;
+  background: #e5dcff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+.card-admin-meta.is-bumped .cam-tag { background: #6c47ff; color: #fff; }
+.card-admin-meta .cam-time { font-weight: 700; }
+.card-admin-meta .cam-ago { color: #9b8fc4; }
+
 .card-seller {
   display: flex;
   align-items: center;

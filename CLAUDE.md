@@ -1021,6 +1021,10 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
   - 임계값은 고정값이 아니라 **판매중 매물의 90분위수**(최소 바닥 3회) — 트래픽이 늘어도 HOT 비율이 유지됨.
   - 클라이언트는 `isHot`만 읽음. JS에 숫자 기준을 박지 말 것.
   - 조회 집계: `track_listing_view` RPC가 **같은 IP+같은 매물 1시간 내 재방문은 미집계**.
+- **관리자 전용 카드 메타**: 로그인 계정이 운영자(`window.isAdmin`)일 때만 카드 하단에
+  `등록 / ⬆ 끌올` + `bumpedAt` 시각 + 상대시간이 표시됨(`.card-admin-meta`).
+  `bumpedAt - createdAt > 1분`이면 끌올로 간주. 일반 사용자에겐 렌더 자체가 안 됨.
+  `loadListings()`가 `window._adminReady`를 await한 뒤 렌더하므로 판정 시점 문제 없음.
 - `/trade/register/` — **3단계**: 게임/서버 → 계정 구성(캐릭터 + 재화를 한 화면에서 자유롭게, 최소 1개) → 가격+재고+상시판매. 리세계/돌계 유형 선택 단계는 없앰(2026-08-03) — 리세계에도 재화가 있고 돌계에도 캐릭이 있어서.
 - `/mypage/` — **`/shop/{username}` 리다이렉트 스텁**(비로그인은 `/auth/`). 마이페이지 기능은 상점 페이지로 통합됨.
 - **상점 = 마이페이지 통합**: `/shop/{username}` 접속자가 주인이면(클라이언트에서 `db.auth.getSession()`으로 판정) 공개 상점 아래 **관리 영역**(판매 관리 / 구매 내역 / 상점 설정) 노출. 함수는 `mgr*` 접두어(mgrInit·mgrBuyerConfirm=수령확인·mgrSaveShopSettings·mgrDeleteListing 등). 네비바의 내 아이디 클릭 → `/shop/{username}`(username 없으면 `/mypage/` 폴백).
