@@ -825,10 +825,10 @@ a { text-decoration: none; color: inherit; }
 }
 
 .seo-intro {
-  font-size: 13px;
-  color: var(--text-sub, #64748b);
-  margin: 0 0 16px;
-  line-height: 1.6;
+  /* 2026-08-05 운영 결정: 검색엔진용 소개문이 화면을 어지럽혀 전 페이지에서 숨김.
+     HTML 에는 남아 크롤러가 읽을 수 있지만, 숨긴 텍스트는 구글이 가중치를 낮게 본다.
+     (키워드는 title/description/JSON-LD 가 계속 담당) */
+  display: none;
 }
 
 .content-count {

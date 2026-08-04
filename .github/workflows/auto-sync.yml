@@ -1,0 +1,35 @@
+name: Auto Character Sync (매일 새벽 캐릭터 자동 동기화)
+
+# 자동화 가능한 전 게임의 신규 캐릭터를 매일 알아서 가져와 DB 에 넣는다.
+# 관리자가 누를 버튼은 없다 — 그냥 돈다.
+#
+#  · 매일 05:00 KST (20:00 UTC) 자동 실행
+#  · 대상: ops/import/run.mjs 의 SYNC_GAMES (원신·스타레일·젠레스·명조·에픽세븐·블루아카)
+#  · 결과는 ImportLog 테이블에 기록 → admin 캐릭터 관리 탭 상단에 표시됨
+#  · 한 게임이 실패해도 나머지는 계속 돌고, 실패가 있으면 이 워크플로가 빨간불이 된다
+#    (GitHub 설정에 따라 실패 메일도 옴)
+#  · 지금 당장 돌리고 싶으면: GitHub → Actions → 이 워크플로 → Run workflow 버튼
+
+on:
+  schedule:
+    - cron: '0 20 * * *'   # 05:00 KST
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+      - name: Sync all games
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          GAME: all
+          MODE: import
+        run: node ops/import/run.mjs
