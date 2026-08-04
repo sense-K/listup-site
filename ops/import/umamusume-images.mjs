@@ -164,6 +164,20 @@ async function discoverImageBases(html, sampleIcon, sampleHeader) {
     'assets/img/main/', 'assets/img/common/character/', 'assets/character/',
   ]) dirs.add(d)
 
+  // 진단: assets/character/ 계열이 왜 실패하는지 (경로 오류 vs 핫링크 차단) 구분
+  clue('  --- 진단: 상태코드/컨텐츠타입 ---')
+  for (const d of ['assets/character/', 'assets/character/icon/', 'assets/character/thumb/',
+                   'assets/character/list/', 'assets/img/character/', 'assets/']) {
+    for (const [label, ref] of [['ref=resetlist', 'https://resetlist.kr/'], ['ref=카카오', KAKAO_HOME]]) {
+      const u = absFrom(d, sampleIcon)
+      try {
+        const r = await fetch(u, { headers: { 'User-Agent': UA, Referer: ref, Accept: 'image/*,*/*' } })
+        const len = r.headers.get('content-length') || '?'
+        clue(`    ${d} [${label}] → ${r.status} ${r.headers.get('content-type')} ${len}B`)
+      } catch (e) { clue(`    ${d} [${label}] → 예외 ${e.message.slice(0, 40)}`) }
+    }
+  }
+
   log(`  총 후보 ${dirs.size}개 검사`)
   const ok = [], okH = []
   for (const d of dirs) {
