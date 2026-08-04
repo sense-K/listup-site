@@ -1014,6 +1014,13 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
   - 히어로 하단 3px 라인 = 대표 캐릭터 티어색. `cardTierClass()`로 정규화(s/a/b/c) — `gradeClass()`는 쿠키런킹덤 전용이라 별도 함수.
   - 스트립: 2번째 캐릭터부터 최대 6칸(+N). 캐릭터 1명뿐이거나 돌계면 재화 칩이 그 자리에.
   - 기본 페이지 크기 `limit = 12` (4열 × 3줄).
+  - 거래중·판매완료는 **히어로 중앙 오버레이**(`.card-hero-center`), HOT은 우측 상단 배지.
+- **HOT 배지 = 최근 7일 조회수 상위 10%** (2026-08-03 변경). 이전엔 `viewCount > 50`(등록 후 누적)이라
+  오래 걸려 있는 매물이 HOT을 독식하는 문제가 있었음 — 105일차 하루 0.8회 매물엔 붙고, 20일차 하루 2.7회 매물엔 안 붙었음.
+  - `Listing.recentViewCount`(최근 7일) + `Listing.isHot` 컬럼, 함수 `recompute_hot_listings()`, cron `auto-hot-listings`(매시 5분).
+  - 임계값은 고정값이 아니라 **판매중 매물의 90분위수**(최소 바닥 3회) — 트래픽이 늘어도 HOT 비율이 유지됨.
+  - 클라이언트는 `isHot`만 읽음. JS에 숫자 기준을 박지 말 것.
+  - 조회 집계: `track_listing_view` RPC가 **같은 IP+같은 매물 1시간 내 재방문은 미집계**.
 - `/trade/register/` — **3단계**: 게임/서버 → 계정 구성(캐릭터 + 재화를 한 화면에서 자유롭게, 최소 1개) → 가격+재고+상시판매. 리세계/돌계 유형 선택 단계는 없앰(2026-08-03) — 리세계에도 재화가 있고 돌계에도 캐릭이 있어서.
 - `/mypage/` — **`/shop/{username}` 리다이렉트 스텁**(비로그인은 `/auth/`). 마이페이지 기능은 상점 페이지로 통합됨.
 - **상점 = 마이페이지 통합**: `/shop/{username}` 접속자가 주인이면(클라이언트에서 `db.auth.getSession()`으로 판정) 공개 상점 아래 **관리 영역**(판매 관리 / 구매 내역 / 상점 설정) 노출. 함수는 `mgr*` 접두어(mgrInit·mgrBuyerConfirm=수령확인·mgrSaveShopSettings·mgrDeleteListing 등). 네비바의 내 아이디 클릭 → `/shop/{username}`(username 없으면 `/mypage/` 폴백).

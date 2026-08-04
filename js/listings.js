@@ -110,7 +110,8 @@ function renderListingCard(listing) {
     : isTrading
       ? `<div class="card-hero-center"><span class="hero-status status-trading">거래중</span></div>`
       : ''
-  const cornerBadge = (!isSold && !isTrading && listing.viewCount > 50)
+  // HOT: 최근 7일 조회수 상위 10% (크론 recompute_hot_listings가 매시간 isHot 갱신)
+  const cornerBadge = (!isSold && !isTrading && listing.isHot)
     ? `<span class="card-flag flag-hot">🔥 HOT</span>` : ''
 
   const discountHtml = listing.discountAmount
@@ -211,7 +212,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 1
 
     // 상태 구분 없이 최신순으로 한 번에 노출 (거래중·판매완료가 섞여 활발해 보이도록)
     const SELECT_FIELDS = `
-      id, price, discountAmount, description, createdAt, bumpedAt, viewCount, status, type, stock,
+      id, price, discountAmount, description, createdAt, bumpedAt, viewCount, isHot, status, type, stock,
       game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
       server:Server(nameKo),
       user:User(nickname, username, sellerGrade),
