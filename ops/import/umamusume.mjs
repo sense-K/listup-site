@@ -182,13 +182,22 @@ let matched = 0
 const rows = kakao.map(c => {
   const u = umaMap.get(norm(c.eng)) || umaMap.get(norm(c.name))
   if (u) matched++
+  const stripTags = t => String(t ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
   return {
     nameKo: c.name ?? null,
     nameEn: c.eng ?? c.name ?? null,
-    thumb: u?.thumb_img ?? u?.image ?? null,
-    header: u?.sns_header ?? u?.thumb_img ?? null,
-    cv: c.cv ?? null,
-    raw: c,
+    // 도감 카드용 반신 이미지 / 상세 히어로용 헤더 이미지
+    thumb: u?.thumb_img ?? u?.sns_icon ?? null,
+    header: u?.sns_header ?? u?.detail_img_pc ?? u?.thumb_img ?? null,
+    meta: {
+      fullImageUrl: u?.sns_header ?? u?.detail_img_pc ?? null,
+      cv: c.cv ?? null,
+      birthday: c.birth ?? null,
+      height: c.height ?? null,
+      catchphrase: stripTags(c.words) || null,
+      description: stripTags(c.description) || null,
+      color: c.color ?? null,
+    },
   }
 })
 log(`카카오 ${kakao.length}명 / umapyoi ${umapyoi.length}명 / 매칭 ${matched}명`)
@@ -250,7 +259,7 @@ INSERT INTO "Character" (id, "gameId", "nameKo", "nameEn", tier, "isLimited", "b
                          "imageUrl", "isActive", "sortOrder", "createdAt", "updatedAt", metadata)
 SELECT ${q('chr_uma_' + i)}, g.id, ${q(r.nameKo)}, ${q(r.nameEn)}, '', false, 0,
        ${q(r.thumb)}, true, ${i}, now(), now(),
-       ${q(JSON.stringify({ fullImageUrl: r.header, cv: r.cv }))}::jsonb
+       ${q(JSON.stringify(r.meta))}::jsonb
 FROM "Game" g WHERE g.slug = 'umamusume'
   AND NOT EXISTS (SELECT 1 FROM "Character" c WHERE c."gameId" = g.id AND c."nameKo" = ${q(r.nameKo)});`)
 }
