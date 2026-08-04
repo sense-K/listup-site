@@ -1021,6 +1021,13 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
   - 임계값은 고정값이 아니라 **판매중 매물의 90분위수**(최소 바닥 3회) — 트래픽이 늘어도 HOT 비율이 유지됨.
   - 클라이언트는 `isHot`만 읽음. JS에 숫자 기준을 박지 말 것.
   - 조회 집계: `track_listing_view` RPC가 **같은 IP+같은 매물 1시간 내 재방문은 미집계**.
+- **⚠️ 시각 파싱은 반드시 `parseTs()`(config.js)를 쓸 것** — `Listing.createdAt`은 `timestamp`(타임존 없음),
+  `bumpedAt`은 `timestamptz`라 PostgREST JSON에서 표기가 다르게 내려온다:
+  `"createdAt": "2026-07-31T15:18:08.154"` vs `"bumpedAt": "...154+00:00"`.
+  `new Date()`에 그대로 넣으면 타임존 없는 쪽을 **로컬 시간으로 해석**해 KST에서 9시간 어긋난다.
+  (이 때문에 모든 매물이 '끌올'로 오판정되고, `timeAgo(createdAt)`이 9시간 오래된 값을 출력하던 버그가 있었음 — 2026-08-04 수정)
+  `parseTs()`가 타임존 표기 없는 문자열에 `Z`를 붙여 UTC로 보정한다. `timeAgo()`는 내부에서 이미 사용 중.
+  남은 미보정 지점: `trade/price/*/index.html`의 `new Date(lastUpdated)` (일 단위 표시라 영향 경미).
 - **관리자 전용 카드 메타**: 로그인 계정이 운영자(`window.isAdmin`)일 때만 카드 하단에
   `등록 / ⬆ 끌올` + `bumpedAt` 시각 + 상대시간이 표시됨(`.card-admin-meta`).
   `bumpedAt - createdAt > 1분`이면 끌올로 간주. 일반 사용자에겐 렌더 자체가 안 됨.

@@ -27,8 +27,22 @@ function formatPrice(price) {
   return price.toLocaleString() + '원'
 }
 
+// Supabase의 timestamp(타임존 없음) 컬럼은 "2026-07-31T15:18:08.154"처럼 내려온다.
+// JS는 이런 문자열을 '로컬 시간'으로 해석하는데 저장값은 UTC라, KST에선 9시간 어긋난다.
+// 타임존 표기가 없으면 UTC로 간주해 보정한다. (timestamptz 컬럼은 +00:00이 붙어 그대로 통과)
+function parseTs(v) {
+  if (v == null) return NaN
+  if (typeof v === 'number') return v
+  if (v instanceof Date) return v.getTime()
+  const s = String(v).trim()
+  const hasTz = /(?:Z|[+-]\d{2}:?\d{2})$/.test(s)
+  return new Date(hasTz ? s : s.replace(' ', 'T') + 'Z').getTime()
+}
+
 function timeAgo(dateStr) {
-  const diff = Date.now() - new Date(dateStr).getTime()
+  const ts = parseTs(dateStr)
+  if (isNaN(ts)) return ''
+  const diff = Date.now() - ts
   const m = Math.floor(diff / 60000)
   if (m < 1) return '방금 전'
   if (m < 60) return m + '분 전'

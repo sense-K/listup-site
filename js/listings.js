@@ -126,8 +126,10 @@ function renderListingCard(listing) {
   // 관리자에게만: 이 매물이 마지막으로 목록 상단에 올라온 시각 (등록 or 끌올)
   // bumpedAt은 등록 시 createdAt과 같고, 끌어올리기 하면 그때로 갱신됨
   const adminMetaHtml = window.isAdmin ? (() => {
-    const created = listing.createdAt ? new Date(listing.createdAt).getTime() : 0
-    const bumped = listing.bumpedAt ? new Date(listing.bumpedAt).getTime() : created
+    // parseTs: createdAt(timestamp)과 bumpedAt(timestamptz)의 타임존 표기 차이를 흡수.
+    // 이걸 안 쓰면 KST에서 9시간 차이가 나 모든 매물이 '끌올'로 오판정됨.
+    const created = listing.createdAt ? parseTs(listing.createdAt) : 0
+    const bumped = listing.bumpedAt ? parseTs(listing.bumpedAt) : created
     if (!bumped || isNaN(bumped)) return ''   // 시각 정보가 없으면 아무것도 표시하지 않음
     const wasBumped = created > 0 && bumped - created > 60000   // 1분 이상 차이나면 끌올로 간주
     const d = new Date(bumped)

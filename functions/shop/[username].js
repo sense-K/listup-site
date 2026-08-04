@@ -1080,7 +1080,7 @@ export async function onRequest({ params }) {
   function mgrRefreshBumpBtn(id) {
     const btn = document.getElementById('bump-btn-' + id)
     if (!btn) return
-    const last = mgrBumpedAt[id] ? new Date(mgrBumpedAt[id]).getTime() : 0
+    const last = mgrBumpedAt[id] ? parseTs(mgrBumpedAt[id]) : 0
     const left = last + BUMP_COOLDOWN_MS - Date.now()
     if (left > 0) {
       const m = Math.floor(left / 60000)
@@ -1100,7 +1100,7 @@ export async function onRequest({ params }) {
     let anyWaiting = false
     btns.forEach(b => {
       const id = b.id.replace('bump-btn-', '')
-      const last = mgrBumpedAt[id] ? new Date(mgrBumpedAt[id]).getTime() : 0
+      const last = mgrBumpedAt[id] ? parseTs(mgrBumpedAt[id]) : 0
       if (last + BUMP_COOLDOWN_MS - Date.now() > 0) anyWaiting = true
       mgrRefreshBumpBtn(id)
     })
@@ -1109,7 +1109,7 @@ export async function onRequest({ params }) {
 
   async function mgrBump(id) {
     const btn = document.getElementById('bump-btn-' + id)
-    const last = mgrBumpedAt[id] ? new Date(mgrBumpedAt[id]).getTime() : 0
+    const last = mgrBumpedAt[id] ? parseTs(mgrBumpedAt[id]) : 0
     if (last + BUMP_COOLDOWN_MS > Date.now()) { mgrRefreshBumpBtn(id); return }
     if (btn) { btn.disabled = true; btn.textContent = '⬆ 올리는 중...' }
     const now = new Date().toISOString()
