@@ -2521,7 +2521,7 @@ a { text-decoration: none; color: inherit; }
   display: grid;
   grid-template-columns: 1.25fr 1fr;
   gap: 20px;
-  align-items: start;
+  align-items: stretch;   /* 좌우 기둥 높이 맞춤 */
 }
 .shop-demo {
   background: #fff;
@@ -2529,6 +2529,8 @@ a { text-decoration: none; color: inherit; }
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 8px 30px rgba(60,40,120,.10);
+  display: flex;
+  flex-direction: column;
 }
 .shop-demo-bar {
   display: flex; align-items: center; gap: 6px;
@@ -2541,7 +2543,7 @@ a { text-decoration: none; color: inherit; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .sd-url b { color: #5b34d6; font-weight: 800; }
-.shop-demo-body { padding: 16px; }
+.shop-demo-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
 
 .sd-header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
 .sd-avatar {
@@ -2587,16 +2589,33 @@ a { text-decoration: none; color: inherit; }
 .sd-price { font-size: 12.5px; font-weight: 900; color: var(--black); padding: 7px 9px; letter-spacing: -.02em; }
 
 .shop-demo-points { display: flex; flex-direction: column; gap: 11px; }
-.shop-demo-cta {
-  padding: 13px 20px; font-size: 14.5px; font-weight: 800;
-  border-radius: 11px; text-align: center; margin-top: 2px;
+/* 설명 카드가 남는 높이를 나눠 가져 좌측 미리보기와 아래끝이 맞는다 */
+.shop-demo-points .update-card {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  margin-bottom: 0;
 }
 
+/* CTA는 두 기둥 아래 전체 폭 기준 가운데 */
+.shop-demo-cta-row { display: flex; justify-content: center; margin-top: 22px; }
+.shop-demo-cta {
+  padding: 14px 40px; font-size: 15px; font-weight: 800;
+  border-radius: 11px; text-align: center;
+}
+
+/* 2열일 때만: 우측 카드에 맞춰 늘어난 높이를 매물 카드가 채우게 (아래 여백 제거) */
+@media (min-width: 1025px) {
+  .shop-demo-body > .sd-grid { flex: 1; }
+  .shop-demo-body > .sd-grid .sd-card { display: flex; flex-direction: column; }
+  .shop-demo-body > .sd-grid .sd-hero { flex: 1; aspect-ratio: auto; min-height: 96px; }
+}
 @media (max-width: 1024px) {
   .shop-demo-row { grid-template-columns: 1fr; }
+  /* 세로로 쌓이면 높이를 억지로 늘릴 이유가 없다 */
+  .shop-demo-points .update-card { flex: 0 0 auto; display: block; }
 }
 @media (max-width: 560px) {
   .sd-grid { grid-template-columns: repeat(2, 1fr); }
   .sd-grid .sd-card:last-child { display: none; }
   .shop-demo-body { padding: 13px; }
+  .shop-demo-cta { width: 100%; padding: 14px 20px; }
 }
