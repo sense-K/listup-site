@@ -175,13 +175,18 @@ async function initNavbarAuth() {
     }
     const nickname = user?.nickname ?? '사용자'
     const shopPath = user?.username ? `/shop/${user.username}` : '/mypage/'
+    // 운영자 계정에만 관리자 페이지 진입 버튼 노출
+    const isAdminUser = session.user.email === ADMIN_EMAIL
+    const adminLink = isAdminUser ? `<a href="/admin/" class="nav-admin-btn">⚙ 관리자</a>` : ''
     el.innerHTML = `
       <a href="${shopPath}" style="font-size:13px;color:#888;font-weight:600;">${nickname}</a>
+      ${adminLink}
       <button class="login-btn" onclick="authSignOut()" style="background:none;border:none;cursor:pointer;">로그아웃</button>
     `
     if (mobileEl) {
       mobileEl.innerHTML = `
         <a href="${shopPath}" class="btn btn-primary" style="text-align:center;">내 상점 (${nickname})</a>
+        ${isAdminUser ? `<a href="/admin/" class="btn btn-outline" style="text-align:center;">⚙ 관리자 페이지</a>` : ''}
         <button class="mobile-logout-btn" onclick="authSignOut()">로그아웃</button>
       `
     }

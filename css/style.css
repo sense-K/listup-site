@@ -129,7 +129,7 @@ a { text-decoration: none; color: inherit; }
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -138,6 +138,24 @@ a { text-decoration: none; color: inherit; }
   font-size: 14px;
   color: var(--text-muted);
 }
+
+/* 운영자 전용 관리자 페이지 버튼 (아이디 옆) */
+.nav-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #5b34d6;
+  background: #ece7ff;
+  border: 1px solid #d6cdf5;
+  border-radius: 999px;
+  padding: 4px 11px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-admin-btn:hover { background: #6c47ff; color: #fff; border-color: #6c47ff; }
 
 .navbar-sell-btn {
   background: var(--black);

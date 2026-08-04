@@ -23,6 +23,13 @@ jobs:
             if [ "$mode" = "gone" ] && [ "$hit" = "FOUND" ]; then echo "::error::should be removed: '$needle'"; fi
             return 0
           }
+          echo "== 헤더 관리자 버튼 (운영자에게만 노출) =="
+          curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/js/config.js?cb=${GITHUB_RUN_ID}" > /tmp/c.js
+          grep -q "nav-admin-btn" /tmp/c.js && echo "  OK  config.js nav-admin-btn" || echo "::error::config.js에 관리자 버튼 없음"
+          grep -q "session.user.email === ADMIN_EMAIL" /tmp/c.js && echo "  OK  운영자 이메일 조건부 렌더" || echo "::error::관리자 조건 없음"
+          curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/css/style.css?cb=${GITHUB_RUN_ID}" > /tmp/s2.css
+          grep -q "nav-admin-btn" /tmp/s2.css && echo "  OK  css nav-admin-btn" || echo "::error::css 관리자 버튼 스타일 없음"
+          check "https://resetlist.kr/admin/" 200 "접근 권한이 없어요"
           echo "== 매물 카드: 히어로형 + 중앙 상태 오버레이 =="
           curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/js/listings.js?cb=${GITHUB_RUN_ID}" > /tmp/l.js
           echo "listings.js size=$(wc -c < /tmp/l.js)"
