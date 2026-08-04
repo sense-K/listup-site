@@ -144,8 +144,10 @@ export async function onRequest({ params }) {
     .gc-banner img { width:100%; height:100%; object-fit:cover; display:block; }
     .gc-hero { display:grid; grid-template-columns:2fr 3fr; gap:32px; margin-bottom:8px; align-items:start; }
     @media(max-width:640px){ .gc-hero { grid-template-columns:1fr; gap:20px; } }
-    .gc-hero-img { border-radius:20px; overflow:hidden; aspect-ratio:1; background:linear-gradient(160deg,${accent}33 0%,#1a1a2e 100%); }
+    .gc-hero-img { border-radius:20px; overflow:hidden; aspect-ratio:1; background:linear-gradient(160deg,${accent}33 0%,#1a1a2e 100%); position:relative; }
     .gc-hero-img img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
+    /* 이미지 매칭 안 된 캐릭터 — 빈 박스 대신 표시 */
+    .gc-hero-img.no-img::after { content:'🐴'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:56px; opacity:0.35; }
     .gc-char-name { font-size:28px; font-weight:900; color:#1e293b; margin:0 0 2px; }
     .gc-char-en   { font-size:14px; color:#94a3b8; margin:0 0 12px; }
     .gc-catch { font-size:15px; font-weight:700; color:${accent}; margin:0 0 12px; line-height:1.5; }
@@ -184,8 +186,8 @@ export async function onRequest({ params }) {
   ${banner ? `<div class="gc-banner"><img src="${esc(banner)}" alt="${esc(c.nameKo)}" fetchpriority="high" onerror="this.parentElement.style.display='none'"></div>` : ''}
 
   <section class="gc-hero">
-    <div class="gc-hero-img">
-      ${c.imageUrl ? `<img src="${esc(c.imageUrl)}" alt="${esc(c.nameKo)}" onerror="this.style.display='none'">` : ''}
+    <div class="gc-hero-img${c.imageUrl ? '' : ' no-img'}">
+      ${c.imageUrl ? `<img src="${esc(c.imageUrl)}" alt="${esc(c.nameKo)}" onerror="this.parentElement.classList.add('no-img');this.style.display='none'">` : ''}
     </div>
     <div>
       <h1 class="gc-char-name">${esc(c.nameKo)}</h1>

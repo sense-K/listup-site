@@ -964,9 +964,36 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 
 ---
 
-## 우마무스메 도감 사전 조사 결과 (2026-04-29, 작업 예정)
+## 우마무스메 (2026-08-04 등록 완료)
 
-### 확정된 데이터 소스
+### 등록 결과
+- `Game` slug `umamusume` / id `game_umamusume_kr` / emoji 🐴 / color `#6366f1`
+- 서버 2개: 한국, 일본 (대행샵이 한섭·일섭을 모두 취급)
+- 재화 1개: 쥬얼 (`ratePerUnit` 150 = 1연)
+- 캐릭터 **144명** (전원 slug 생성 완료, `nameEn` 기반 케밥 슬러그)
+- `tier`는 빈 문자열 — 우마무스메는 레어도가 캐릭터가 아닌 **육성/서포트 카드 단위**라 캐릭터에 등급이 없다
+- `metadata`: `{ fullImageUrl(sns_header 배너), cv, birthday, height, catchphrase, description, color }`
+
+### 페이지
+- `/game/umamusume/` — 공략 허브 (도감 카드 1개)
+- `/game/umamusume/characters/` — 도감 메인 (정적)
+- `/game/umamusume/characters/[slug]/` — 상세 SSR (`functions/game/umamusume/characters/[slug].js`)
+- `/trade/umamusume/`, `/trade/price/umamusume/`
+
+### 다른 게임 도감과 다른 점
+- 등급·속성·무기 필터가 **없다** → 필터는 이름 검색 / 생일 월 / "판매중인 계정 있음" 3종
+- 추천 캐릭터를 속성으로 못 뽑아서 **도감 `sortOrder` 앞뒤 캐릭터**를 쓴다
+- 상세 hero가 정사각 썸네일(`imageUrl`) + 그 위에 가로 배너(`metadata.fullImageUrl`) 2단
+- 상세 SSR은 gameId를 하드코딩하지 않고 `game:Game!inner(slug)` 조인으로 찾는다
+- 스킬 데이터 없음 (소스 미제공)
+
+### 재등록 / 갱신 방법 (admin 자동화 없음)
+GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메시지 태그:
+- `[probe-uma]` — 소스 구조만 확인 (DB 미변경)
+- `[import-uma]` — 실제 등록. 기존 캐릭터는 `NOT EXISTS`로 skip하므로 신캐릭터만 들어간다
+- 신규 등록 후에는 slug 생성 SQL을 `[sql]`로 한 번 돌려야 상세 페이지가 열린다
+
+### 데이터 소스 (사전 조사, 2026-04-29)
 
 **메인: 카카오게임즈 한국 공식 JS**
 - URL: `https://umamusume.kakaogames.com/assets/js/data.v5.js?v={버전}`
@@ -994,17 +1021,6 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 | umamusume.jp 이미지 | ❌ 404 | 직접 URL 접근 불가 |
 | 카카오 view*.png (CORS 없음) | ⚠️ 백업 | `<img>` 렌더링은 가능, JS fetch 불가 |
 
-### 다음 세션 작업 순서 (4시간 예상)
-
-1. **DB 사전 확인** (Supabase SQL Editor):
-   ```sql
-   SELECT id, slug, "nameKo" FROM "Game" WHERE slug IN ('umamusume','uma','uma-musume','horse-racing');
-   ```
-2. admin 일괄 등록 함수 (카카오 JS 파싱 + umapyoi 이미지 매핑)
-3. 도감 메인 + 상세 SSR (니케 패턴 — rarity 없음, 스킬 없음)
-4. 거래소 양방향 링크 + _routes.json
-5. 게임 허브 카드 + sold 더미 30개 SQL
-
 ### DotGG 범용 프록시 (보존)
 - 파일: `functions/api/dotgg-proxy/[[path]].js`
 - cgfw/* 경로 화이트리스트, CORS 포함
@@ -1019,7 +1035,7 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 ### 스키마 (반영 완료)
 - `User`(=상점 1:1): `username`(영문 아이디, URL용, 유니크, 기존 유저 shop0001~ 백필, 신규는 트리거 `trg_user_default_username`이 shop0300~ 자동발급), `shopBio`, `isVerified`, `sellerGrade`, `deliveryTime`, `refundPolicy`, `supportRecovery`, `businessHours`. 상점 이름 = 기존 `nickname`.
 - `Listing`: `type`('reroll'=리세계/'currency'=돌계, CHECK 제약) — **등록 화면에서 사용자가 고르지 않고 내용으로 자동 판별**(캐릭터 없이 재화만 있으면 'currency', 그 외 'reroll'). 거래소 유형 탭 필터용으로만 쓰임. `stock`(재고), `isAlwaysOn`(상시판매).
-- 돌계 재화: `Currency`(gameId별) + `ListingCurrency(amount)`. `ratePerUnit`=1연당 재화량 → "약 N연"=floor(amount/ratePerUnit). 시드: 원신 원석160/스타레일 성옥160/젠레스 폴리크롬160/명조 성성석160/니케 쥬얼300/블아 청휘석120.
+- 돌계 재화: `Currency`(gameId별) + `ListingCurrency(amount)`. `ratePerUnit`=1연당 재화량 → "약 N연"=floor(amount/ratePerUnit). 시드: 원신 원석160/스타레일 성옥160/젠레스 폴리크롬160/명조 별의 소리160/니케 쥬얼300/블아 청휘석120.
 - **보안 트리거** `trg_protect_user_admin_cols`: PostgREST 경유 비관리자(zzabhm@gmail.com 외)의 `isVerified`/`sellerGrade`/`role`/`trustScore` 변경 무시(셀프 인증배지 차단). psql 경로는 통과 → 인증 부여는 SQL Runner로.
 
 ### 페이지
