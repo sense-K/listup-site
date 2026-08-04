@@ -2488,3 +2488,30 @@ a { text-decoration: none; color: inherit; }
   .home-seo-grid { grid-template-columns: 1fr; }
   .home-seo-section { padding: 32px 16px 36px; }
 }
+
+/* ===== 판매 등록 안내 (판매자 대상) ===== */
+.sell-intro {
+  background: linear-gradient(160deg, #f7f4ff, #fff);
+  border: 1.5px solid #e5dcff;
+  border-radius: 16px;
+  padding: 20px 20px 18px;
+  margin: 20px 0 4px;
+}
+.sell-intro-title {
+  font-size: 19px; font-weight: 900; color: var(--black);
+  letter-spacing: -.02em; margin: 0 0 5px;
+}
+.sell-intro-sub {
+  font-size: 13.5px; color: var(--text-muted); margin: 0 0 12px; line-height: 1.6;
+}
+.sell-intro-sub b { color: #5b34d6; font-weight: 800; }
+.sell-intro-points { margin: 0; padding-left: 17px; }
+.sell-intro-points li {
+  font-size: 12.5px; color: var(--text-muted); line-height: 1.7;
+  margin-bottom: 3px; word-break: keep-all;
+}
+.sell-intro-points li b { color: #17141f; font-weight: 700; }
+.price-seller-note {
+  font-size: 13px; line-height: 1.75; color: var(--text-muted);
+  margin: 10px auto 0; max-width: 70ch; word-break: keep-all;
+}
