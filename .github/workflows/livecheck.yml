@@ -23,31 +23,16 @@ jobs:
             if [ "$mode" = "gone" ] && [ "$hit" = "FOUND" ]; then echo "::error::should be removed: '$needle'"; fi
             return 0
           }
-          U="https://resetlist.kr/shop/shop0002"
-          echo "== 상점: 끌올 버튼 + 등급 =="
-          check "$U" 200 "mgrBump"
-          check "$U" 200 "끌올"
-          check "$U" 200 "파워 판매자"
-          check "$U" 200 "공식 파트너"
-          check "$U" 200 "우수대행" gone
-          check "$U" 200 "파워대행" gone
-          echo "== 거래소: 유형 탭 제거 =="
-          check "https://resetlist.kr/trade/" 200 "trade-type-tab" gone
-          check "https://resetlist.kr/trade/" 200 "setTypeFilter" gone
-          echo "== 랜딩: 업데이트 안내 섹션 =="
-          check "https://resetlist.kr/" 200 "내 상점 가기"
-          check "https://resetlist.kr/" 200 "update-notice-section"
-          check "https://resetlist.kr/" 200 "끌어올리기"
-          echo "== SEO: 대행/돌계 키워드 =="
-          check "https://resetlist.kr/trade/" 200 "돌계"
-          check "https://resetlist.kr/trade/genshin/" 200 "원신 대행"
-          check "https://resetlist.kr/trade/nikke/" 200 "돌계"
-          echo "== 404였던 명조 시세 =="
-          check "https://resetlist.kr/trade/price/wuwa/" 200 "명조"
-          echo "== listings.js: bumpedAt 정렬 =="
+          echo "== 매물 카드: 히어로형 + 중앙 상태 오버레이 =="
           curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/js/listings.js?cb=${GITHUB_RUN_ID}" > /tmp/l.js
-          grep -q "bumpedAt" /tmp/l.js && echo "listings.js bumpedAt OK" || echo "::error::listings.js bumpedAt 없음"
-          grep -q "typeFilter" /tmp/l.js && echo "::error::listings.js typeFilter 남음" || echo "listings.js typeFilter clean"
+          echo "listings.js size=$(wc -c < /tmp/l.js)"
+          for n in card-hero-center hero-status card-hero-img cardTierClass; do
+            grep -q "$n" /tmp/l.js && echo "  OK  $n" || echo "::error::listings.js에 $n 없음"
+          done
+          grep -q "card-flag flag-sold" /tmp/l.js && echo "::error::판매완료가 아직 코너 배지" || echo "  OK  판매완료 코너배지 제거됨"
+          curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/css/style.css?cb=${GITHUB_RUN_ID}" > /tmp/s.css
+          grep -q "card-hero-center" /tmp/s.css && echo "  OK  css card-hero-center" || echo "::error::css에 card-hero-center 없음"
+          grep -q "repeat(4, minmax(0, 1fr))" /tmp/s.css && echo "  OK  css 4열 그리드" || echo "::error::css 4열 그리드 없음"
           echo "== 회귀 =="
           check "https://resetlist.kr/" 200 "플레이센스"
           check "https://resetlist.kr/trade/" 200 "돌계"
