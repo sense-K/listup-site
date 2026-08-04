@@ -11,15 +11,15 @@
 
 ---
 
-## 도메인 이전 (플레이센스) 시 처리할 항목
+## 도메인 이전 (리세리스트) 시 처리할 항목
 
 ### 이메일 알림
 - [ ] Resend Dashboard → Domains → Add Domain → 새 도메인
 - [ ] DKIM/SPF/DMARC DNS 레코드 추가 (Cloudflare DNS)
 - [ ] `supabase/functions/trade-notify/index.ts` 수정:
-  - `FROM` 상수: `'리세리스트 <onboarding@resend.dev>'` → `'플레이센스 <noreply@<new-domain>>'`
+  - `FROM` 상수: `'리세리스트 <onboarding@resend.dev>'` → `'리세리스트 <noreply@<new-domain>>'`
   - `SITE_URL` 상수: `'https://resetlist.kr'` → 새 도메인
-  - 메일 템플릿 내 "리세리스트" 텍스트 → "플레이센스"
+  - 메일 템플릿 내 "리세리스트" 텍스트 → "리세리스트"
   - 메일 템플릿 푸터 도메인 변경
 - [ ] quick-responder 재배포
 
@@ -83,7 +83,7 @@
   - UI: `/trade/register/` 2단계 — 검색창 아래 보라 버튼 → 모달 (게임 선택 + 이름 입력)
   - 알림: `trade-notify` Edge Function에 `action: 'char-request'` 분기 추가
   - CF 프록시: `functions/api/char-request-notify.js` (nudge.js 패턴 그대로)
-- **이메일 알림 브랜드명 통일** — 제목·본문·발신자 '리세리스트' → '플레이센스' 일괄 변경
+- **이메일 알림 브랜드명 통일** — 제목·본문·발신자 '리세리스트' → '리세리스트' 일괄 변경
   - `supabase/functions/trade-notify/index.ts` 10곳 치환 (도메인 이전 시 FROM 주소만 추가 수정 필요)
 - **등록 페이지 UX 개선**
   - '캐릭터 추가 요청하기' + '여러 계정 한번에 올리기' 버튼 → 보라 실선 스타일 통일
@@ -101,7 +101,7 @@
 ### 추가 완료 (오후)
 - **SEO 메타 태그 일괄 개선**
   - `/trade/{game}/` 14개: `functions/trade/[slug].js` 1파일 수정 → 전 게임 자동 반영
-    - title 패턴: `플레이센스 - {게임명} 리세계 직거래 플랫폼`
+    - title 패턴: `리세리스트 - {게임명} 리세계 직거래 플랫폼`
     - description 패턴: 수수료·직거래·1:1 거래 키워드 포함 통일 문구
     - twitter:card 3태그 신규 추가
   - `/trade/price/{game}/` 12개: description·og:description·twitter:description 일괄 통일

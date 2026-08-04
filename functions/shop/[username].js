@@ -29,7 +29,7 @@ function errorPage(status, heading, msg) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${esc(heading)} | 플레이센스</title>
+  <title>${esc(heading)} | 리세리스트</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -116,8 +116,8 @@ export async function onRequest({ params }) {
       ? listings.map(l => renderCard(l)).join('')
       : `<div class="shop-empty">아직 등록된 판매계정이 없어요.</div>`
 
-    const title = `${nickname} 상점 | 플레이센스`
-    const description = `${nickname} 판매자 상점 — 리세계 계정·돌계 직거래. 판매중 계정 ${activeCount}개 · 판매완료 ${soldCount}건${avgRating ? ` · 평점 ${avgRating}` : ''}. 플레이센스에서 수수료 없이 안전하게 거래하세요.`
+    const title = `${nickname} 상점 | 리세리스트`
+    const description = `${nickname} 판매자 상점 — 리세계 계정·돌계 직거래. 판매중 계정 ${activeCount}개 · 판매완료 ${soldCount}건${avgRating ? ` · 평점 ${avgRating}` : ''}. 리세리스트에서 수수료 없이 안전하게 거래하세요.`
     const canonical = `https://resetlist.kr/shop/${esc(username)}`
 
     const jsonLd = {
@@ -148,13 +148,13 @@ export async function onRequest({ params }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(description)}">
-  <meta name="keywords" content="${esc(nickname)} 상점, 판매자 상점, 대행 상점, 게임 계정 대행, 리세계 대행, 리세계 계정 판매, 돌계 판매, 돌계 거래, 플레이센스">
+  <meta name="keywords" content="${esc(nickname)} 상점, 판매자 상점, 대행 상점, 게임 계정 대행, 리세계 대행, 리세계 계정 판매, 돌계 판매, 돌계 거래, 리세리스트">
   <link rel="canonical" href="${canonical}">
   <meta property="og:title" content="${esc(title)}">
   <meta property="og:description" content="${esc(description)}">
   <meta property="og:url" content="${canonical}">
   <meta property="og:type" content="profile">
-  <meta property="og:site_name" content="플레이센스">
+  <meta property="og:site_name" content="리세리스트">
   ${user.profileImage ? `<meta property="og:image" content="${esc(user.profileImage)}">` : ''}
   <meta name="twitter:card" content="${user.profileImage ? 'summary_large_image' : 'summary'}">
   <meta name="twitter:title" content="${esc(title)}">

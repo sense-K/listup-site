@@ -17,7 +17,7 @@ export async function onRequest({ params, env, request }) {
   if (!game) return new Response('Not Found', { status: 404 })
 
   const nameKo = game.nameKo ?? slug
-  const title = `플레이센스 - ${nameKo} 리세계 직거래 플랫폼`
+  const title = `리세리스트 - ${nameKo} 리세계 직거래 플랫폼`
   const desc = `${nameKo} 리세계 계정을 수수료 없이 직거래로 사고파는 플랫폼. 등록 무료, 안전한 1:1 거래로 원하는 캐릭터를 보유한 계정을 빠르게 찾으세요.`
   const url = `https://resetlist.kr/trade/${slug}/`
 
@@ -34,7 +34,7 @@ export async function onRequest({ params, env, request }) {
   <meta property="og:url" content="${url}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${desc}">
-  <meta property="og:site_name" content="플레이센스">
+  <meta property="og:site_name" content="리세리스트">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${desc}">

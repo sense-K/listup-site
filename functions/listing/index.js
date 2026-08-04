@@ -38,7 +38,7 @@ export async function onRequest(context) {
       .filter(Boolean)
     const artImageUrl = listing.game?.artImageUrl ?? listing.game?.imageUrl ?? ''
 
-    const title = `${gameName} 리세계 판매계정 · ${price}원 | 플레이센스`
+    const title = `${gameName} 리세계 판매계정 · ${price}원 | 리세리스트`
     const descParts = []
     if (serverName) descParts.push(`서버: ${serverName}`)
     if (chars.length > 0) {
@@ -54,7 +54,7 @@ export async function onRequest(context) {
   <meta property="og:url" content="${pageUrl}">
   <meta property="og:title" content="${esc(title)}">
   <meta property="og:description" content="${esc(description)}">
-  <meta property="og:site_name" content="플레이센스">
+  <meta property="og:site_name" content="리세리스트">
   ${artImageUrl ? `<meta property="og:image" content="${esc(artImageUrl)}">` : ''}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${esc(title)}">

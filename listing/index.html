@@ -5,7 +5,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="shortcut icon" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>판매계정 상세 | 플레이센스</title>
+  <title>판매계정 상세 | 리세리스트</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -248,7 +248,7 @@
     const currencies = (l.currencies ?? []).filter(lc => lc.currency).sort((a, b) => (a.currency.sortOrder ?? 0) - (b.currency.sortOrder ?? 0))
     const isMine = currentUser && currentUser.id === l.userId
 
-    document.title = `${gameName} 리세계 판매계정 | 플레이센스`
+    document.title = `${gameName} 리세계 판매계정 | 리세리스트`
 
     const charsHtml = chars.length > 0
       ? chars.map(lc => {
@@ -735,7 +735,7 @@
           <div style="font-size:13px;color:#444;background:#f8f8f8;padding:12px;white-space:pre-wrap;line-height:1.6;">${l.description.slice(0,200)}${l.description.length > 200 ? '...' : ''}</div>
         </div>` : ''}
         <div style="background:#f8f8f8;padding:10px 20px;">
-          <span style="font-size:11px;color:#aaa;">플레이센스 · resetlist.kr</span>
+          <span style="font-size:11px;color:#aaa;">리세리스트 · resetlist.kr</span>
         </div>
       </div>`
     card.style.display = 'block'
@@ -751,7 +751,7 @@
           const url = URL.createObjectURL(blob)
           const a = document.createElement('a')
           a.href = url
-          a.download = `플레이센스_${gameName}_${l.id.slice(0, 8)}.png`
+          a.download = `리세리스트_${gameName}_${l.id.slice(0, 8)}.png`
           a.click()
           URL.revokeObjectURL(url)
           showToast('이미지를 저장했어요!')

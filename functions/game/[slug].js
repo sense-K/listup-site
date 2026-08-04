@@ -18,8 +18,8 @@ export async function onRequest({ params, env, request }) {
   const nameKo = game.nameKo ?? slug
   const nameEn = game.nameEn ?? ''
   const displayName = nameEn ? `${nameKo} (${nameEn})` : nameKo
-  const title = `${nameKo} 공략 - 플레이센스`
-  const desc = `${nameKo} 공략 도구와 판매계정 거래소를 플레이센스에서 확인하세요.`
+  const title = `${nameKo} 공략 - 리세리스트`
+  const desc = `${nameKo} 공략 도구와 판매계정 거래소를 리세리스트에서 확인하세요.`
   const pageUrl = `https://resetlist.kr/game/${slug}/`
   const emoji = game.emoji ?? '🎮'
   const heroBg = game.artImageUrl ? `style="background-image:url('${game.artImageUrl}')"` : ''
@@ -40,7 +40,7 @@ export async function onRequest({ params, env, request }) {
   <meta property="og:url" content="${pageUrl}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${desc}">
-  <meta property="og:site_name" content="플레이센스">
+  <meta property="og:site_name" content="리세리스트">
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/config.js"></script>

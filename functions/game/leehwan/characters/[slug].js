@@ -21,7 +21,7 @@ async function supaGet(path) {
 function respond404(msg) {
   return new Response(`<!DOCTYPE html>
 <html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>캐릭터를 찾을 수 없어요 | 플레이센스</title><link rel="stylesheet" href="/css/style.css"></head>
+<title>캐릭터를 찾을 수 없어요 | 리세리스트</title><link rel="stylesheet" href="/css/style.css"></head>
 <body><div id="navbar-container"></div>
 <div style="max-width:560px;margin:80px auto;padding:20px;text-align:center;">
   <div style="font-size:48px;margin-bottom:16px;">😔</div>
@@ -87,7 +87,7 @@ export async function onRequest({ params }) {
     : ''
 
   const nameDisplay = c.nameEn ? `${c.nameKo} (${c.nameEn})` : c.nameKo
-  const title = `${nameDisplay} — ${tradePrefix}이환 ${tierLabel} ${attrStr} 정보 | 플레이센스`
+  const title = `${nameDisplay} — ${tradePrefix}이환 ${tierLabel} ${attrStr} 정보 | 리세리스트`
   const desc = tradeStats.active_count > 0
     ? `${c.nameKo} 캐릭터 정보. 이환 ${tierLabel} ${attrStr}.${tradeSuffix}`
     : `${c.nameKo} 캐릭터 정보. 이환 ${tierLabel} ${attrStr}. 거래소에서 ${c.nameKo} 보유 계정 매물을 찾아보세요.`
@@ -105,7 +105,7 @@ export async function onRequest({ params }) {
     : ''
 
   const jsonLd = JSON.stringify([
-    { '@context':'https://schema.org','@type':'Article', headline:`이환 ${c.nameKo} 캐릭터 정보`, image:c.imageUrl||'', author:{name:'플레이센스'}, publisher:{name:'플레이센스',url:'https://resetlist.kr/'}, description:desc, mainEntityOfPage:canonical },
+    { '@context':'https://schema.org','@type':'Article', headline:`이환 ${c.nameKo} 캐릭터 정보`, image:c.imageUrl||'', author:{name:'리세리스트'}, publisher:{name:'리세리스트',url:'https://resetlist.kr/'}, description:desc, mainEntityOfPage:canonical },
     { '@context':'https://schema.org','@type':'BreadcrumbList', itemListElement:[
       {position:1,name:'홈',item:'https://resetlist.kr/'},
       {position:2,name:'이환',item:'https://resetlist.kr/game/leehwan/'},
@@ -124,7 +124,7 @@ export async function onRequest({ params }) {
   <meta name="keywords" content="${esc(keywords)}">
   <link rel="canonical" href="${canonical}">
   <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">
-  <meta property="og:url" content="${canonical}"><meta property="og:type" content="article"><meta property="og:site_name" content="플레이센스">
+  <meta property="og:url" content="${canonical}"><meta property="og:type" content="article"><meta property="og:site_name" content="리세리스트">
   ${c.imageUrl ? `<meta property="og:image" content="${esc(c.imageUrl)}"><meta name="twitter:image" content="${esc(c.imageUrl)}">` : ''}
   <meta name="twitter:card" content="summary_large_image">
   <script type="application/ld+json">${jsonLd}</script>

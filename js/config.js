@@ -56,7 +56,7 @@ function renderNavbar(activePage = '') {
   return `
     <nav class="navbar">
       <div class="navbar-inner">
-        <a href="/" class="navbar-logo">플레이센스</a>
+        <a href="/" class="navbar-logo">리세리스트</a>
         <div class="navbar-menu">
           <div class="nav-dropdown-wrap" id="nav-guide-dropdown-wrap" onclick="toggleGuideDropdown()">
             <span class="muted" style="cursor:pointer;">게임 공략 ▾</span>
@@ -484,7 +484,7 @@ function renderFooter() {
       <div class="site-footer-inner">
         <div class="footer-top">
           <div class="footer-col footer-brand">
-            <a href="/" class="footer-logo">플레이센스</a>
+            <a href="/" class="footer-logo">리세리스트</a>
             <p class="footer-desc">리세계정 직거래부터 캐릭터 도감·시세·공략까지, 한 곳에서.</p>
             <a href="mailto:zzabhm@gmail.com" class="footer-email">zzabhm@gmail.com</a>
           </div>
@@ -511,8 +511,8 @@ function renderFooter() {
           </div>
         </div>
         <div class="footer-bottom">
-          <span>© 2026 플레이센스. All rights reserved.</span>
-          <span class="footer-disclaimer">플레이센스는 통신판매중개자로서 거래 당사자가 아니며, 개인 간 거래에 대한 책임을 지지 않습니다.</span>
+          <span>© 2026 리세리스트. All rights reserved.</span>
+          <span class="footer-disclaimer">리세리스트는 통신판매중개자로서 거래 당사자가 아니며, 개인 간 거래에 대한 책임을 지지 않습니다.</span>
         </div>
       </div>
     </footer>

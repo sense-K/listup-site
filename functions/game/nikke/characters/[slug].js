@@ -32,7 +32,7 @@ function respond404(msg) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>캐릭터를 찾을 수 없어요 | 플레이센스</title>
+  <title>캐릭터를 찾을 수 없어요 | 리세리스트</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -107,7 +107,7 @@ export async function onRequest({ params }) {
   const tradeSuffix = tradeStats.active_count > 0
     ? ` ${c.nameKo} 보유 계정 ${tradeStats.active_count}개가 ${fmt(tradeStats.min_price)}원~${fmt(tradeStats.max_price)}원에 판매 중.`
     : ''
-  const title = `${nameDisplay} — ${tradePrefix}니케 ${rarityLabel}급 ${attrStr} 정보 | 플레이센스`
+  const title = `${nameDisplay} — ${tradePrefix}니케 ${rarityLabel}급 ${attrStr} 정보 | 리세리스트`
   const desc = [
     `${c.nameKo} 캐릭터 정보, 등급, 속성, 무기, 제조사, 버스트 정보.`,
     ` 니케 ${rarityLabel} ${elemKo ? elemKo + '속성' : ''} ${weaponKo}`,
@@ -121,8 +121,8 @@ export async function onRequest({ params }) {
       '@context': 'https://schema.org', '@type': 'Article',
       headline: `니케 ${c.nameKo} 캐릭터 정보`,
       image: c.imageUrl || '',
-      author: { '@type': 'Organization', name: '플레이센스' },
-      publisher: { '@type': 'Organization', name: '플레이센스', url: 'https://resetlist.kr/' },
+      author: { '@type': 'Organization', name: '리세리스트' },
+      publisher: { '@type': 'Organization', name: '리세리스트', url: 'https://resetlist.kr/' },
       description: desc,
       mainEntityOfPage: canonical,
     },
@@ -192,7 +192,7 @@ export async function onRequest({ params }) {
   <meta property="og:description" content="${esc(desc)}">
   <meta property="og:url" content="${canonical}">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="플레이센스">
+  <meta property="og:site_name" content="리세리스트">
   ${c.imageUrl ? `<meta property="og:image" content="${esc(c.imageUrl)}">` : ''}
   <meta name="twitter:card" content="summary_large_image">
   ${c.imageUrl ? `<meta name="twitter:image" content="${esc(c.imageUrl)}">` : ''}
