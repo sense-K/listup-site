@@ -92,17 +92,67 @@ async function loadKakao() {
   if (withImg[0]) {
     log(`  icon   샘플: ${JSON.stringify(withImg[0].icon)}`)
     log(`  header 샘플: ${JSON.stringify(withImg[0].header)}`)
+    await discoverImageBases(html, withImg[0].icon, withImg[0].header)
   }
   return chars
 }
 
-// 카카오 icon/header 값이 상대경로일 수 있으므로 절대 URL로
-function abs(v) {
-  if (!v) return null
-  const s = String(v)
-  if (/^https?:\/\//.test(s)) return s
-  return new URL(s.replace(/^\.?\//, ''), KAKAO_HOME).href
+// 카카오 icon/header 값은 "icon-special-week.png" 같은 파일명뿐이라 디렉터리를 따로 찾아야 한다.
+// 메인 HTML/CSS/JS에서 실제로 참조되는 이미지 경로를 긁어 베이스 후보를 만든다.
+let ICON_BASES = []
+let HEADER_BASES = []
+
+async function discoverImageBases(html, sampleIcon, sampleHeader) {
+  log('\n=== 1-2) 카카오 이미지 경로 탐색 ===')
+  const pages = [html]
+  // 캐릭터 목록 페이지가 따로 있으면 거기 <img>에 실제 경로가 있다
+  for (const p of ['character', 'character/', 'character.html', 'contents/character']) {
+    try { pages.push(await get(new URL(p, KAKAO_HOME).href)); log(`  추가 페이지 로드: ${p}`) } catch { /* 없으면 무시 */ }
+  }
+  // CSS도 background-image로 경로를 노출한다
+  const cssHrefs = [...html.matchAll(/href=["']([^"']+\.css[^"']*)["']/g)].map(m => m[1]).slice(0, 6)
+  for (const h of cssHrefs) {
+    try { pages.push(await get(h.startsWith('http') ? h : new URL(h, KAKAO_HOME).href)) } catch { /* 무시 */ }
+  }
+  const blob = pages.join('\n')
+
+  const dirs = new Set()
+  // 이미지 참조에서 디렉터리 부분만 수집
+  for (const m of blob.matchAll(/["'(]([^"')\s]*\/)[^"')\s]*\.(?:png|webp|jpg)[^"')\s]*["')]/g)) {
+    dirs.add(m[1])
+  }
+  // 파일명이 직접 등장하면 그 경로가 정답
+  for (const name of [sampleIcon, sampleHeader].filter(Boolean)) {
+    const re = new RegExp(`["'(]([^"')\\s]*)${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g')
+    for (const m of blob.matchAll(re)) { dirs.add(m[1]); log(`  ★ 파일명 직접 발견: ${m[1]}${name}`) }
+  }
+  log(`  이미지 디렉터리 후보 ${dirs.size}개: ${JSON.stringify([...dirs].slice(0, 25))}`)
+
+  // 후보를 실제로 때려봐서 200 뜨는 것만 남긴다
+  const ok = []
+  for (const d of dirs) {
+    const url = absFrom(d, sampleIcon)
+    const p = await probeImage(url)
+    if (p.ok) { log(`  ✅ ICON  베이스: ${d}  (${p.size}B)`); ok.push(d) }
+  }
+  ICON_BASES = ok
+  const okH = []
+  for (const d of dirs) {
+    const p = await probeImage(absFrom(d, sampleHeader))
+    if (p.ok) { log(`  ✅ HEADER 베이스: ${d}`); okH.push(d) }
+  }
+  HEADER_BASES = okH
+  if (!ok.length) log('  !! icon 베이스를 못 찾음 — 카카오 이미지는 사용 불가')
 }
+
+function absFrom(dir, file) {
+  if (!file) return null
+  if (/^https?:\/\//.test(String(file))) return String(file)
+  const d = String(dir)
+  return (/^https?:\/\//.test(d) ? new URL(file, d) : new URL(d.replace(/^\.?\//, '') + file, KAKAO_HOME)).href
+}
+const kakaoIconUrls = f => ICON_BASES.map(d => absFrom(d, f)).filter(Boolean)
+const kakaoHeaderUrls = f => HEADER_BASES.map(d => absFrom(d, f)).filter(Boolean)
 
 // ------------------------------------------------------------ umapyoi
 async function loadUmapyoi() {
@@ -171,13 +221,13 @@ for (const m of missing) {
   const thumbCands = [
     ['umapyoi.thumb_img', u?.thumb_img],
     ['umapyoi.sns_icon', u?.sns_icon],
-    ['kakao.icon', abs(k?.icon)],
-    ['kakao.header', abs(k?.header)],
+    ...kakaoIconUrls(k?.icon).map(v => ['kakao.icon', v]),
+    ...kakaoHeaderUrls(k?.header).map(v => ['kakao.header', v]),
   ].filter(([, v]) => v)
   const heroCands = [
     ['umapyoi.sns_header', u?.sns_header],
     ['umapyoi.detail_img_pc', u?.detail_img_pc],
-    ['kakao.header', abs(k?.header)],
+    ...kakaoHeaderUrls(k?.header).map(v => ['kakao.header', v]),
   ].filter(([, v]) => v)
 
   log(`\n--- ${m.nameKo} (${m.nameEn})`)
