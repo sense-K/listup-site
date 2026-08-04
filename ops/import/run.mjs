@@ -146,8 +146,9 @@ async function runGame(slug) {
   }
   await sampleImages(news, say)
 
+  const addedNames = news.map(r => r.nameKo).slice(0, 100)
   if (MODE !== 'import' || (!news.length && !updates.length)) {
-    return { game: slug, added: news.length, updated: updates.length, applied: false, lines }
+    return { game: slug, added: news.length, updated: updates.length, applied: false, lines, addedNames }
   }
 
   const sql = ['\\set ON_ERROR_STOP on', 'BEGIN;']
@@ -173,13 +174,13 @@ VALUES (gen_random_uuid()::text, ${esc(gameId)}, ${esc(r.nameKo)}, ${esc(r.nameE
   writeFileSync(`/tmp/import-${slug}.sql`, sql.join('\n'))
   execFileSync('psql', [DB, '-v', 'ON_ERROR_STOP=1', '-q', '-f', `/tmp/import-${slug}.sql`], { stdio: 'inherit' })
   say(`  → DB 반영 완료`)
-  return { game: slug, added: news.length, updated: updates.length, applied: true, lines }
+  return { game: slug, added: news.length, updated: updates.length, applied: true, lines, addedNames }
 }
 
 // ---------------------------------------------------------------- 결과 기록 (admin 페이지가 읽는다)
 function writeImportLog(results) {
   const rows = results.map(r => `(gen_random_uuid()::text, now(), ${esc(r.game)}, ${r.added ?? 0}, ${r.updated ?? 0},
-     ${esc(r.error ?? null)}, ${esc(JSON.stringify({ lines: (r.lines || []).slice(0, 12) }))}::jsonb)`)
+     ${esc(r.error ?? null)}, ${esc(JSON.stringify({ added: r.addedNames || [], lines: (r.lines || []).slice(0, 12) }))}::jsonb)`)
   const sql = `INSERT INTO "ImportLog" (id, "ranAt", game, added, updated, error, detail) VALUES ${rows.join(',')};`
   try { q(sql); log('ImportLog 기록 완료') }
   catch (e) { log(`::warning::ImportLog 기록 실패 (테이블 없으면 [sql] 로 생성 필요): ${e.message.slice(0, 120)}`) }
