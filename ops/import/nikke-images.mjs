@@ -34,8 +34,36 @@ const say = s => { out.push(s); log(s) }
 
 async function getJson(url) {
   const r = await fetch(url, { headers: { 'User-Agent': UA } })
-  if (!r.ok) throw new Error(`${r.status} ${url}`)
+  if (!r.ok) {
+    const body = await r.text().catch(() => '')
+    throw new Error(`${r.status} ${url} ${body.slice(0, 200)}`)
+  }
   return r.json()
+}
+
+// prydwen 은 러너 직접 요청에 403, 우리 CF 프록시에도 502 를 준 적이 있다.
+// 프록시 → 직접(브라우저 헤더 전체) 순으로 시도하고, 실패 이유를 남긴다.
+async function getPrydwen(proxyPath, directPath) {
+  const tries = [
+    ['프록시', `${PROXY}${proxyPath}`, { 'User-Agent': UA }],
+    ['직접', `${PRYDWEN}${directPath}`, {
+      'User-Agent': UA,
+      'Accept': 'application/json,text/plain,*/*',
+      'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8',
+      'Referer': `${PRYDWEN}/nikke/characters`,
+      'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-origin',
+    }],
+  ]
+  const errs = []
+  for (const [label, url, headers] of tries) {
+    try {
+      const r = await fetch(url, { headers })
+      if (r.ok) { say(`  ${label} 성공`); return await r.json() }
+      errs.push(`${label} ${r.status}: ${(await r.text().catch(() => '')).slice(0, 160)}`)
+    } catch (e) { errs.push(`${label} 예외 ${e.message.slice(0, 80)}`) }
+  }
+  errs.forEach(e => say(`  ✗ ${e}`))
+  return null
 }
 
 // ---------------------------------------------------------------- 이미지 크기 측정
@@ -120,13 +148,26 @@ sized.forEach(r => {
   if (!r.dim || r.dim.err || r.dim.w < MIN_W) byDomain[d].bad++
 })
 say('도메인별: ' + Object.entries(byDomain).map(([d, v]) => `${d} ${v.n}건(문제 ${v.bad})`).join(' / '))
-bad.forEach(r => say(`  ✗ ${r.nameKo} [${r.slug}] ${r.dim?.err ?? `${r.dim.w}x${r.dim.h}`}`))
+const dead = bad.filter(r => r.dim?.err)
+const small = bad.filter(r => !r.dim?.err)
+say(`  · 이미지가 아예 안 뜸(깨짐): ${dead.length}명`)
+dead.forEach(r => say(`    ✗ ${r.nameKo} [${r.slug}] ${r.dim.err}`))
+say(`  · 저해상도: ${small.length}명`)
+small.forEach(r => say(`    ✗ ${r.nameKo} [${r.slug}] ${r.dim.w}x${r.dim.h}`))
 
 if (!bad.length) { say('\n>>> 고칠 것 없음'); process.exit(0) }
 
 log('\n=== 3) prydwen 재조회 ===')
-const list = await getJson(`${PROXY}/prydwen-nikke`)
+const list = await getPrydwen('/prydwen-nikke', '/page-data/nikke/characters/page-data.json')
 const nodes = list?.result?.data?.allCharacters?.nodes ?? []
+if (!nodes.length) {
+  // prydwen 이 막혀도 측정 결과는 그대로 쓸모가 있으므로 죽지 않고 요약만 남긴다
+  say('\n!! prydwen 목록을 가져오지 못했습니다 — 이미지 교체는 못 하고 진단만 남깁니다.')
+  say('   (같은 이유로 admin 의 "prydwen 동기화" 버튼도 지금은 동작하지 않습니다)')
+  log('\n=== 요약 재출력 ===')
+  out.forEach(l => log(l))
+  process.exit(0)
+}
 log(`prydwen 목록 ${nodes.length}명`)
 const bySlug = new Map(nodes.map(n => [n.slug, n]))
 const norm = s => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -140,7 +181,8 @@ for (const r of bad) {
   const hit = bySlug.get(r.slug) || byName.get(norm(r.nameKo))
   if (!hit) { say(`  – ${r.nameKo}: prydwen 미수록`); continue }
   let detail = null
-  try { detail = await getJson(`${PROXY}/prydwen-nikke-char/${hit.slug}`) }
+  detail = await getPrydwen(`/prydwen-nikke-char/${hit.slug}`, `/page-data/nikke/characters/${hit.slug}/page-data.json`)
+  try { if (!detail) throw new Error('둘 다 실패') }
   catch (e) { say(`  – ${r.nameKo}: 개별 조회 실패 ${e.message.slice(0, 40)}`); continue }
   const node = detail?.result?.data?.currentUnit?.nodes?.[0]
   if (!node) { say(`  – ${r.nameKo}: 상세 노드 없음`); continue }
