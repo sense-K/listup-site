@@ -1,34 +1,37 @@
--- 판매글 끌어올리기(bump) 기반 마련. [sql]
+-- HOT 기준(viewCount) 실태 파악. 읽기 전용. [sql]
+\echo '===== track_listing_view 함수 정의 (중복 집계 방지 여부 확인) ====='
+SELECT pg_get_functiondef(p.oid)
+FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE p.proname = 'track_listing_view';
 
--- 1) bumpedAt 컬럼 (없으면 추가) — 정렬 기준. 기본값은 등록 시각.
-ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "bumpedAt" timestamptz;
-UPDATE "Listing" SET "bumpedAt" = "createdAt" WHERE "bumpedAt" IS NULL;
-ALTER TABLE "Listing" ALTER COLUMN "bumpedAt" SET DEFAULT now();
-CREATE INDEX IF NOT EXISTS "Listing_bumpedAt_idx" ON "Listing" ("bumpedAt" DESC);
+\echo '===== viewCount 분포 ====='
+SELECT
+  count(*) AS "전체 매물",
+  count(*) FILTER (WHERE "viewCount" > 50)  AS "50 초과 (현재 HOT)",
+  count(*) FILTER (WHERE "viewCount" > 30)  AS "30 초과",
+  count(*) FILTER (WHERE "viewCount" > 20)  AS "20 초과",
+  count(*) FILTER (WHERE "viewCount" > 10)  AS "10 초과",
+  max("viewCount") AS "최대",
+  round(avg("viewCount"), 1) AS "평균"
+FROM "Listing";
 
--- 2) 5분 쿨다운을 DB에서 강제 (클라이언트 우회 차단)
-CREATE OR REPLACE FUNCTION enforce_bump_cooldown() RETURNS trigger AS $fn$
-BEGIN
-  IF NEW."bumpedAt" IS DISTINCT FROM OLD."bumpedAt" THEN
-    IF OLD."bumpedAt" IS NOT NULL AND OLD."bumpedAt" > now() - interval '5 minutes' THEN
-      RAISE EXCEPTION '끌어올리기는 5분에 한 번만 가능해요';
-    END IF;
-    -- 미래 시각으로 올려치기 방지
-    IF NEW."bumpedAt" > now() + interval '1 minute' THEN
-      NEW."bumpedAt" := now();
-    END IF;
-  END IF;
-  RETURN NEW;
-END $fn$ LANGUAGE plpgsql;
+\echo '===== 판매중 매물만 (HOT이 실제 붙는 대상) ====='
+SELECT
+  count(*) AS "판매중 매물",
+  count(*) FILTER (WHERE "viewCount" > 50) AS "HOT 표시됨",
+  max("viewCount") AS "최대",
+  round(avg("viewCount"), 1) AS "평균",
+  percentile_cont(0.9) WITHIN GROUP (ORDER BY "viewCount") AS "상위10% 경계",
+  percentile_cont(0.95) WITHIN GROUP (ORDER BY "viewCount") AS "상위5% 경계"
+FROM "Listing" WHERE status = 'active';
 
-DROP TRIGGER IF EXISTS trg_bump_cooldown ON "Listing";
-CREATE TRIGGER trg_bump_cooldown BEFORE UPDATE ON "Listing"
-  FOR EACH ROW EXECUTE FUNCTION enforce_bump_cooldown();
+\echo '===== 조회수 상위 10개 (등록 경과일 대비) ====='
+SELECT left(id, 8) AS id, status, "viewCount",
+       round(extract(epoch FROM (now() - "createdAt")) / 86400) AS "등록 경과일",
+       round("viewCount" / greatest(extract(epoch FROM (now() - "createdAt")) / 86400, 1), 1) AS "하루평균 조회"
+FROM "Listing" ORDER BY "viewCount" DESC LIMIT 10;
 
-\echo '===== 컬럼 확인 ====='
-SELECT column_name, data_type, column_default
-FROM information_schema.columns
-WHERE table_name = 'Listing' AND column_name IN ('bumpedAt','createdAt');
-
-\echo '===== bumpedAt 백필 결과 ====='
-SELECT count(*) AS total, count("bumpedAt") AS filled FROM "Listing";
+\echo '===== ListingView 원장 대비 (실제 조회 기록 수) ====='
+SELECT count(*) AS "ListingView 총 기록",
+       count(*) FILTER (WHERE "viewedAt" > now() - interval '30 days') AS "최근 30일"
+FROM "ListingView";

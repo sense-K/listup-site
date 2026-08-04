@@ -921,8 +921,31 @@ a { text-decoration: none; color: inherit; }
   color: #fff;
 }
 .card-flag.flag-hot { background: #ef4444; }
-.card-flag.flag-trading { background: rgba(180,83,9,0.92); }
-.card-flag.flag-sold { background: rgba(0,0,0,0.72); }
+
+/* 거래중 / 판매완료 — 사진 가운데 오버레이 */
+.card-hero-center {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.hero-status {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+  padding: 6px 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,0.32);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+}
+.hero-status.status-trading { background: rgba(180,83,9,0.88); }
+.hero-status.status-sold { background: rgba(0,0,0,0.66); }
 
 .card-hero-foot {
   position: absolute;
@@ -1026,7 +1049,7 @@ a { text-decoration: none; color: inherit; }
 
 /* 판매완료 / 거래중 카드 */
 .card-sold { opacity: 0.72; }
-.card-sold .card-hero-img, .card-trading .card-hero-img { filter: saturate(0.3) brightness(0.82); }
+.card-sold .card-hero-img, .card-trading .card-hero-img { filter: saturate(0.3) brightness(0.62); }
 .card-sold:hover, .card-trading:hover {
   transform: none;
   box-shadow: var(--shadow-card);
@@ -2347,6 +2370,7 @@ a { text-decoration: none; color: inherit; }
   .strip-ch, .strip-ch-more { width: 27px; height: 27px; }
 }
 @media (max-width: 460px) {
+  .hero-status { font-size: 12px; padding: 5px 14px; }
   .card-hero-name { font-size: 14px; }
   .card-hero-sub { font-size: 10.5px; }
   .card-hero-game { font-size: 10px; padding: 2px 7px; }

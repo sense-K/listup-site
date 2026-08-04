@@ -104,11 +104,14 @@ function renderListingCard(listing) {
   }
 
   // --- 배지 ---
-  const statusBadge = isSold
-    ? `<span class="card-flag flag-sold">판매완료</span>`
+  // 거래중·판매완료는 사진 가운데 오버레이, HOT은 우측 상단 배지
+  const centerOverlay = isSold
+    ? `<div class="card-hero-center"><span class="hero-status status-sold">판매완료</span></div>`
     : isTrading
-      ? `<span class="card-flag flag-trading">거래중</span>`
-      : (listing.viewCount > 50 ? `<span class="card-flag flag-hot">🔥 HOT</span>` : '')
+      ? `<div class="card-hero-center"><span class="hero-status status-trading">거래중</span></div>`
+      : ''
+  const cornerBadge = (!isSold && !isTrading && listing.viewCount > 50)
+    ? `<span class="card-flag flag-hot">🔥 HOT</span>` : ''
 
   const discountHtml = listing.discountAmount
     ? `<span class="card-discount">↓ ${formatPrice(listing.discountAmount)} 할인</span>` : ''
@@ -130,9 +133,10 @@ function renderListingCard(listing) {
       <div class="card-hero ${artClass}${heroTier ? ' hero-' + heroTier : ''}">
         ${heroImg ? `<img class="card-hero-img${heroIsGameArt ? ' is-game-art' : ''}" src="${heroImg}" alt="${heroName}"${heroOnError}>` : ''}
         <div class="card-hero-shade"></div>
+        ${centerOverlay}
         <div class="card-hero-top">
           <span class="card-hero-game">${gameName}${serverName ? ` · ${serverName}` : ''}</span>
-          ${statusBadge}
+          ${cornerBadge}
         </div>
         <div class="card-hero-foot">
           <div class="card-hero-name">${heroName}</div>
