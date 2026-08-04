@@ -1,6 +1,6 @@
 -- public 스키마의 timestamp(타임존 없음) 컬럼을 전부 timestamptz로 변환.
 -- 저장값은 UTC 기준이므로 AT TIME ZONE 'UTC'로 재해석한다.
--- [sql-dry] 로 먼저 검증 → 문제 없으면 [sql] 로 반영.
+-- dry-run 검증 완료(10개 컬럼, 값 변화 없음, 뷰 의존성 없음) → 실제 반영. [sql]
 
 \echo '===== DB 타임존 설정 ====='
 SHOW TimeZone;
