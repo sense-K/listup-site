@@ -22,8 +22,11 @@ import { writeFileSync } from 'node:fs'
 const MODE = process.env.MODE || 'probe'
 const DB = process.env.SUPABASE_DB_URL
 const MIN_W = 250          // 카드 히어로가 218px 이므로 이보다 작으면 확대되어 뭉개진다
+// prydwen 은 러너의 직접 요청에 403(Cloudflare 봇 차단)을 준다.
+// 우리 사이트에 이미 있는 CF Pages Function 프록시를 경유한다 (admin 도 이 경로를 쓴다).
+const PROXY = 'https://resetlist.kr/api'
 const PRYDWEN = 'https://www.prydwen.gg'
-const UA = 'resetlist.kr/1.0'
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
 
 const log = (...a) => console.log(...a)
 const out = []
@@ -122,7 +125,7 @@ bad.forEach(r => say(`  ✗ ${r.nameKo} [${r.slug}] ${r.dim?.err ?? `${r.dim.w}x
 if (!bad.length) { say('\n>>> 고칠 것 없음'); process.exit(0) }
 
 log('\n=== 3) prydwen 재조회 ===')
-const list = await getJson(`${PRYDWEN}/page-data/nikke/characters/page-data.json`)
+const list = await getJson(`${PROXY}/prydwen-nikke`)
 const nodes = list?.result?.data?.allCharacters?.nodes ?? []
 log(`prydwen 목록 ${nodes.length}명`)
 const bySlug = new Map(nodes.map(n => [n.slug, n]))
@@ -137,7 +140,7 @@ for (const r of bad) {
   const hit = bySlug.get(r.slug) || byName.get(norm(r.nameKo))
   if (!hit) { say(`  – ${r.nameKo}: prydwen 미수록`); continue }
   let detail = null
-  try { detail = await getJson(`${PRYDWEN}/page-data/nikke/characters/${hit.slug}/page-data.json`) }
+  try { detail = await getJson(`${PROXY}/prydwen-nikke-char/${hit.slug}`) }
   catch (e) { say(`  – ${r.nameKo}: 개별 조회 실패 ${e.message.slice(0, 40)}`); continue }
   const node = detail?.result?.data?.currentUnit?.nodes?.[0]
   if (!node) { say(`  – ${r.nameKo}: 상세 노드 없음`); continue }
@@ -162,7 +165,12 @@ for (const r of bad) {
 
 say(`\n=== 4) 교체 대상 ${plan.length}/${bad.length}명 ===`)
 
-if (MODE !== 'import') { log('\n>>> probe 모드 — DB 변경 없이 종료'); process.exit(0) }
+if (MODE !== 'import') {
+  log('\n=== 요약 재출력 ===')
+  out.forEach(l => log(l))
+  log('>>> probe 모드 — DB 변경 없이 종료')
+  process.exit(0)
+}
 if (!plan.length) { log('\n>>> 교체할 것 없음'); process.exit(0) }
 
 const esc = s => `'${String(s).replace(/'/g, "''")}'`
