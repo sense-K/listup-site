@@ -221,6 +221,10 @@ a { text-decoration: none; color: inherit; }
   margin-bottom: 32px;
 }
 
+/* .hero-inner 가 align-items:center 라 .hero-text 는 h1 너비로 줄어든다.
+   그 안의 버튼 줄은 기본이 flex-start 라 왼쪽에 붙어버린다 → 가운데로 */
+.hero-cta { justify-content: center; }
+
 .hero-stats {
   display: flex;
   gap: 32px;
