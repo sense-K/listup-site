@@ -48,6 +48,19 @@
     .detail-char-no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #ccc; }
 
     .detail-desc { font-size: 14px; line-height: 1.7; color: #444; background: #f8f8f8; border-radius: 12px; padding: 16px; white-space: pre-wrap; }
+    /* 판매자가 올린 스크린샷 */
+    .detail-shots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    @media (max-width: 640px) { .detail-shots { grid-template-columns: repeat(3, 1fr); } }
+    .detail-shot { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; border: 1px solid #eee; cursor: zoom-in; background: #f8fafc; }
+    .shot-lightbox {
+      position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.88);
+      display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+    }
+    .shot-lightbox.open { display: flex; }
+    .shot-lightbox img { max-width: 94vw; max-height: 82vh; object-fit: contain; border-radius: 8px; }
+    .shot-nav { display: flex; align-items: center; gap: 18px; color: #fff; font-size: 14px; }
+    .shot-nav button { background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 18px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+    .shot-close { position: absolute; top: 16px; right: 20px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
 
     .detail-seller-block { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 4px 0; }
     .detail-seller-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
@@ -184,7 +197,7 @@
     const { data: listing, error } = await db
       .from('Listing')
       .select(`
-        id, price, description, kakaoOpenChatUrl, createdAt, viewCount, status, userId, gameId, type, stock,
+        id, price, description, kakaoOpenChatUrl, createdAt, viewCount, status, userId, gameId, type, stock, images,
         game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
         server:Server(nameKo),
         user:User(username, nickname, tradeCount, avgRating, sellerGrade),
@@ -329,6 +342,14 @@
                 ${per != null ? `<span style="font-size:12px;font-weight:700;color:#0ea5e9;">· 약 ${per.toLocaleString()}연</span>` : ''}
               </div>`
             }).join('')}
+          </div>
+        </div>` : ''}
+
+        ${Array.isArray(l.images) && l.images.length ? `
+        <div class="detail-section">
+          <div class="detail-section-title">스크린샷 <span style="color:#94a3b8;font-weight:400;font-size:12px;">${l.images.length}장</span></div>
+          <div class="detail-shots">
+            ${l.images.map((u, i) => `<img class="detail-shot" src="${String(u).replace(/"/g, '&quot;')}" alt="스크린샷 ${i + 1}" loading="lazy" onclick="openShot(${i})" onerror="this.remove()">`).join('')}
           </div>
         </div>` : ''}
 
@@ -799,5 +820,32 @@
 </script>
 <div id="footer"></div>
 <div id="listing-share-card" style="display:none;position:fixed;left:-9999px;top:0;z-index:-1;"></div>
+<div class="shot-lightbox" id="shot-lightbox" onclick="if(event.target===this)closeShot()">
+  <button class="shot-close" onclick="closeShot()">✕</button>
+  <img id="shot-lightbox-img" src="" alt="스크린샷 확대">
+  <div class="shot-nav">
+    <button onclick="moveShot(-1)">‹</button>
+    <span id="shot-counter"></span>
+    <button onclick="moveShot(1)">›</button>
+  </div>
+</div>
+<script>
+  let shotIndex = 0
+  function shotList() { return Array.isArray(currentListing?.images) ? currentListing.images : [] }
+  function openShot(i) { shotIndex = i; updateShot(); document.getElementById('shot-lightbox').classList.add('open'); document.body.style.overflow = 'hidden' }
+  function closeShot() { document.getElementById('shot-lightbox').classList.remove('open'); document.body.style.overflow = '' }
+  function moveShot(d) { const list = shotList(); if (!list.length) return; shotIndex = (shotIndex + d + list.length) % list.length; updateShot() }
+  function updateShot() {
+    const list = shotList()
+    document.getElementById('shot-lightbox-img').src = list[shotIndex] || ''
+    document.getElementById('shot-counter').textContent = `${shotIndex + 1} / ${list.length}`
+  }
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('shot-lightbox').classList.contains('open')) return
+    if (e.key === 'Escape') closeShot()
+    if (e.key === 'ArrowLeft') moveShot(-1)
+    if (e.key === 'ArrowRight') moveShot(1)
+  })
+</script>
 </body>
 </html>

@@ -37,7 +37,7 @@ const DB = process.env.SUPABASE_DB_URL
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
 
 // GAME=all 일 때 도는 목록. 새 어댑터를 만들면 여기 추가.
-const SYNC_GAMES = ['genshin', 'starrail', 'zzz', 'wuwa', 'epicseven', 'bluearchive']
+const SYNC_GAMES = ['genshin', 'starrail', 'zzz', 'wuwa', 'epicseven', 'bluearchive', 'arknights']
 
 const log = (...a) => console.log(...a)
 

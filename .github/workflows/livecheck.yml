@@ -50,6 +50,10 @@ jobs:
           check "https://resetlist.kr/" 200 "내 주소를 가진 상점"
           check "https://resetlist.kr/" 200 "shop-demo-body" gone   # 가짜 상점 화면 제거됨
           check "https://resetlist.kr/" 200 "sd-owner-btn" gone
+          echo "== 매물 스크린샷 업로드 =="
+          check "https://resetlist.kr/trade/register/" 200 "img-upload-grid"
+          check "https://resetlist.kr/trade/register/" 200 "uploadListingImages"
+          check "https://resetlist.kr/listing/?id=x" 200 "shot-lightbox"
           echo "== seo-intro 숨김 =="
           curl -s --max-time 20 "https://resetlist.kr/css/style.css?cb=${GITHUB_RUN_ID}" | grep -A5 "^\.seo-intro" | grep -q "display: none" && echo "  OK  seo-intro 숨김" || echo "::error::seo-intro 가 아직 보임"
           echo "== css/js 캐시 무효화 (배포 후 옛 CSS 로 깨지는 것 방지) =="

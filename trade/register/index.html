@@ -192,6 +192,27 @@
     /* 재고/상시판매 */
     .stock-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .stock-input-box { width: 90px; }
+
+    /* 스크린샷 업로드 */
+    .img-upload-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    @media (max-width: 560px) { .img-upload-grid { grid-template-columns: repeat(3, 1fr); } }
+    .img-thumb { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb; background: #f8fafc; }
+    .img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img-thumb .img-del {
+      position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border: none; border-radius: 50%;
+      background: rgba(0,0,0,0.6); color: #fff; font-size: 13px; line-height: 1; cursor: pointer;
+    }
+    .img-thumb .img-badge {
+      position: absolute; left: 4px; bottom: 4px; font-size: 10px; font-weight: 800;
+      background: rgba(108,71,255,0.9); color: #fff; border-radius: 6px; padding: 2px 6px;
+    }
+    .img-add-btn {
+      aspect-ratio: 1; border: 1.5px dashed #cbd5e1; border-radius: 10px; background: #fff;
+      color: #94a3b8; font-size: 20px; cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px; transition: all 0.15s;
+    }
+    .img-add-btn span { font-size: 11px; font-weight: 700; }
+    .img-add-btn:hover { border-color: #6c47ff; color: #6c47ff; }
     .always-on-label {
       display: flex; align-items: center; gap: 6px;
       font-size: 13px; color: #444; cursor: pointer;
@@ -517,6 +538,12 @@
       <textarea class="form-textarea" id="desc-input" placeholder="계정 상태, 보유 캐릭터·재화 등 자유롭게 적어주세요"></textarea>
     </div>
     <div class="form-group">
+      <label class="form-label">스크린샷 <span style="color:#94a3b8;font-weight:400;">(선택 · 최대 10장, 장당 10MB)</span></label>
+      <div class="img-upload-grid" id="img-upload-grid"></div>
+      <input type="file" id="img-file-input" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none" onchange="handleImageSelect(this.files); this.value=''">
+      <div style="font-size:12px;color:#94a3b8;margin-top:6px;">계정 화면·보유 캐릭터 스크린샷을 올리면 구매 문의가 훨씬 잘 와요</div>
+    </div>
+    <div class="form-group">
       <label class="form-label">카카오 오픈채팅 링크 <span style="color:red">*</span></label>
       <input type="url" class="form-input" id="contact-input" placeholder="https://open.kakao.com/o/...">
       <div style="font-size:12px;color:#888;margin-top:6px;">구매 신청 후에만 구매자에게 공개돼요</div>
@@ -578,7 +605,7 @@
     // 수정 모드: 기존 데이터 불러오기
     if (editListingId) {
       const { data: listing } = await db.from('Listing')
-        .select(`id, price, description, kakaoOpenChatUrl, gameId, serverId, type, stock, isAlwaysOn,
+        .select(`id, price, description, kakaoOpenChatUrl, gameId, serverId, type, stock, isAlwaysOn, images,
           game:Game(id, nameKo, slug, emoji, imageUrl),
           server:Server(id, nameKo),
           characters:ListingCharacter(count, character:Character(id, nameKo, tier, imageUrl)),
@@ -627,6 +654,8 @@
       document.getElementById('always-on-checkbox').checked = !!listing.isAlwaysOn
       document.getElementById('desc-input').value = listing.description ?? ''
       document.getElementById('contact-input').value = listing.kakaoOpenChatUrl ?? ''
+      listingImages = (Array.isArray(listing.images) ? listing.images : []).map(u => ({ url: u }))
+      renderImageGrid()
 
       goToStep('chars')
     }
@@ -1095,6 +1124,61 @@
     input.value = raw ? Number(raw).toLocaleString('ko-KR') : ''
   }
 
+  // ===== 스크린샷 업로드 =====
+  const MAX_IMAGES = 10
+  const MAX_IMG_MB = 10
+  // { url } = 이미 스토리지에 있는 이미지(수정 모드) / { file, preview } = 등록 시 업로드할 파일
+  let listingImages = []
+
+  function handleImageSelect(files) {
+    for (const f of Array.from(files || [])) {
+      if (listingImages.length >= MAX_IMAGES) { alert(`이미지는 최대 ${MAX_IMAGES}장까지 올릴 수 있어요`); break }
+      if (!f.type.startsWith('image/')) { alert(`${f.name} 은 이미지 파일이 아니에요`); continue }
+      if (f.size > MAX_IMG_MB * 1024 * 1024) { alert(`${f.name} 이 ${MAX_IMG_MB}MB를 넘어요 (${(f.size/1024/1024).toFixed(1)}MB)`); continue }
+      listingImages.push({ file: f, preview: URL.createObjectURL(f) })
+    }
+    renderImageGrid()
+  }
+
+  function removeListingImage(i) {
+    const it = listingImages[i]
+    if (it?.preview) URL.revokeObjectURL(it.preview)
+    listingImages.splice(i, 1)
+    renderImageGrid()
+  }
+
+  function renderImageGrid() {
+    const grid = document.getElementById('img-upload-grid')
+    if (!grid) return
+    const thumbs = listingImages.map((it, i) => `
+      <div class="img-thumb">
+        <img src="${it.url || it.preview}" alt="스크린샷 ${i + 1}">
+        ${i === 0 ? '<span class="img-badge">대표</span>' : ''}
+        <button type="button" class="img-del" onclick="removeListingImage(${i})">✕</button>
+      </div>`).join('')
+    const addBtn = listingImages.length < MAX_IMAGES
+      ? `<button type="button" class="img-add-btn" onclick="document.getElementById('img-file-input').click()">＋<span>사진 추가</span></button>`
+      : ''
+    grid.innerHTML = thumbs + addBtn
+  }
+  renderImageGrid()
+
+  // 신규 파일은 스토리지에 올리고, 최종 URL 배열(순서 유지)을 돌려준다.
+  // 경로는 {userId}/... — 스토리지 RLS 가 자기 폴더에만 쓰게 막는다.
+  async function uploadListingImages(userId) {
+    const urls = []
+    for (const [i, it] of listingImages.entries()) {
+      if (it.url) { urls.push(it.url); continue }
+      const ext = (it.file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
+      const path = `${userId}/${Date.now().toString(36)}-${i}.${ext}`
+      const { error } = await db.storage.from('listing-images').upload(path, it.file, { contentType: it.file.type })
+      if (error) throw new Error(`이미지 업로드 실패 (${i + 1}번째): ${error.message}`)
+      const { data } = db.storage.from('listing-images').getPublicUrl(path)
+      urls.push(data.publicUrl)
+    }
+    return urls
+  }
+
   async function submitListing() {
     const price = Number(document.getElementById('price-input').value.replace(/,/g, ''))
     const contact = document.getElementById('contact-input').value.trim()
@@ -1119,6 +1203,14 @@
       const desc = document.getElementById('desc-input').value || null
       const updatedAt = new Date().toISOString()
 
+      // 이미지 업로드 (신규 파일만 올라가고, 기존 URL 은 그대로 유지)
+      let images = []
+      if (listingImages.length > 0) {
+        btn.textContent = '이미지 업로드 중...'
+        images = await uploadListingImages(authUser.id)
+        btn.textContent = '등록 중...'
+      }
+
       if (editListingId) {
         // 수정 모드
         const { error } = await db.from('Listing').update({
@@ -1130,6 +1222,7 @@
           price,
           description: desc,
           kakaoOpenChatUrl: contact,
+          images,
           updatedAt,
         }).eq('id', editListingId)
         if (error) throw error
@@ -1164,6 +1257,7 @@
           price,
           description: desc,
           kakaoOpenChatUrl: contact,
+          images,
           status: 'active',
           viewCount: 0,
           createdAt: updatedAt,
