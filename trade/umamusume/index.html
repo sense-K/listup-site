@@ -130,7 +130,7 @@
     if (!allFilterChars.length) { container.innerHTML = '<div style="text-align:center;padding:24px;color:#aaa;">캐릭터 정보를 불러오는 중...</div>'; return }
     if (chars.length === 0) { container.innerHTML = '<div style="text-align:center;padding:24px;color:#aaa;">검색 결과가 없어요</div>'; return }
     const groups = {}
-    chars.forEach(c => { const g = c.tier || '기타'; if (!groups[g]) groups[g] = []; groups[g].push(c) })
+    chars.forEach(c => { const g = c.tier || '캐릭터'; if (!groups[g]) groups[g] = []; groups[g].push(c) })
     const ORDER = GRADE_ORDER_MAP[GAME_SLUG] || []
     const grades = [...ORDER.filter(g => groups[g]), ...Object.keys(groups).filter(g => !ORDER.includes(g))]
     container.innerHTML = grades.map(grade => {
