@@ -8,6 +8,8 @@ name: Game Import (외부 데이터 → Supabase)
 #   [import-uma]     우마무스메 실제 등록 (Game/Server/Currency/Character)
 #   [probe-uma-img]  imageUrl 비어있는 캐릭터의 이미지 후보만 탐색 (DB 미변경)
 #   [fix-uma-img]    그 이미지를 실제로 UPDATE
+#   [probe-nikke-img] 니케 저해상도 이미지 측정 + prydwen 후보 탐색 (DB 미변경)
+#   [fix-nikke-img]   그 이미지를 실제로 UPDATE
 #
 # 필요: Secret SUPABASE_DB_URL
 
@@ -32,7 +34,9 @@ jobs:
       contains(github.event.head_commit.message, '[probe-uma]') ||
       contains(github.event.head_commit.message, '[import-uma]') ||
       contains(github.event.head_commit.message, '[probe-uma-img]') ||
-      contains(github.event.head_commit.message, '[fix-uma-img]')
+      contains(github.event.head_commit.message, '[fix-uma-img]') ||
+      contains(github.event.head_commit.message, '[probe-nikke-img]') ||
+      contains(github.event.head_commit.message, '[fix-nikke-img]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -58,7 +62,12 @@ jobs:
             MODE="${{ github.event.inputs.mode }}"
             case "${{ github.event.inputs.game }}" in
               umamusume-images) SCRIPT=ops/import/umamusume-images.mjs ;;
+              nikke-images)     SCRIPT=ops/import/nikke-images.mjs ;;
             esac
+          elif echo "$MSG" | grep -q '\[fix-nikke-img\]'; then
+            SCRIPT=ops/import/nikke-images.mjs; MODE=import
+          elif echo "$MSG" | grep -q '\[probe-nikke-img\]'; then
+            SCRIPT=ops/import/nikke-images.mjs; MODE=probe
           elif echo "$MSG" | grep -q '\[fix-uma-img\]'; then
             SCRIPT=ops/import/umamusume-images.mjs; MODE=import
           elif echo "$MSG" | grep -q '\[probe-uma-img\]'; then
