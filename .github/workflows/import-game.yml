@@ -4,8 +4,10 @@ name: Game Import (외부 데이터 → Supabase)
 # 네트워크가 열린 러너에서 데이터를 받아 파싱하고 Supabase에 INSERT한다.
 #
 # 사용법 — 커밋 메시지에 태그를 넣어 push:
-#   [probe-uma]   우마무스메 데이터 소스 구조만 확인 (DB 미변경)
-#   [import-uma]  우마무스메 실제 등록 (Game/Server/Currency/Character)
+#   [probe-uma]      우마무스메 데이터 소스 구조만 확인 (DB 미변경)
+#   [import-uma]     우마무스메 실제 등록 (Game/Server/Currency/Character)
+#   [probe-uma-img]  imageUrl 비어있는 캐릭터의 이미지 후보만 탐색 (DB 미변경)
+#   [fix-uma-img]    그 이미지를 실제로 UPDATE
 #
 # 필요: Secret SUPABASE_DB_URL
 
@@ -28,7 +30,9 @@ jobs:
     if: >
       github.event_name == 'workflow_dispatch' ||
       contains(github.event.head_commit.message, '[probe-uma]') ||
-      contains(github.event.head_commit.message, '[import-uma]')
+      contains(github.event.head_commit.message, '[import-uma]') ||
+      contains(github.event.head_commit.message, '[probe-uma-img]') ||
+      contains(github.event.head_commit.message, '[fix-uma-img]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -48,16 +52,26 @@ jobs:
         id: mode
         run: |
           MSG="${{ github.event.head_commit.message }}"
+          SCRIPT=ops/import/umamusume.mjs
+          MODE=probe
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "mode=${{ github.event.inputs.mode }}" >> $GITHUB_OUTPUT
+            MODE="${{ github.event.inputs.mode }}"
+            case "${{ github.event.inputs.game }}" in
+              umamusume-images) SCRIPT=ops/import/umamusume-images.mjs ;;
+            esac
+          elif echo "$MSG" | grep -q '\[fix-uma-img\]'; then
+            SCRIPT=ops/import/umamusume-images.mjs; MODE=import
+          elif echo "$MSG" | grep -q '\[probe-uma-img\]'; then
+            SCRIPT=ops/import/umamusume-images.mjs; MODE=probe
           elif echo "$MSG" | grep -q '\[import-uma\]'; then
-            echo "mode=import" >> $GITHUB_OUTPUT
-          else
-            echo "mode=probe" >> $GITHUB_OUTPUT
+            MODE=import
           fi
+          echo "mode=$MODE"     >> $GITHUB_OUTPUT
+          echo "script=$SCRIPT" >> $GITHUB_OUTPUT
+          echo ">>> $SCRIPT (MODE=$MODE)"
 
       - name: Run importer
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           MODE: ${{ steps.mode.outputs.mode }}
-        run: node ops/import/umamusume.mjs
+        run: node ${{ steps.mode.outputs.script }}
