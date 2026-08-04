@@ -6,8 +6,8 @@
   <link rel="shortcut icon" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>리세계 거래소 | 플레이센스</title>
-  <meta name="description" content="원신, 블루아카이브, 니케, 에픽세븐 등 인기 모바일 게임 리세계 판매계정을 한눈에 확인하세요. 수수료 없는 직거래 플랫폼.">
-  <meta name="keywords" content="리세계 직거래, 리세계 판매, 리세계 계정거래, 판매계정, 플레이센스">
+  <meta name="description" content="원신, 블루아카이브, 니케, 에픽세븐 등 인기 모바일 게임 리세계 판매계정과 돌계를 한눈에 확인하세요. 대행 판매자 상점부터 개인 직거래까지, 수수료 없는 직거래 플랫폼.">
+  <meta name="keywords" content="리세계 직거래, 리세계 판매, 리세계 계정거래, 판매계정, 리세계 대행, 계정 대행, 게임 계정 대행, 돌계, 돌계 판매, 돌계 거래, 돌계 직거래, 플레이센스">
   <link rel="canonical" href="https://resetlist.kr/trade/">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://resetlist.kr/trade/">
@@ -96,26 +96,6 @@
     }
     .trade-sort { display: flex; align-items: center; gap: 6px; }
 
-    /* 유형 탭 (전체/리세계/돌계) */
-    .trade-type-tabs {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .trade-type-tab {
-      font-size: 13px;
-      font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: 1.5px solid #e5e7eb;
-      background: #fff;
-      color: #64748b;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
-      font-family: inherit;
-    }
-    .trade-type-tab:hover { border-color: #6c47ff; color: #6c47ff; }
-    .trade-type-tab.active { border-color: #6c47ff; color: #6c47ff; background: #f5f3ff; }
     @media (max-width: 768px) {
       .trade-sort-bar { flex-direction: column; align-items: flex-start; }
     }
@@ -127,7 +107,7 @@
 <div class="trade-wrap">
   <div class="trade-page-header">
     <div class="trade-page-title">거래소</div>
-    <div class="trade-page-sub">수수료 없는 리세계 직거래 플랫폼</div>
+    <div class="trade-page-sub">수수료 없는 리세계·돌계 직거래 플랫폼 — 대행 판매자 상점과 개인 판매계정을 한곳에서</div>
   </div>
 
   <!-- 판매하기 CTA -->
@@ -147,13 +127,8 @@
     </a>
   </div>
 
-  <!-- 유형 탭 + 정렬 -->
+  <!-- 정렬 -->
   <div class="trade-sort-bar">
-    <div class="trade-type-tabs" id="type-tabs">
-      <button class="trade-type-tab active" data-type="all" onclick="setTypeFilter('all')">전체</button>
-      <button class="trade-type-tab" data-type="reroll" onclick="setTypeFilter('reroll')">리세계</button>
-      <button class="trade-type-tab" data-type="currency" onclick="setTypeFilter('currency')">돌계</button>
-    </div>
     <div class="trade-sort">
       <button class="sort-btn active" id="sort-latest" onclick="setSort('latest')">최신순</button>
       <span class="sort-divider">|</span>
@@ -194,29 +169,19 @@
 
   let currentSort = 'latest'
   let currentPage = 1
-  let currentType = 'all'
 
   function setSort(sort) {
     currentSort = sort
     currentPage = 1
     document.getElementById('sort-latest').classList.toggle('active', sort === 'latest')
     document.getElementById('sort-price').classList.toggle('active', sort === 'price')
-    loadListings({ container: 'listings-container', limit: 12, sort, moreBtn: 'more-btn', typeFilter: currentType })
-  }
-
-  function setTypeFilter(type) {
-    currentType = type
-    currentPage = 1
-    document.querySelectorAll('#type-tabs .trade-type-tab').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.type === type)
-    })
-    loadListings({ container: 'listings-container', limit: 12, sort: currentSort, moreBtn: 'more-btn', typeFilter: currentType })
+    loadListings({ container: 'listings-container', limit: 12, sort, moreBtn: 'more-btn' })
   }
 
   document.getElementById('more-btn').addEventListener('click', e => {
     e.preventDefault()
     currentPage++
-    loadListings({ container: 'listings-container', limit: 12, sort: currentSort, page: currentPage, append: true, moreBtn: 'more-btn', typeFilter: currentType })
+    loadListings({ container: 'listings-container', limit: 12, sort: currentSort, page: currentPage, append: true, moreBtn: 'more-btn' })
   })
 
   loadGameTabs()

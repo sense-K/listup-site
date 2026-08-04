@@ -6,6 +6,9 @@
   <link rel="shortcut icon" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>판매계정 등록 | 플레이센스</title>
+  <meta name="description" content="원신, 니케, 블루아카이브 등 리세계 계정과 돌계를 수수료 없이 판매하세요. 대행 판매자도 개인도 내 상점에 계정을 등록하고 바로 판매를 시작할 수 있어요.">
+  <meta name="keywords" content="판매계정 등록, 리세계 판매, 게임 계정 팔기, 리세계 계정 판매, 돌계 판매, 돌계 등록, 계정 대행 판매, 리세계 대행 판매, 플레이센스">
+  <link rel="canonical" href="https://resetlist.kr/trade/register/">
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .step-indicator {
@@ -432,7 +435,7 @@
   <!-- STEP: 계정 구성 (캐릭터 + 재화, 둘 다 자유롭게) -->
   <div class="step-panel" id="panel-2">
     <div class="section-title" style="margin-bottom:6px;">계정에 뭐가 들어있나요?</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">보유 캐릭터와 재화를 자유롭게 넣어주세요. 캐릭터만, 재화만, 둘 다 넣어도 괜찮아요. (최소 1개는 입력해주세요)</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">보유 캐릭터와 재화를 자유롭게 넣어주세요. 캐릭터만, 재화만, 둘 다 넣어도 되고 <b>아무것도 안 골라도</b> 괜찮아요. 그럴 땐 다음 단계의 계정 설명에 적어주세요.</div>
 
     <!-- UID 자동 불러오기 (원신 선택 시에만 표시) -->
     <div id="uid-lookup-section" style="display:none;background:#f8f5ff;border:1.5px solid #e0d4ff;border-radius:12px;padding:14px;margin-bottom:16px;">
@@ -500,7 +503,7 @@
     </div>
     <div class="form-group">
       <label class="form-label">계정 설명 <span style="color:var(--text-muted);font-size:12px;">(선택)</span></label>
-      <textarea class="form-textarea" id="desc-input" placeholder="계정 상태, 보유 재화 등 자유롭게 적어주세요"></textarea>
+      <textarea class="form-textarea" id="desc-input" placeholder="계정 상태, 보유 캐릭터·재화 등 자유롭게 적어주세요"></textarea>
     </div>
     <div class="form-group">
       <label class="form-label">카카오 오픈채팅 링크 <span style="color:red">*</span></label>
@@ -900,14 +903,8 @@
     goToStep('chars')
   }
 
-  // 캐릭터든 재화든 최소 1개는 있어야 다음으로
+  // 캐릭터·재화는 선택 사항 (아무것도 안 골라도 설명으로 대체 가능)
   function proceedFromContents() {
-    const hasChar = Object.keys(selectedChars).length > 0
-    const hasCurrency = Object.values(selectedCurrencies).some(e => e.amount > 0)
-    if (!hasChar && !hasCurrency) {
-      alert('보유 캐릭터를 선택하거나 재화 수량을 입력해주세요')
-      return
-    }
     goToStep('price')
   }
 
@@ -1090,10 +1087,8 @@
   async function submitListing() {
     const price = Number(document.getElementById('price-input').value.replace(/,/g, ''))
     const contact = document.getElementById('contact-input').value.trim()
-    // 유형은 사용자가 고르지 않고 내용으로 자동 판별 (캐릭터 없이 재화만 → 돌계)
-    const hasChar = Object.keys(selectedChars).length > 0
-    const hasCurrency = Object.values(selectedCurrencies).some(e => e.amount > 0)
-    const listingType = (!hasChar && hasCurrency) ? 'currency' : 'reroll'
+    // type 컬럼은 CHECK 제약 때문에 값이 필요 — 화면에서는 구분 없이 'reroll' 고정
+    const listingType = 'reroll'
     let stock = parseInt(document.getElementById('stock-input').value, 10)
     if (!stock || stock < 1) stock = 1
     if (stock > 99) stock = 99
@@ -1102,9 +1097,6 @@
     if (!selectedServerId) { alert('서버를 선택해주세요'); goToStep('game'); return }
     if (!price || price <= 0) { alert('판매가격을 입력해주세요'); return }
     if (!contact) { alert('카카오 오픈채팅 링크를 입력해주세요'); return }
-    if (!hasChar && !hasCurrency) {
-      alert('보유 캐릭터나 재화를 최소 1개는 입력해주세요'); goToStep('chars'); return
-    }
 
     const btn = document.getElementById('submit-btn')
     btn.disabled = true; btn.textContent = '등록 중...'
