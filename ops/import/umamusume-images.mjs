@@ -112,9 +112,12 @@ async function discoverImageBases(html, sampleIcon, sampleHeader) {
     ...[...html.matchAll(/src=["']([^"']+\.js[^"']*)["']/g)].map(m => m[1]),
     ...[...html.matchAll(/href=["']([^"']+\.css[^"']*)["']/g)].map(m => m[1]),
   ].slice(0, 20)
+  // CSS/HTML 안의 url(...)은 그 파일 위치 기준 상대경로다 → 출처 URL을 같이 들고 다닌다
+  const sources = [{ url: KAKAO_HOME, text: html }]
   const blobs = [html]
   for (const a of assets) {
-    try { blobs.push(await get(a.startsWith('http') ? a : new URL(a, KAKAO_HOME).href)) } catch { /* 무시 */ }
+    const u = a.startsWith('http') ? a : new URL(a, KAKAO_HOME).href
+    try { const t = await get(u); blobs.push(t); sources.push({ url: u, text: t }) } catch { /* 무시 */ }
   }
 
   // 캐릭터 페이지는 루트 HTML에 없다 → sitemap/robots로 실제 페이지 목록을 받아 훑는다
@@ -136,7 +139,7 @@ async function discoverImageBases(html, sampleIcon, sampleHeader) {
   for (const u of [...pageUrls].slice(0, 25)) {
     try {
       const t = await get(u)
-      blobs.push(t)
+      blobs.push(t); sources.push({ url: u, text: t })
       if (t.includes(sampleIcon)) clue(`  ★★ ${u} 안에 ${sampleIcon} 있음`)
     } catch { /* 무시 */ }
   }
@@ -164,19 +167,20 @@ async function discoverImageBases(html, sampleIcon, sampleHeader) {
     'assets/img/main/', 'assets/img/common/character/', 'assets/character/',
   ]) dirs.add(d)
 
-  // 진단: assets/character/ 계열이 왜 실패하는지 (경로 오류 vs 핫링크 차단) 구분
-  clue('  --- 진단: 상태코드/컨텐츠타입 ---')
-  for (const d of ['assets/character/', 'assets/character/icon/', 'assets/character/thumb/',
-                   'assets/character/list/', 'assets/img/character/', 'assets/']) {
-    for (const [label, ref] of [['ref=resetlist', 'https://resetlist.kr/'], ['ref=카카오', KAKAO_HOME]]) {
-      const u = absFrom(d, sampleIcon)
-      try {
-        const r = await fetch(u, { headers: { 'User-Agent': UA, Referer: ref, Accept: 'image/*,*/*' } })
-        const len = r.headers.get('content-length') || '?'
-        clue(`    ${d} [${label}] → ${r.status} ${r.headers.get('content-type')} ${len}B`)
-      } catch (e) { clue(`    ${d} [${label}] → 예외 ${e.message.slice(0, 40)}`) }
+  // 각 파일(HTML/CSS)에 적힌 상대경로는 그 파일 위치 기준으로 풀어야 한다.
+  // 앞선 라운드에서 사이트 루트 기준으로만 풀어 전부 404가 났다.
+  clue('  --- 출처 기준 상대경로 해석 ---')
+  const relDirs = new Set()
+  for (const src of sources) {
+    for (const m of src.text.matchAll(/url\(\s*['"]?([^'")\s]*\/)/g)) {
+      if (/char|uma|icon|thumb/i.test(m[1])) relDirs.add(new URL(m[1], src.url).href)
+    }
+    for (const m of src.text.matchAll(/["'`]([^"'`\s)]*(?:char|uma)[^"'`\s)]*\/)["'`]/gi)) {
+      relDirs.add(new URL(m[1], src.url).href)
     }
   }
+  clue(`  출처 기준 절대 디렉터리 ${relDirs.size}개: ${JSON.stringify([...relDirs].slice(0, 20))}`)
+  for (const d of relDirs) dirs.add(d)
 
   log(`  총 후보 ${dirs.size}개 검사`)
   const ok = [], okH = []
