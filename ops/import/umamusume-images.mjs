@@ -20,6 +20,9 @@ const UMAPYOI_LIST = 'https://umapyoi.net/api/v1/character'
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
 
 const log = (...a) => console.log(...a)
+// 경로 탐색 로그는 출력 앞쪽이라 러너 로그에서 잘려 안 보인다 → 끝에 한 번 더 찍는다
+const clues = []
+const clue = s => { clues.push(s); log(s) }
 
 async function get(url, asText = true) {
   const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'ko-KR,ko;q=0.9' } })
@@ -113,18 +116,18 @@ async function discoverImageBases(html, sampleIcon, sampleHeader) {
   for (const a of assets) {
     try { blobs.push(await get(a.startsWith('http') ? a : new URL(a, KAKAO_HOME).href)) } catch { /* 무시 */ }
   }
-  log(`  자산 ${blobs.length - 1}개 로드`)
+  clue(`  자산 ${blobs.length - 1}개 로드`)
   const blob = blobs.join('\n')
 
   // 1) 경로 조립부: "img/character/" 처럼 char/uma 가 들어간 디렉터리 리터럴
   const dirs = new Set()
   for (const m of blob.matchAll(/["'`(]([^"'`)\s;{}]*(?:char|uma|list|thumb)[^"'`)\s;{}]*\/)/gi)) dirs.add(m[1])
-  log(`  코드에서 뽑은 캐릭터스러운 디렉터리: ${JSON.stringify([...dirs].slice(0, 20))}`)
+  clue(`  코드에서 뽑은 캐릭터스러운 디렉터리: ${JSON.stringify([...dirs].slice(0, 20))}`)
 
   // 2) 파일명이 통째로 박혀있으면 그게 정답
   for (const name of [sampleIcon, sampleHeader].filter(Boolean)) {
     const re = new RegExp(`["'\`(]([^"'\`)\\s]*)${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g')
-    for (const m of blob.matchAll(re)) { dirs.add(m[1]); log(`  ★ 파일명 직접 발견: ${m[1]}${name}`) }
+    for (const m of blob.matchAll(re)) { dirs.add(m[1]); clue(`  ★ 파일명 직접 발견: ${m[1]}${name}`) }
   }
 
   // 3) 무차별 대입 — 흔한 배치를 한 번에 확인
@@ -139,20 +142,20 @@ async function discoverImageBases(html, sampleIcon, sampleHeader) {
   const ok = [], okH = []
   for (const d of dirs) {
     const p = await probeImage(absFrom(d, sampleIcon))
-    if (p.ok) { log(`  ✅ ICON  베이스: ${d}  (${p.size}B)`); ok.push(d) }
+    if (p.ok) { clue(`  ✅ ICON  베이스: ${d}  (${p.size}B)`); ok.push(d) }
   }
   for (const d of dirs) {
     const p = await probeImage(absFrom(d, sampleHeader))
-    if (p.ok) { log(`  ✅ HEADER 베이스: ${d}`); okH.push(d) }
+    if (p.ok) { clue(`  ✅ HEADER 베이스: ${d}`); okH.push(d) }
   }
   ICON_BASES = ok
   HEADER_BASES = okH
   if (!ok.length) {
-    log('  !! icon 베이스를 못 찾음 — 카카오 이미지는 사용 불가')
+    clue('  !! icon 베이스를 못 찾음 — 카카오 이미지는 사용 불가')
     // 다음 라운드 단서: img 가 들어간 디렉터리를 몇 개 보여준다
     const anyDirs = new Set()
     for (const m of blob.matchAll(/["'`(]([^"'`)\s;{}]*img[^"'`)\s;{}]*\/)/gi)) anyDirs.add(m[1])
-    log(`  단서(img 포함 디렉터리): ${JSON.stringify([...anyDirs].filter(d => d.length < 60).slice(0, 30))}`)
+    clue(`  단서(img 포함 디렉터리): ${JSON.stringify([...anyDirs].filter(d => d.length < 60).slice(0, 30))}`)
   }
 }
 
@@ -261,6 +264,8 @@ for (const m of missing) {
   else log(`    !! 쓸 수 있는 이미지 없음`)
 }
 
+log('\n=== 4-9) 경로 탐색 단서 재출력 ===')
+clues.forEach(c => log(c))
 log(`\n=== 5) 채울 수 있는 캐릭터 ${plan.length}/${missing.length}명 ===`)
 plan.forEach(p => log(`  ${p.nameKo}: ${p.thumb}`))
 
