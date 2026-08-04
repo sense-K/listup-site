@@ -23,6 +23,17 @@ jobs:
             if [ "$mode" = "gone" ] && [ "$hit" = "FOUND" ]; then echo "::error::should be removed: '$needle'"; fi
             return 0
           }
+          echo "== 판매자 화법 전환 =="
+          check "https://resetlist.kr/" 200 "자유롭게 거래하세요"
+          check "https://resetlist.kr/" 200 "내 계정 판매 시작하기"
+          check "https://resetlist.kr/" 200 "여기서 다 삽니다" gone
+          check "https://resetlist.kr/trade/genshin/" 200 "판매한다면"
+          check "https://resetlist.kr/trade/register/" 200 "sell-intro"
+          check "https://resetlist.kr/trade/bulk/" 200 "대행 판매자"
+          echo "== 게임 선택기 (시안 D) =="
+          check "https://resetlist.kr/trade/" 200 "gp-chips"
+          check "https://resetlist.kr/trade/" 200 "게임 이름으로 찾기"
+          check "https://resetlist.kr/trade/" 200 "trade-game-grid" gone
           echo "== 리브랜딩: 리세리스트 =="
           check "https://resetlist.kr/" 200 "리세리스트"
           check "https://resetlist.kr/" 200 "플레이센스" gone
