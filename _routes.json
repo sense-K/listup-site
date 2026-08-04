@@ -83,6 +83,10 @@
     "/trade/bulk",
     "/trade/bulk/*",
     "/trade/price",
-    "/trade/price/*"
+    "/trade/price/*",
+    "/game/umamusume",
+    "/game/umamusume/",
+    "/trade/umamusume",
+    "/trade/umamusume/*"
   ]
 }

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>우마무스메 리세계·돌계 판매·공략 | 리세리스트</title>
+  <meta name="description" content="우마무스메 프리티 더비 공략 도구와 리세계·돌계 거래소를 리세리스트에서 확인하세요. 타오바오 계정을 들여오는 대행 상점과 개인 판매자가 등록비·중개 수수료 없이 계정을 판매하고, 구매자는 보유 캐릭터로 검색해 직거래해요." />
+  <meta name="keywords" content="우마무스메 공략, 우마무스메 캐릭터 도감, 우마무스메 리세계, 우마무스메 대행, 우마무스메 돌계, 우마무스메 계정 거래, 우마무스메 타오바오, 우마무스메 타오바오 대행" />
+  <link rel="canonical" href="https://resetlist.kr/game/umamusume/" />
+  <meta property="og:title" content="우마무스메 리세계·돌계 판매·공략 | 리세리스트" />
+  <meta property="og:description" content="우마무스메 프리티 더비 공략 도구와 리세계·돌계 거래소를 리세리스트에서 확인하세요. 타오바오 계정을 들여오는 대행 상점과 개인 판매자가 등록비·중개 수수료 없이 계정을 판매하고, 구매자는 보유 캐릭터로 검색해 직거래해요." />
+  <meta property="og:url" content="https://resetlist.kr/game/umamusume/" />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+  <style>
+    .section-label { font-size:12px; font-weight:700; color:var(--text-sub,#64748b); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border,#e5e7eb); }
+    .trade-section { display:flex; gap:12px; flex-wrap:wrap; }
+    .trade-btn { display:inline-flex; align-items:center; gap:8px; padding:14px 24px; border-radius:14px; text-decoration:none; font-size:15px; font-weight:700; transition:transform 0.15s,box-shadow 0.15s; }
+    .trade-btn:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+    .trade-btn-primary { background:#06b6d4; color:#fff; }
+    .trade-btn-secondary { background:#f1f5f9; color:#1e293b; border:1.5px solid var(--border,#e5e7eb); }
+  </style>
+</head>
+<body>
+  <div id="navbar-container"></div>
+  <main class="game-hub-wrap">
+    <div class="game-hub-hero">
+      <div class="game-hub-hero-bg" id="game-hub-hero-bg"></div>
+      <div class="game-hub-hero-overlay"></div>
+      <div class="game-hub-hero-content">
+        <img class="game-hub-app-icon" id="game-hub-app-icon" src="" alt="" style="display:none;">
+        <span class="game-hub-icon" id="game-hub-emoji" style="font-size:48px;line-height:1;">🌊</span>
+        <div>
+          <div class="game-hub-title">우마무스메 프리티 더비</div>
+          <div class="game-hub-sub">공략 도구 1종 서비스 중</div>
+        </div>
+      </div>
+    </div>
+    <div class="section-label">공략 도구</div>
+    <div class="tools-grid">
+      
+    </div>
+    <div class="section-label">거래소</div>
+    <div class="trade-section">
+      <a href="/trade/umamusume/" class="trade-btn trade-btn-primary">🌊 거래소 바로가기 →</a>
+      <a href="/trade/price/umamusume/" class="trade-btn trade-btn-secondary">📊 계정 시세 확인</a>
+    </div>
+      <p class="seo-intro">우마무스메 리세계·돌계를 판매하신다면 리세리스트에 등록해보세요. 등록비와 중개 수수료가 없고, 가입하면 내 상점이 자동으로 만들어지며, 보유 캐릭터를 등록해두면 그 캐릭터를 찾는 구매자에게 검색으로 바로 노출돼요. 타오바오에서 우마무스메 계정을 들여오는 대행 상점도, 직접 리세계를 돌린 개인 판매자도 똑같이 판매할 수 있어요. 구매자는 판매자가 올린 우마무스메 계정을 수수료 없이 직거래로 구매할 수 있어요.</p>
+  </main>
+  <div id="footer-container"></div>
+  <script>
+    const GAME_SLUG = 'umamusume'
+    async function loadGameHero() {
+      const { data: game } = await db.from('Game').select('imageUrl, artImageUrl').eq('slug', GAME_SLUG).single()
+      if (!game) return
+      if (game.artImageUrl) document.getElementById('game-hub-hero-bg').style.backgroundImage = `url('${game.artImageUrl}')`
+      if (game.imageUrl) {
+        const icon = document.getElementById('game-hub-app-icon'), emoji = document.getElementById('game-hub-emoji')
+        icon.src = game.imageUrl; icon.alt = '우마무스메 프리티 더비'; icon.style.display = 'block'
+        if (emoji) emoji.style.display = 'none'
+      }
+    }
+    loadGameHero()
+    document.getElementById('navbar-container').innerHTML = renderNavbar()
+    loadAndRenderGameUI('umamusume')
+    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : ''
+  </script>
+</body>
+</html>

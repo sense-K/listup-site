@@ -63,6 +63,9 @@ const STATIC_URLS = [
   { loc: '/game/wuwa/characters/',        priority: '0.8', changefreq: 'weekly'  },
   { loc: '/trade/wuwa/',                  priority: '0.9', changefreq: 'daily'   },
   { loc: '/trade/price/wuwa/',            priority: '0.7', changefreq: 'weekly'  },
+  { loc: '/game/umamusume/',              priority: '0.8', changefreq: 'weekly'  },
+  { loc: '/trade/umamusume/',             priority: '0.9', changefreq: 'daily'   },
+  { loc: '/trade/price/umamusume/',       priority: '0.7', changefreq: 'weekly'  },
   { loc: '/contact/',                     priority: '0.4', changefreq: 'monthly' },
 ]
 

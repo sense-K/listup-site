@@ -23,6 +23,19 @@ jobs:
             if [ "$mode" = "gone" ] && [ "$hit" = "FOUND" ]; then echo "::error::should be removed: '$needle'"; fi
             return 0
           }
+          echo "== 우마무스메 신규 등록 =="
+          check "https://resetlist.kr/trade/umamusume/" 200 "우마무스메"
+          check "https://resetlist.kr/trade/price/umamusume/" 200 "우마무스메"
+          check "https://resetlist.kr/game/umamusume/" 200 "우마무스메"
+          check "https://resetlist.kr/trade/umamusume/" 200 "워더링" gone
+          check "https://resetlist.kr/trade/umamusume/" 200 "타오바오"
+          check "https://resetlist.kr/sitemap.xml" 200 "/trade/umamusume/"
+          echo "== 랜딩 개편 =="
+          check "https://resetlist.kr/" 200 "shop-demo"
+          check "https://resetlist.kr/" 200 "가입하면"
+          check "https://resetlist.kr/" 200 "게임별 공략" gone
+          check "https://resetlist.kr/" 200 "돌계 등록, 곧 전 게임으로" gone
+          check "https://resetlist.kr/" 200 "리세리스트에서 판매하세요"
           echo "== 판매자 화법 전환 =="
           check "https://resetlist.kr/" 200 "자유롭게 거래하세요"
           check "https://resetlist.kr/" 200 "내 계정 판매 시작하기"
