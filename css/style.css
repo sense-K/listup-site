@@ -2437,6 +2437,15 @@ a { text-decoration: none; color: inherit; }
   margin-bottom: 22px;
   word-break: keep-all;
 }
+.home-seo-lead {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-muted);
+  max-width: 78ch;
+  margin: -8px 0 22px;
+  word-break: keep-all;
+}
+.home-seo-lead b { color: #5b34d6; font-weight: 800; }
 .home-seo-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
