@@ -35,7 +35,7 @@
 
 ## 프로젝트 구조
 ```
-listup-site/
+resetlist/            # GitHub sense-K/resetlist
 ├── index.html              # 홈 (게임카드 + 최신 판매계정)
 ├── js/
 │   ├── config.js           # Supabase 클라이언트, 공용 함수 (navbar, footer, gameUI 등)
@@ -96,12 +96,15 @@ listup-site/
 - `listup` 폴더는 버린 Next.js 프로젝트, 무시할 것
 - 수정 후 항상 git push (자동 배포됨)
 - git config: user.email=zzabhm@gmail.com, user.name=sense-K
-- git 커밋 시 `git config windows.appendAtomically false` 필요 (Windows 이슈)
 
-## git 작업 방식
-- **작업 폴더**: `C:\Users\혁문\OneDrive\Desktop\vibe coding\리세계\listup-site` (OneDrive 동기화, 노트북 공유됨)
-- push → GitHub `sense-K/listup-site` main → Cloudflare Pages 자동 배포
-- git config: user.email=zzabhm@gmail.com, user.name=sense-K
+## git 작업 방식 (2026-08-04 정리)
+- **단일 기준은 GitHub `sense-K/resetlist`.** 로컬 폴더 사본(예전 OneDrive 경로)은 더 이상 쓰지 않는다.
+  코드를 볼 일이 있으면 GitHub을 보고, 고칠 일이 있으면 clone 받아서 작업 후 push.
+- **`main`은 항상 현재 서비스 상태와 일치시킨다.** 작업 브랜치에서 진행하더라도
+  한 덩어리가 끝나면 곧바로 main에 머지해서 main이 뒤처지지 않게 할 것.
+- 배포는 브랜치와 무관 — `deploy.yml`이 `main`과 `claude/**` 양쪽을 감시하고
+  `wrangler pages deploy --branch=main`으로 올리므로, 커밋 메시지의 `[deploy]` 태그만 있으면 프로덕션에 반영된다.
+  즉 **머지는 배포용이 아니라 "GitHub이 항상 최신"을 유지하기 위한 것**.
 
 ## 용어 통일
 - 사이트명: **리세리스트** (로고/네비바), **리세 리스트** (본문/SEO)
@@ -407,7 +410,7 @@ const GRADE_ORDER_MAP = {
 - 거래소 목록 판매중 우선 정렬 적용
 - 블루아카이브 학생 도감 서비스 중 (`/game/bluearchive/students/`)
 - 니케 캐릭터 도감 서비스 중 (`/game/nikke/characters/`)
-- 작업 폴더: OneDrive (`C:\Users\혁문\OneDrive\Desktop\vibe coding\리세계\listup-site`)
+- 코드 기준: GitHub `sense-K/resetlist` (main = 현재 서비스 상태)
 
 ## 남은 작업 목록
 ### 중요도 높음
