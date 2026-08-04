@@ -31,22 +31,26 @@ export async function fetchCharacters() {
   if (!res.ok) throw new Error(`스토브 응답 ${res.status}`)
   const json = await res.json()
 
-  // 최상위에서 영웅 배열을 찾는다 (키 이름이 난독화돼 있어 이름으로 못 잡는다)
-  const arrays = (Array.isArray(json) ? [json] : Object.values(json))
-    .filter(v => Array.isArray(v) && v.length > 50)
-    .filter(v => v.some(o => o && typeof o === 'object' && o.code && o.name))
-  if (!arrays.length) throw new Error('영웅 배열을 못 찾음 — 응답 구조가 바뀜')
-  const heroes = arrays.sort((a, b) => b.length - a.length)[0]
+  // 이 JSON 은 언어별 키를 가진 객체다: { ko:[...], en:[...], de:[...] ... }
+  // '가장 긴 배열'을 고르면 엉뚱한 언어를 집는다 (실제로 de 를 집어 이름이 영문으로 들어갔음).
+  // 도감 화면(game/epic7/heroes/)과 동일하게 ko 를 명시적으로 쓴다.
+  const heroes = json?.ko
+  if (!Array.isArray(heroes) || !heroes.length) {
+    throw new Error(`ko 배열 없음 — 최상위 키: ${JSON.stringify(Object.keys(json || {})).slice(0, 120)}`)
+  }
+  // 영문명은 code 로 맞춰 가져온다 (nameEn 이 NOT NULL 이라 있으면 채워둔다)
+  const enByCode = new Map((json.en || []).map(h => [h.code, h.name]))
 
   return heroes
-    .filter(h => h && h.code && h.name)
+    // 도감과 동일하게 주인공(플레이어 캐릭터)은 제외한다
+    .filter(h => h && h.code && h.name && h.code !== 'c0001' && h.code !== 'c1005')
     .map(h => {
       const job = JOB_KO[String(h.job_cd || '').toLowerCase()] || h.job_cd || null
       const elem = ELEM_KO[String(h.attribute_cd || '').toLowerCase()] || h.attribute_cd || null
       return {
         nameKo: String(h.name).trim(),
-        // 스토브 JSON 은 한국어 이름만 준다 → 영문명이 없어 slug 는 code 로 만든다
-        nameEn: h.name_en || null,
+        // slug 는 영문명이 아니라 스토브 hero code 로 만든다 (동명이인·표기 변화에 안전)
+        nameEn: enByCode.get(h.code) || h.name_en || null,
         slug: String(h.code).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '') || null,
         tier: gradeToTier(h.grade),
         imageUrl: heroImg(h.code),
