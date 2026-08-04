@@ -182,6 +182,7 @@
           <div class="sd-url">resetlist.kr/shop/<b>my-shop</b></div>
         </div>
         <div class="shop-demo-body">
+          <!-- 실제 /shop/{username} 구조를 그대로 옮긴 미리보기 -->
           <div class="sd-header">
             <div class="sd-avatar">🏪</div>
             <div class="sd-info">
@@ -194,43 +195,83 @@
                 <span>🤝 거래완료 <b>32</b></span>
                 <span>🏷️ 판매중 <b>12</b></span>
               </div>
-              <div class="sd-chips">
-                <span class="sd-chip">⏱ 1시간 내 전달</span>
-                <span class="sd-chip">🛡 3일 보증</span>
-                <span class="sd-chip">🔑 계정복구 지원</span>
-              </div>
+            </div>
+            <div class="sd-owner-actions">
+              <span class="sd-btn-primary">＋ 판매글 등록</span>
+              <span class="sd-btn-dark">⚙ 상점 설정</span>
             </div>
           </div>
+
+          <div class="sd-summary">
+            <div class="sd-sum-card"><div class="sd-sum-num">12</div><div class="sd-sum-label">판매중</div></div>
+            <div class="sd-sum-card"><div class="sd-sum-num">2</div><div class="sd-sum-label">거래중</div></div>
+            <div class="sd-sum-card"><div class="sd-sum-num">32</div><div class="sd-sum-label">판매완료</div></div>
+            <div class="sd-sum-card"><div class="sd-sum-num">0</div><div class="sd-sum-label">구매 진행중</div></div>
+          </div>
+
           <div class="sd-tabs">
             <span class="sd-tab on">전체 12</span>
             <span class="sd-tab">원신 5</span>
             <span class="sd-tab">니케 4</span>
-            <span class="sd-tab">명조 3</span>
+            <span class="sd-tab">스타레일 3</span>
           </div>
+          <div class="sd-status-chips">
+            <span class="sd-status-chip on">전체</span>
+            <span class="sd-status-chip">판매중</span>
+            <span class="sd-status-chip">거래중</span>
+            <span class="sd-status-chip">판매완료</span>
+          </div>
+
           <div class="sd-grid">
-            <!-- 이미지는 도감에 등록된 실제 캐릭터 사진. 안 뜨면 아래 그라디언트가 그대로 보인다 -->
+            <!-- 캐릭터 칩은 32px 라 스프라이트 원본이어도 선명하다 -->
             <div class="sd-card">
-              <div class="sd-hero sd-h1">
-                <img class="sd-hero-img" src="https://act-webstatic.hoyoverse.com/event-static-hoyowiki-admin/2026/01/29/72161f01ff431c9f099710f92c811454_1654176825175164246.png" alt="" loading="lazy" onerror="this.remove()">
-                <span class="sd-hero-name">자백</span><span class="sd-hero-sub">외 7명 보유</span>
+              <div class="sd-card-body">
+                <div class="sd-card-game"><img src="https://play-lh.googleusercontent.com/YQqyKaXX-63krqsfIzUEJWUWLINxcb5tbS6QVySdxbS7eZV7YB2dUjUvX27xA0TIGtfxQ5v-tQjwlT5tTB-O=s96-rw" alt="" loading="lazy" onerror="this.remove()"><span>원신</span></div>
+                <div class="sd-chips-row">
+                  <img class="sd-chip-img" src="https://act-webstatic.hoyoverse.com/event-static-hoyowiki-admin/2026/01/29/72161f01ff431c9f099710f92c811454_1654176825175164246.png" alt="자백" loading="lazy" onerror="this.remove()">
+                  <img class="sd-chip-img" src="https://fastcdn.hoyoverse.com/content-v2/hk4e/113447/e8d153da1a2dca7a07fd76397cd60612_2043628622447437530.png" alt="푸리나" loading="lazy" onerror="this.remove()">
+                  <span class="sd-chip-more">+5</span>
+                </div>
+                <div class="sd-card-price">85,000원</div>
               </div>
-              <div class="sd-price">85,000원</div>
+              <div class="sd-owner-bar">
+                <span class="sd-owner-btn bump">⬆ 끌올</span>
+                <span class="sd-owner-btn">수정</span>
+                <span class="sd-owner-btn">삭제</span>
+              </div>
             </div>
+
             <div class="sd-card">
-              <!-- 크라운은 DB 이미지가 128px 스프라이트라 카드에서 뭉개짐 → 원본이 큰 나유타 사용 -->
-              <div class="sd-hero sd-h2">
-                <img class="sd-hero-img" src="https://www.prydwen.gg/static/1c2459ae6ca1abeb89aa97e7bf2ee5f8/2547a/188_card.webp" alt="" loading="lazy" onerror="this.remove()">
-                <span class="sd-hero-name">나유타</span><span class="sd-hero-sub">외 11명 보유</span>
+              <div class="sd-card-body">
+                <div class="sd-card-game"><img src="https://play-lh.googleusercontent.com/JK5mejs0bVT_9613gCxNfCjRw_m3JiQ4wC8B8Kt471yu7ThFQazVkCLTfPZ81hnenft7ilaE-qSwVGpQT6sEFcY=s96-rw" alt="" loading="lazy" onerror="this.remove()"><span>니케</span></div>
+                <div class="sd-chips-row">
+                  <img class="sd-chip-img" src="https://www.prydwen.gg/static/1c2459ae6ca1abeb89aa97e7bf2ee5f8/2547a/188_card.webp" alt="나유타" loading="lazy" onerror="this.remove()">
+                  <img class="sd-chip-img" src="https://raw.githubusercontent.com/Nikke-db/Nikke-db.github.io/main/images/sprite/si_c330_00_s.png" alt="크라운" loading="lazy" onerror="this.remove()">
+                  <img class="sd-chip-img" src="https://raw.githubusercontent.com/Nikke-db/Nikke-db.github.io/main/images/sprite/si_c470_00_s.png" alt="레드후드" loading="lazy" onerror="this.remove()">
+                  <span class="sd-chip-more">+1</span>
+                </div>
+                <div class="sd-card-price">120,000원</div>
               </div>
-              <div class="sd-price">120,000원</div>
+              <div class="sd-owner-bar">
+                <span class="sd-owner-btn bump">⬆ 끌올</span>
+                <span class="sd-owner-btn">수정</span>
+                <span class="sd-owner-btn">삭제</span>
+              </div>
             </div>
+
+            <!-- 돌계 매물: 실제 카드도 캐릭터 대신 재화를 보여준다 -->
             <div class="sd-card">
-              <!-- 돌계는 캐릭터가 없어 실제 카드도 게임 아트를 쓴다 -->
-              <div class="sd-hero sd-h3">
-                <img class="sd-hero-img sd-hero-img-art" src="https://i.namu.wiki/i/bpYDcDpmYz-yllmMz0aiHYbROO4jUDpqbMplt0LWOTL3rkoF94A6eP8dd2zBv6mlnAl4YuIwKUjvX7u4JeEaWA.webp" alt="" loading="lazy" onerror="this.remove()">
-                <span class="sd-hero-name">성옥 12,800</span><span class="sd-hero-sub">약 80연 분량</span>
+              <div class="sd-card-body">
+                <div class="sd-card-game"><img src="https://play-lh.googleusercontent.com/_dFcpIqTMtD0b87HDt_GgCWrHzRWEkPRfGNrVP6fymrkV8tHtb8ub5ZPigilApFCTAgeGQK3W9T5Jp4QgK6ilUA=s96-rw" alt="" loading="lazy" onerror="this.remove()"><span>붕괴 스타레일</span></div>
+                <span class="sd-curr-badge">💎 돌계</span>
+                <div class="sd-curr-row">성옥 <b>12,800</b><span class="sd-curr-sub"> · 약 80연</span></div>
+                <div class="sd-card-price">30,000원</div>
               </div>
-              <div class="sd-price">30,000원</div>
+              <div class="sd-owner-bar">
+                <span class="sd-owner-btn bump">⬆ 끌올</span>
+                <span class="sd-owner-btn">수정</span>
+                <span class="sd-owner-btn">삭제</span>
+              </div>
             </div>
           </div>
         </div>

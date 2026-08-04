@@ -47,6 +47,14 @@ jobs:
           check "https://resetlist.kr/game/umamusume/characters/zzz-not-a-character/" 404 "캐릭터를 찾을 수 없어요"
           echo "== 랜딩 개편 =="
           check "https://resetlist.kr/" 200 "shop-demo"
+          echo "== 상점 미리보기가 실제 /shop 구조와 같은지 =="
+          check "https://resetlist.kr/" 200 "sd-summary"        # 요약 타일 4개
+          check "https://resetlist.kr/" 200 "구매 진행중"
+          check "https://resetlist.kr/" 200 "sd-status-chips"   # 상태 필터
+          check "https://resetlist.kr/" 200 "sd-owner-btn"      # 끌올/수정/삭제
+          check "https://resetlist.kr/" 200 "sd-chip-img"       # 캐릭터 칩
+          check "https://resetlist.kr/" 200 "sd-curr-badge"     # 돌계 배지
+          check "https://resetlist.kr/" 200 "판매글 등록"
           check "https://resetlist.kr/" 200 "가입하면"
           check "https://resetlist.kr/" 200 "게임별 공략" gone
           check "https://resetlist.kr/" 200 "돌계 등록, 곧 전 게임으로" gone

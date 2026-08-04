@@ -2545,62 +2545,78 @@ a { text-decoration: none; color: inherit; }
 .sd-url b { color: #5b34d6; font-weight: 800; }
 .shop-demo-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
 
-.sd-header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+/* 아래 값들은 functions/shop/[username].js 의 실제 상점 스타일을 그대로 축소한 것 */
+.sd-header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; }
 .sd-avatar {
-  width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
-  background: linear-gradient(150deg, #8b6bff, #5b34d6);
-  display: grid; place-items: center; font-size: 22px;
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+  background: #f3f0ff; display: grid; place-items: center; font-size: 22px;
 }
 .sd-info { min-width: 0; flex: 1; }
 .sd-name-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 4px; }
 .sd-name { font-size: 16px; font-weight: 900; color: var(--black); letter-spacing: -.02em; }
 .sd-grade {
-  font-size: 10.5px; font-weight: 800; color: #5b34d6;
-  background: #ece7ff; border-radius: 999px; padding: 2px 8px;
+  font-size: 10.5px; font-weight: 800; color: #92400e;
+  background: linear-gradient(135deg,#fde68a,#fbbf24); border-radius: 999px; padding: 2px 8px;
 }
-.sd-stats { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-muted); margin-bottom: 7px; }
+.sd-stats { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-muted); }
 .sd-stats b { color: var(--black); font-weight: 800; }
-.sd-chips { display: flex; gap: 5px; flex-wrap: wrap; }
-.sd-chip {
-  font-size: 10.5px; font-weight: 600; color: #6b6480;
-  background: #f5f3fa; border: 1px solid #e9e4f5; border-radius: 999px; padding: 2px 8px;
+
+/* 주인에게만 보이는 상단 버튼 — 실제 상점의 shop-owner-actions */
+.sd-owner-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.sd-btn-primary, .sd-btn-dark {
+  font-size: 11px; font-weight: 800; border-radius: 8px; padding: 7px 11px; white-space: nowrap;
 }
-.sd-tabs { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+.sd-btn-primary { background: #6c47ff; color: #fff; }
+.sd-btn-dark { background: #1f2937; color: #fff; }
+
+/* 요약 타일 4개 — 실제 상점의 shop-summary-strip */
+.sd-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.sd-sum-card { background: #fff; border: 1px solid #ececf2; border-radius: 12px; padding: 10px 6px; text-align: center; }
+.sd-sum-num { font-size: 18px; font-weight: 900; color: #111; line-height: 1.2; }
+.sd-sum-label { font-size: 10px; color: #8b8b9b; font-weight: 700; margin-top: 2px; }
+
+.sd-tabs { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 7px; }
 .sd-tab {
   font-size: 11px; font-weight: 700; color: #7b7391;
   border: 1px solid #e7e3f2; border-radius: 999px; padding: 3px 10px; background: #fff;
 }
-.sd-tab.on { background: #6c47ff; color: #fff; border-color: #6c47ff; }
+.sd-tab.on { background: #1f2937; color: #fff; border-color: #1f2937; }
+
+.sd-status-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+.sd-status-chip {
+  font-size: 11px; font-weight: 700; color: #7b7391;
+  background: #f3f2f8; border-radius: 999px; padding: 3px 10px;
+}
+.sd-status-chip.on { background: #6c47ff; color: #fff; }
+
 .sd-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
-.sd-card { border: 1px solid #ece9f5; border-radius: 10px; overflow: hidden; background: #fff; }
-.sd-hero {
-  aspect-ratio: 4/3; padding: 8px; display: flex; flex-direction: column;
-  justify-content: flex-end; position: relative; overflow: hidden;
+.sd-card { border: 1px solid #ece9f5; border-radius: 14px; overflow: hidden; background: #fff; }
+.sd-card-body { padding: 10px; }
+.sd-card-game { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #8b8b9b; margin-bottom: 7px; }
+.sd-card-game img { width: 16px; height: 16px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+
+/* 캐릭터 칩 — 실제 상점과 같은 32px. 이 크기면 스프라이트 원본도 선명하다 */
+.sd-chips-row { display: flex; align-items: center; gap: 4px; margin-bottom: 9px; min-height: 32px; }
+.sd-chip-img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; border: 1px solid #eee; background: #f3f4f6; }
+.sd-chip-more { font-size: 11px; font-weight: 700; color: #888; background: #f3f4f6; border-radius: 8px; padding: 4px 6px; }
+
+.sd-curr-badge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800;
+  color: #fff; background: #0ea5e9; border-radius: 999px; padding: 3px 9px; margin-bottom: 7px;
 }
-/* 그라디언트는 이미지가 안 뜰 때의 바닥. 실제 캐릭터 사진이 그 위에 깔린다 */
-.sd-h1 { background: linear-gradient(150deg,#ffb648,#e0590c); }
-.sd-h2 { background: linear-gradient(150deg,#a879ff,#5b34d6); }
-.sd-h3 { background: linear-gradient(150deg,#5eaaff,#2b6fd6); }
-.sd-hero-img {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; object-position: top center;
+.sd-curr-row { font-size: 11.5px; color: #444; margin-bottom: 9px; }
+.sd-curr-row b { color: #111; font-size: 12.5px; margin: 0 3px; }
+.sd-curr-sub { color: #0ea5e9; font-weight: 700; }
+
+.sd-card-price { font-size: 15px; font-weight: 900; color: #111; letter-spacing: -.02em; }
+
+/* 주인 전용 카드 하단 액션 — 실제 상점의 shop-card-owner-actions */
+.sd-owner-bar { display: flex; gap: 5px; padding: 0 10px 10px; }
+.sd-owner-btn {
+  flex: 1; background: #f3f4f6; border-radius: 8px; color: #555;
+  font-size: 10px; font-weight: 700; padding: 6px 0; text-align: center; white-space: nowrap;
 }
-/* 게임 키아트는 가로로 넓어 위쪽을 잡으면 하늘만 보인다 */
-.sd-hero-img-art { object-position: center; }
-/* 사진 위 글자가 묻히지 않게 아래쪽만 어둡게 */
-.sd-hero::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 58%;
-  background: linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,0));
-  pointer-events: none;
-}
-.sd-hero-name, .sd-hero-sub { position: relative; z-index: 1; }
-.sd-hero-name {
-  font-size: 12.5px; font-weight: 900; color: #fff; line-height: 1.2;
-  text-shadow: 0 1px 5px rgba(0,0,0,.4);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.sd-hero-sub { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.85); text-shadow: 0 1px 4px rgba(0,0,0,.45); }
-.sd-price { font-size: 12.5px; font-weight: 900; color: var(--black); padding: 7px 9px; letter-spacing: -.02em; }
+.sd-owner-btn.bump { background: #ece7ff; color: #5b34d6; }
 
 .shop-demo-points { display: flex; flex-direction: column; gap: 11px; }
 /* 설명 카드가 남는 높이를 나눠 가져 좌측 미리보기와 아래끝이 맞는다 */
@@ -2616,11 +2632,11 @@ a { text-decoration: none; color: inherit; }
   border-radius: 11px; text-align: center;
 }
 
-/* 2열일 때만: 우측 카드에 맞춰 늘어난 높이를 매물 카드가 채우게 (아래 여백 제거) */
+/* 2열일 때만: 남는 높이를 매물 카드가 나눠 가져 우측 설명 카드와 아래끝을 맞춘다 */
 @media (min-width: 1025px) {
-  .shop-demo-body > .sd-grid { flex: 1; }
+  .shop-demo-body > .sd-grid { flex: 1; align-content: stretch; }
   .shop-demo-body > .sd-grid .sd-card { display: flex; flex-direction: column; }
-  .shop-demo-body > .sd-grid .sd-hero { flex: 1; aspect-ratio: auto; min-height: 96px; }
+  .shop-demo-body > .sd-grid .sd-card-body { flex: 1; }
 }
 @media (max-width: 1024px) {
   .shop-demo-row { grid-template-columns: 1fr; }
@@ -2629,7 +2645,17 @@ a { text-decoration: none; color: inherit; }
 }
 @media (max-width: 560px) {
   .sd-grid { grid-template-columns: repeat(2, 1fr); }
-  .sd-grid .sd-card:last-child { display: none; }
+  /* 2칸에 3장이면 한 장이 붕 뜬다 → 가장 평범한 첫 카드를 접고 돌계 카드는 남긴다 */
+  .sd-grid .sd-card:first-child { display: none; }
+  .sd-summary { grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .sd-sum-num { font-size: 15px; }
+  .sd-sum-label { font-size: 9px; }
+  /* 좁아지면 상단 버튼이 이름을 밀어내며 배지가 두 줄로 쪼개진다 → 버튼을 아래 줄로 */
+  .sd-avatar { width: 40px; height: 40px; font-size: 18px; }
+  .sd-owner-actions { order: 3; width: 100%; }
+  .sd-btn-primary, .sd-btn-dark { flex: 1; text-align: center; }
+  .sd-grade { white-space: nowrap; }
+  .sd-stats { gap: 8px; font-size: 11px; }
   .shop-demo-body { padding: 13px; }
   .shop-demo-cta { width: 100%; padding: 14px 20px; }
 }
