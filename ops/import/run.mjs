@@ -104,7 +104,10 @@ for (const [i, r] of fetched.entries()) {
 
   // 값이 실제로 달라진 것만 갱신 대상에 올린다 (빈 값으로 덮어쓰지 않음)
   const diff = {}
-  if (r.imageUrl && r.imageUrl !== hit.imageUrl) diff.imageUrl = r.imageUrl
+  // 이미 우리 스토리지에 올려둔 이미지는 외부 URL 로 되돌리지 않는다.
+  // 외부 핫링크는 소스가 리빌드되면 주소가 썩는다 (니케 prydwen 이 실제로 410 이 됐다).
+  const selfHosted = /supabase\.co\/storage\//.test(hit.imageUrl)
+  if (r.imageUrl && r.imageUrl !== hit.imageUrl && !selfHosted) diff.imageUrl = r.imageUrl
   if (r.tier && r.tier !== hit.tier) diff.tier = r.tier
   if (slug && slug !== hit.slug) diff.slug = slug
   if (r.nameEn && r.nameEn !== hit.nameEn) diff.nameEn = r.nameEn
@@ -112,7 +115,12 @@ for (const [i, r] of fetched.entries()) {
   if (Object.keys(diff).length) updates.push({ id: hit.id, nameKo, diff })
 }
 
+const kept = fetched.filter(r => {
+  const hit = byName.get(String(r.nameKo ?? '').trim())
+  return hit && /supabase\.co\/storage\//.test(hit.imageUrl) && r.imageUrl && r.imageUrl !== hit.imageUrl
+}).length
 say(`신규 ${news.length}명 / 갱신 ${updates.length}명 / 변화없음 ${fetched.length - news.length - updates.length}명`)
+if (kept) say(`  자체 호스팅 이미지 ${kept}건은 외부 URL 로 덮어쓰지 않고 유지`)
 if (news.length) say(`  신규 예시: ${news.slice(0, 10).map(r => r.nameKo).join(', ')}${news.length > 10 ? ` … 외 ${news.length - 10}명` : ''}`)
 if (updates.length) {
   const fields = {}
