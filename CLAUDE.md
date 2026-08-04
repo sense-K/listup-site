@@ -1051,6 +1051,42 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 - 우마무스메/엔드필드는 인증 차단으로 미사용
 - 향후 다른 DotGG 지원 게임에 활용 가능
 
+## 캐릭터 자동 동기화 (2026-08-05 구축)
+
+**매일 05:00 KST 에 GitHub Actions(`auto-sync.yml`)가 무인으로 돈다. 관리자가 누를 버튼 없음.**
+- 대상: 원신·스타레일·젠레스·명조·에픽세븐·블루아카 (`ops/import/run.mjs` 의 `SYNC_GAMES`)
+- 구조: 공통 러너 `ops/import/run.mjs` + 게임별 어댑터 `ops/import/games/{slug}.mjs`
+  - 어댑터는 "소스에서 캐릭터 배열을 뽑는 함수" 하나만 구현 (fetchCharacters)
+  - 새 게임 자동화 추가 = 어댑터 파일 1개 + SYNC_GAMES 에 slug 추가
+- 결과는 `ImportLog` 테이블에 기록 → **admin 캐릭터 관리 탭 상단 '자동 동기화' 카드**에 표시
+- 즉시 실행: GitHub → Actions → "Auto Character Sync" → Run workflow
+- 단일 게임 수동 실행: 커밋 메시지에 `[probe:slug]`(미리보기) / `[import:slug]`(반영)
+
+### 안전 규칙 (run.mjs 공통 — 무인 실행 전제)
+- 신규 판정: nameKo 대조, 실패 시 nameEn 정규화 2차 대조
+  (StarRailRes kr 에 'Mar. 7th' 처럼 영어 이름이 섞여 있어 2차 대조 없으면 중복 INSERT 남)
+- 신규가 소스의 30% 초과면 이름 대조 실패로 간주하고 그 게임 자동 중단
+  (에픽세븐 epic7_hero.json 은 {ko,en,de,...} 언어별 키 — de 를 집으면 전원 신규로 보임)
+- slug 는 기존 값이 있으면 불변 (색인된 상세 URL 보호)
+- 자체 호스팅(supabase storage) 이미지는 외부 URL 로 안 덮어씀
+- metadata 는 기존이 비어있을 때만 채움 / 빈 값 덮어쓰기 없음 / 삭제 없음
+- 수집 0명이면 중단, 신규 이미지 표본 전멸이면 중단
+
+### 게임별 어댑터 소스
+| slug | 소스 | 비고 |
+|---|---|---|
+| genshin | genshin-db API | 기본 필드만. talents 상세는 admin 버튼 유지 |
+| starrail | StarRailRes index_min kr+en | path→weaponType, 개척자 제외 |
+| zzz | nanoka.cc manifest→character.json | rank4→S, IconRoleSelect 이미지 |
+| wuwa | nanoka.cc ww | 방랑자 6종 제외, rank<4 제외 |
+| epicseven | 스토브 epic7_hero.json **ko 배열** | slug 는 hero code. 주인공 c0001/c1005 제외 |
+| bluearchive | SchaleDB kr students.json | tier=학교명(기존 규칙), IsReleased[0] 만 |
+
+자동화 불가(공개 소스 없음): 이환·몬길·쿠킹덤·세나리·트릭컬·림버스·로스트소드 → 수동 또는 CharacterRequest 승인 방식(계획).
+
+### SEO 소개문 숨김 (2026-08-05)
+전 게임 페이지의 `.seo-intro` 는 CSS `display:none` (style.css). HTML 에는 남아 있음.
+
 ## 대행(상점) 모델 (2026-08-03 구축)
 
 ### 개념
