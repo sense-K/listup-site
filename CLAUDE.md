@@ -826,6 +826,30 @@ MFR_KO:    { Elysion:'엘리시온', Missilis:'미사일리스', Tetra:'테트�
 - 애장품(Treasure) 캐릭터 일부는 prydwen fullImage가 null → 기본 캐릭터 이미지 복사 전략 (작업 예정)
 - INSERT 시 중복 방지: 감지 단계 normalize 비교 + INSERT 직전 nameEn·nameKo DB 재쿼리 이중 방어
 
+### 🔴 prydwen 접근 차단 + 이미지 품질 문제 (2026-08-04 확인)
+
+**prydwen.gg가 Cloudflare 챌린지를 걸어 자동 접근이 전부 막혔다.**
+- GitHub Actions 러너 직접 요청 → `403` + `<title>Just a moment...</title>` (JS 챌린지 페이지)
+- 우리 CF Function 프록시(`/api/prydwen-nikke`) → `502` (프록시의 fetch도 같은 챌린지를 받음)
+- **따라서 admin의 "🔄 prydwen 동기화"와 "🔍 신규 캐릭터 감지"는 현재 동작하지 않는다.**
+  버튼을 눌러도 502가 뜬다. 우회를 시도하지 말 것 — 상대가 명시적으로 막은 것이다.
+
+**DB 니케 이미지 실측 결과** (`ops/import/nikke-images.mjs`, PNG/WebP/JPEG 헤더 파싱):
+| 상태 | 인원 | 내용 |
+|---|---|---|
+| 깨짐 | 6명 | 렘·클레이·미사토·플로라·모리·릴리 — prydwen URL이 `HTTP 410` |
+| 저해상도 | 약 60명 | Nikke-db 스프라이트 `128x128` (라피·아니스·네온·엠마·신·히메노·마키마 등 주력 포함) |
+
+- 카드 히어로가 218px라 128px 이미지는 확대되어 뭉개진다 (기준: 가로 250px 미만이면 문제)
+- 410은 **prydwen 정적 URL에 콘텐츠 해시가 들어가 리빌드마다 바뀌기 때문**이다.
+  즉 prydwen URL을 DB에 저장하는 방식 자체가 시간이 지나면 썩는다.
+- 임시 방어: 니케 상세 SSR에 `onerror` 추가 → 깨진 아이콘 대신 🖼 플레이스홀더 (2026-08-04)
+- **근본 해결 방향**: prydwen 핫링크를 그만두고 이미지를 Supabase Storage에 직접 올린다.
+  이미 `리틀 머메이드`가 그 방식(`.../storage/v1/object/public/characters/...`)으로 들어가 있다.
+  단 지금은 prydwen에서 원본을 받을 수 없어 다른 소스가 먼저 필요하다.
+
+**진단 재실행**: 커밋 메시지에 `[probe-nikke-img]` (측정만) / `[fix-nikke-img]` (실제 UPDATE)
+
 ## sitemap.xml 동적 생성 (2026-04-28 추가)
 
 - 파일: `functions/sitemap.xml.js` (Cloudflare Function)

@@ -155,7 +155,7 @@ export async function onRequest({ params }) {
     ? `<div class="gc-rel-grid">${related.map(r => `
       <a class="gc-rel-card" href="/game/nikke/characters/${esc(r.slug)}/">
         <div class="gc-rel-img">
-          ${r.imageUrl ? `<img src="${esc(r.imageUrl)}" alt="${esc(r.nameKo)}" loading="lazy">` : ''}
+          ${r.imageUrl ? `<img src="${esc(r.imageUrl)}" alt="${esc(r.nameKo)}" loading="lazy" onerror="this.parentElement.classList.add('no-img');this.remove()">` : ''}
           <span class="gc-rarity-badge">${esc(r.rarity || '')}</span>
         </div>
         <div class="gc-rel-name">${esc(r.nameKo)}</div>
@@ -211,10 +211,16 @@ export async function onRequest({ params }) {
     @media(max-width:640px){ .gc-hero { grid-template-columns:1fr; gap:20px; } }
 
     .gc-hero-img {
-      border-radius:20px; overflow:hidden; aspect-ratio:1;
+      border-radius:20px; overflow:hidden; aspect-ratio:1; position:relative;
       background:linear-gradient(160deg,${elemColor}33 0%,#1a1a2e 100%);
     }
     .gc-hero-img img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
+    /* prydwen 이 정적 URL 을 갈아엎으면 기존 주소가 410 이 된다 → 깨진 아이콘 대신 표시 */
+    .gc-hero-img.no-img::after, .gc-rel-img.no-img::after {
+      content:'🖼'; position:absolute; inset:0; display:flex; align-items:center;
+      justify-content:center; font-size:40px; opacity:.3;
+    }
+    .gc-rel-img.no-img::after { font-size:22px; }
 
     .gc-char-name { font-size:28px; font-weight:900; color:#1e293b; margin:0 0 2px; }
     .gc-char-en   { font-size:14px; color:#94a3b8; margin:0 0 12px; }
@@ -272,7 +278,7 @@ export async function onRequest({ params }) {
 
   <section class="gc-hero">
     <div class="gc-hero-img">
-      ${c.imageUrl ? `<img src="${esc(c.imageUrl)}" alt="${esc(c.nameKo)}" fetchpriority="high">` : ''}
+      ${c.imageUrl ? `<img src="${esc(c.imageUrl)}" alt="${esc(c.nameKo)}" fetchpriority="high" onerror="this.parentElement.classList.add('no-img');this.remove()">` : ''}
     </div>
     <div>
       <h1 class="gc-char-name">${esc(c.nameKo)}</h1>
