@@ -104,45 +104,56 @@ let HEADER_BASES = []
 
 async function discoverImageBases(html, sampleIcon, sampleHeader) {
   log('\n=== 1-2) 카카오 이미지 경로 탐색 ===')
-  const pages = [html]
-  // 캐릭터 목록 페이지가 따로 있으면 거기 <img>에 실제 경로가 있다
-  for (const p of ['character', 'character/', 'character.html', 'contents/character']) {
-    try { pages.push(await get(new URL(p, KAKAO_HOME).href)); log(`  추가 페이지 로드: ${p}`) } catch { /* 없으면 무시 */ }
+  // 사이트가 참조하는 JS/CSS를 전부 긁는다 — 경로를 조립하는 코드가 그 안에 있다
+  const assets = [
+    ...[...html.matchAll(/src=["']([^"']+\.js[^"']*)["']/g)].map(m => m[1]),
+    ...[...html.matchAll(/href=["']([^"']+\.css[^"']*)["']/g)].map(m => m[1]),
+  ].slice(0, 20)
+  const blobs = [html]
+  for (const a of assets) {
+    try { blobs.push(await get(a.startsWith('http') ? a : new URL(a, KAKAO_HOME).href)) } catch { /* 무시 */ }
   }
-  // CSS도 background-image로 경로를 노출한다
-  const cssHrefs = [...html.matchAll(/href=["']([^"']+\.css[^"']*)["']/g)].map(m => m[1]).slice(0, 6)
-  for (const h of cssHrefs) {
-    try { pages.push(await get(h.startsWith('http') ? h : new URL(h, KAKAO_HOME).href)) } catch { /* 무시 */ }
-  }
-  const blob = pages.join('\n')
+  log(`  자산 ${blobs.length - 1}개 로드`)
+  const blob = blobs.join('\n')
 
+  // 1) 경로 조립부: "img/character/" 처럼 char/uma 가 들어간 디렉터리 리터럴
   const dirs = new Set()
-  // 이미지 참조에서 디렉터리 부분만 수집
-  for (const m of blob.matchAll(/["'(]([^"')\s]*\/)[^"')\s]*\.(?:png|webp|jpg)[^"')\s]*["')]/g)) {
-    dirs.add(m[1])
-  }
-  // 파일명이 직접 등장하면 그 경로가 정답
+  for (const m of blob.matchAll(/["'`(]([^"'`)\s;{}]*(?:char|uma|list|thumb)[^"'`)\s;{}]*\/)/gi)) dirs.add(m[1])
+  log(`  코드에서 뽑은 캐릭터스러운 디렉터리: ${JSON.stringify([...dirs].slice(0, 20))}`)
+
+  // 2) 파일명이 통째로 박혀있으면 그게 정답
   for (const name of [sampleIcon, sampleHeader].filter(Boolean)) {
-    const re = new RegExp(`["'(]([^"')\\s]*)${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g')
+    const re = new RegExp(`["'\`(]([^"'\`)\\s]*)${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g')
     for (const m of blob.matchAll(re)) { dirs.add(m[1]); log(`  ★ 파일명 직접 발견: ${m[1]}${name}`) }
   }
-  log(`  이미지 디렉터리 후보 ${dirs.size}개: ${JSON.stringify([...dirs].slice(0, 25))}`)
 
-  // 후보를 실제로 때려봐서 200 뜨는 것만 남긴다
-  const ok = []
+  // 3) 무차별 대입 — 흔한 배치를 한 번에 확인
+  for (const d of [
+    'assets/img/character/', 'assets/img/characters/', 'assets/img/char/',
+    'assets/img/character/icon/', 'assets/img/character/header/',
+    'assets/images/character/', 'assets/img/uma/', 'assets/img/main/character/',
+    'assets/img/contents/character/', 'img/character/', 'assets/img/',
+  ]) dirs.add(d)
+
+  log(`  총 후보 ${dirs.size}개 검사`)
+  const ok = [], okH = []
   for (const d of dirs) {
-    const url = absFrom(d, sampleIcon)
-    const p = await probeImage(url)
+    const p = await probeImage(absFrom(d, sampleIcon))
     if (p.ok) { log(`  ✅ ICON  베이스: ${d}  (${p.size}B)`); ok.push(d) }
   }
-  ICON_BASES = ok
-  const okH = []
   for (const d of dirs) {
     const p = await probeImage(absFrom(d, sampleHeader))
     if (p.ok) { log(`  ✅ HEADER 베이스: ${d}`); okH.push(d) }
   }
+  ICON_BASES = ok
   HEADER_BASES = okH
-  if (!ok.length) log('  !! icon 베이스를 못 찾음 — 카카오 이미지는 사용 불가')
+  if (!ok.length) {
+    log('  !! icon 베이스를 못 찾음 — 카카오 이미지는 사용 불가')
+    // 다음 라운드 단서: img 가 들어간 디렉터리를 몇 개 보여준다
+    const anyDirs = new Set()
+    for (const m of blob.matchAll(/["'`(]([^"'`)\s;{}]*img[^"'`)\s;{}]*\/)/gi)) anyDirs.add(m[1])
+    log(`  단서(img 포함 디렉터리): ${JSON.stringify([...anyDirs].filter(d => d.length < 60).slice(0, 30))}`)
+  }
 }
 
 function absFrom(dir, file) {
