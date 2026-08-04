@@ -1,0 +1,63 @@
+name: Game Import (외부 데이터 → Supabase)
+
+# 이 컨테이너(매니저 세션)는 egress가 막혀 외부 게임 데이터 소스에 직접 접근할 수 없다.
+# 네트워크가 열린 러너에서 데이터를 받아 파싱하고 Supabase에 INSERT한다.
+#
+# 사용법 — 커밋 메시지에 태그를 넣어 push:
+#   [probe-uma]   우마무스메 데이터 소스 구조만 확인 (DB 미변경)
+#   [import-uma]  우마무스메 실제 등록 (Game/Server/Currency/Character)
+#
+# 필요: Secret SUPABASE_DB_URL
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'probe | import'
+        required: true
+        default: 'probe'
+      game:
+        description: '게임 slug (umamusume 등)'
+        required: true
+        default: 'umamusume'
+  push:
+    branches: [main, 'claude/**']
+
+jobs:
+  import:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[probe-uma]') ||
+      contains(github.event.head_commit.message, '[import-uma]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Determine mode
+        id: mode
+        run: |
+          MSG="${{ github.event.head_commit.message }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.mode }}" >> $GITHUB_OUTPUT
+          elif echo "$MSG" | grep -q '\[import-uma\]'; then
+            echo "mode=import" >> $GITHUB_OUTPUT
+          else
+            echo "mode=probe" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run importer
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          MODE: ${{ steps.mode.outputs.mode }}
+        run: node ops/import/umamusume.mjs
