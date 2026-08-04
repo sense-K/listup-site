@@ -116,7 +116,31 @@ async function discoverImageBases(html, sampleIcon, sampleHeader) {
   for (const a of assets) {
     try { blobs.push(await get(a.startsWith('http') ? a : new URL(a, KAKAO_HOME).href)) } catch { /* 무시 */ }
   }
-  clue(`  자산 ${blobs.length - 1}개 로드`)
+
+  // 캐릭터 페이지는 루트 HTML에 없다 → sitemap/robots로 실제 페이지 목록을 받아 훑는다
+  const pageUrls = new Set()
+  for (const f of ['sitemap.xml', 'robots.txt']) {
+    try {
+      const t = await get(new URL(f, KAKAO_HOME).href)
+      for (const m of t.matchAll(/https?:\/\/[^\s<"']+/g)) {
+        if (/umamusume\.kakaogames\.com/.test(m[0]) && !/\.(png|jpg|css|js|xml)/.test(m[0])) pageUrls.add(m[0])
+      }
+      clue(`  ${f}에서 페이지 ${pageUrls.size}개`)
+    } catch { clue(`  ${f} 없음`) }
+  }
+  // 링크로 걸린 내부 페이지도 후보
+  for (const m of html.matchAll(/href=["'](\/[^"'#?]*)["']/g)) {
+    if (!/\.(png|jpg|css|js)$/.test(m[1])) pageUrls.add(new URL(m[1], KAKAO_HOME).href)
+  }
+  clue(`  훑을 페이지 ${pageUrls.size}개: ${JSON.stringify([...pageUrls].slice(0, 15))}`)
+  for (const u of [...pageUrls].slice(0, 25)) {
+    try {
+      const t = await get(u)
+      blobs.push(t)
+      if (t.includes(sampleIcon)) clue(`  ★★ ${u} 안에 ${sampleIcon} 있음`)
+    } catch { /* 무시 */ }
+  }
+  clue(`  자산+페이지 ${blobs.length - 1}개 로드`)
   const blob = blobs.join('\n')
 
   // 1) 경로 조립부: "img/character/" 처럼 char/uma 가 들어간 디렉터리 리터럴
@@ -136,6 +160,8 @@ async function discoverImageBases(html, sampleIcon, sampleHeader) {
     'assets/img/character/icon/', 'assets/img/character/header/',
     'assets/images/character/', 'assets/img/uma/', 'assets/img/main/character/',
     'assets/img/contents/character/', 'img/character/', 'assets/img/',
+    'assets/img/character/list/', 'assets/img/chara/', 'assets/img/about/character/',
+    'assets/img/main/', 'assets/img/common/character/', 'assets/character/',
   ]) dirs.add(d)
 
   log(`  총 후보 ${dirs.size}개 검사`)
