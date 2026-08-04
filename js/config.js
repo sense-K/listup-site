@@ -485,7 +485,7 @@ function renderFooter() {
         <div class="footer-top">
           <div class="footer-col footer-brand">
             <a href="/" class="footer-logo">리세리스트</a>
-            <p class="footer-desc">리세계정 직거래부터 캐릭터 도감·시세·공략까지, 한 곳에서.</p>
+            <p class="footer-desc">리세계·돌계 전문 거래샵. 타오바오 대행 상점과 개인 판매자의 게임 계정을 수수료 없이 직거래하세요.</p>
             <a href="mailto:zzabhm@gmail.com" class="footer-email">zzabhm@gmail.com</a>
           </div>
           <div class="footer-col">

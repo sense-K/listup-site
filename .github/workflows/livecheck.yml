@@ -23,6 +23,18 @@ jobs:
             if [ "$mode" = "gone" ] && [ "$hit" = "FOUND" ]; then echo "::error::should be removed: '$needle'"; fi
             return 0
           }
+          echo "== 리브랜딩: 리세리스트 =="
+          check "https://resetlist.kr/" 200 "리세리스트"
+          check "https://resetlist.kr/" 200 "플레이센스" gone
+          check "https://resetlist.kr/trade/" 200 "리세리스트"
+          check "https://resetlist.kr/trade/" 200 "플레이센스" gone
+          check "https://resetlist.kr/trade/genshin/" 200 "플레이센스" gone
+          echo "== 4축 키워드 (리세계·돌계·대행·타오바오) =="
+          for kw in 리세계 돌계 대행 타오바오; do
+            check "https://resetlist.kr/" 200 "$kw"
+          done
+          check "https://resetlist.kr/trade/" 200 "타오바오"
+          check "https://resetlist.kr/" 200 "home-seo-section"
           echo "== 헤더 관리자 버튼 (운영자에게만 노출) =="
           curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/js/config.js?cb=${GITHUB_RUN_ID}" > /tmp/c.js
           grep -q "nav-admin-btn" /tmp/c.js && echo "  OK  config.js nav-admin-btn" || echo "::error::config.js에 관리자 버튼 없음"
@@ -42,6 +54,6 @@ jobs:
           grep -q "card-hero-center" /tmp/s.css && echo "  OK  css card-hero-center" || echo "::error::css에 card-hero-center 없음"
           grep -q "repeat(4, minmax(0, 1fr))" /tmp/s.css && echo "  OK  css 4열 그리드" || echo "::error::css 4열 그리드 없음"
           echo "== 회귀 =="
-          check "https://resetlist.kr/" 200 "플레이센스"
+          check "https://resetlist.kr/" 200 "리세리스트"
           check "https://resetlist.kr/trade/" 200 "돌계"
           check "https://resetlist.kr/mypage/" 200 "/shop/"
