@@ -317,7 +317,8 @@ async function loadAndRenderGameUI(activeSlug) {
   if (titleEl && activeSlug) {
     const activeGame = games.find(g => g.slug === activeSlug)
     if (activeGame) {
-      titleEl.innerHTML = `${gameIcon(activeGame, 26)} ${activeGame.nameKo} 계정`
+      // 정적 h1의 '리세계·돌계' 키워드를 지우지 않도록 유지 (SEO 4축)
+      titleEl.innerHTML = `${gameIcon(activeGame, 26)} ${activeGame.nameKo} 리세계·돌계 판매계정`
     }
   }
 
