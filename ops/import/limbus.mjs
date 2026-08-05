@@ -8,7 +8,7 @@
 // MODE=import : 신규 인격만 INSERT                                      [limbus-import]
 
 import { chromium } from 'playwright'
-import { execSync } from 'node:child_process'
+import { execSync, execFileSync } from 'node:child_process'
 
 const MODE = process.env.MODE === 'import' ? 'import' : 'probe'
 const DB = process.env.SUPABASE_DB_URL
@@ -16,8 +16,8 @@ const LIST_URL = 'https://baslimbus.info/identity'
 
 const esc = v => (v === null || v === undefined) ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`
 function q(sql) {
-  const one = sql.replace(/\s+/g, ' ').trim()   // psql -c 는 줄바꿈이 리터럴 \n 으로 가서 깨진다
-  const out = execSync(`psql "${DB}" -v ON_ERROR_STOP=1 -At -F $'\\t' -c ${JSON.stringify(one)}`,
+  // 셸을 거치지 않는다 (execSync 는 /bin/sh=dash 라 $'\\t' 를 리터럴로 넘겨 컬럼 분리가 깨졌었다)
+  const out = execFileSync('psql', [DB, '-v', 'ON_ERROR_STOP=1', '-At', '-F', '\t', '-c', sql],
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
   return out.trim() ? out.trim().split('\n').map(l => l.split('\t')) : []
 }
@@ -62,10 +62,19 @@ const scraped = await page.evaluate(() => {
 })
 await browser.close()
 
-console.log(`\n수집 ${scraped.length}건`)
+console.log(`\n수집 ${scraped.length}건 (중복 제거 전)`)
+// 같은 인격이 여러 번 잡힐 수 있으니 id 기준 유일화
+const seen = new Set()
+const uniq = scraped.filter(s => { if (seen.has(s.id)) return false; seen.add(s.id); return true })
+console.log(`id 유일화 후 ${uniq.length}건`)
+const ids = uniq.map(s => Number(s.id)).sort((a, b) => a - b)
+console.log(`  id 범위 ${ids[0]} ~ ${ids[ids.length - 1]}`)
+const missing = []
+for (let n = ids[0]; n <= ids[ids.length - 1]; n++) if (!seen.has(String(n))) missing.push(n)
+console.log(`  중간에 빠진 id ${missing.length}개${missing.length ? ': ' + missing.slice(0, 30).join(',') : ''}`)
 if (MODE === 'probe') {
   console.log('\n샘플 5건 (구조 확인):')
-  for (const s of scraped.slice(0, 5)) {
+  for (const s of uniq.slice(0, 5)) {
     console.log(`  id=${s.id}  raw="${s.raw}"`)
     console.log(`     texts: ${JSON.stringify(s.texts)}`)
     console.log(`     imgs : ${JSON.stringify(s.imgs)}`)
@@ -74,7 +83,7 @@ if (MODE === 'probe') {
 
 // ── 2. 정규화: 인격명 / 수감자 / 등급
 const GRADE = { 1: '1성', 2: '2성', 3: '3성' }
-const rows = scraped.map(s => {
+const rows = uniq.map(s => {
   // 등급: <img alt="grade-3"> 또는 /assets/common/3.webp
   let grade = null
   for (const im of s.imgs) {
@@ -108,21 +117,22 @@ if (!rows.length) throw new Error('수집 0건 — 사이트 구조가 바뀌었
 const g = q(`SELECT id FROM "Game" WHERE slug = 'limbus';`)
 if (!g.length) throw new Error('limbus Game 없음')
 const gameId = g[0][0]
-const existing = q(`SELECT "nameKo", coalesce(tier,''), coalesce("imageUrl",'') FROM "Character"
-                    WHERE "gameId" = ${esc(gameId)} AND kind = 'character';`)
-console.log(`\nDB 림버스 인격 ${existing.length}명`)
-console.log('  DB 표기 예: ' + existing.slice(0, 6).map(r => r[0]).join(' | '))
 
-// 우리 DB 이름은 "수감자 인격명" 또는 "인격명 수감자" 등 표기가 다를 수 있어
-// 공백·기호를 뺀 문자열 포함 관계로 대조한다
-const haveNorm = existing.map(r => norm(r[0]))
-const isNew = r => {
-  const a = norm(r.sinner + r.title), b = norm(r.title + r.sinner)
-  return !haveNorm.some(h => h === a || h === b || h.includes(norm(r.title)) && h.includes(norm(r.sinner)))
+const existing = q(`SELECT "nameKo", coalesce("nameEn",''), coalesce(tier,''), coalesce("imageUrl",'') FROM "Character" WHERE "gameId" = ${esc(gameId)} AND kind = 'character' ORDER BY "sortOrder"`)
+console.log(`\nDB 림버스 인격 ${existing.length}명`)
+console.log('  컬럼 규칙 확인 (nameKo | nameEn | tier | 이미지있음):')
+for (const r of existing.slice(0, 6)) {
+  console.log(`   · ${r[0]} | ${r[1]} | ${r[2]} | ${r[3] ? 'Y' : 'N'}`)
 }
-const news = rows.filter(isNew)
+const tiers = [...new Set(existing.map(r => r[2]))]
+console.log(`  DB tier 값 ${tiers.length}종: ${tiers.slice(0, 20).join(', ')}`)
+console.log(`  이미지 있는 인격 ${existing.filter(r => r[3]).length}명`)
+
+// 우리 DB 는 nameKo = 인격명 하나로 식별된다. 인격명으로 대조한다.
+const haveTitle = new Set(existing.map(r => norm(r[0])))
+const news = rows.filter(r => !haveTitle.has(norm(r.title)))
 console.log(`\n신규 후보 ${news.length}건 / 이미 있음 ${rows.length - news.length}건`)
-for (const r of news.slice(0, 40)) console.log(`  + ${(r.tier || '-').padEnd(4)} ${r.sinner} · ${r.title}`)
+for (const r of news.slice(0, 60)) console.log(`  + [${r.tier}] ${r.sinner} · ${r.title}`)
 
 if (MODE === 'probe') { console.log('\n>>> probe 종료 (DB 미변경)'); process.exit(0) }
 
@@ -131,14 +141,16 @@ if (news.length > rows.length * 0.5) {
   throw new Error(`신규가 ${news.length}/${rows.length} — 이름 대조가 깨진 듯. 중단`)
 }
 
-// ── 4. INSERT (신규만). 이미지는 단빵숲 핫링크 대신 비워두고 나중에 채운다
-const maxOrder = Number(q(`SELECT coalesce(max("sortOrder"),0) FROM "Character" WHERE "gameId" = ${esc(gameId)};`)[0][0] || 0)
+// ── 4. INSERT (신규만)
+// 기존 DB 규칙을 그대로 따른다: nameKo = 인격명, nameEn = 수감자, tier = 수감자(등록 화면 그룹)
+// 이미지는 단빵숲 핫링크를 쓰지 않고 비워둔다 (기존 인격들은 우리 스토리지에 있음)
+const maxOrder = Number(q(`SELECT coalesce(max("sortOrder"),0) FROM "Character" WHERE "gameId" = ${esc(gameId)}`)[0][0] || 0)
 const sql = news.map((r, i) => `
 INSERT INTO "Character" (id, "gameId", "nameKo", "nameEn", tier, "isLimited", "basePrice",
                          "imageUrl", "isActive", "sortOrder", "createdAt", "updatedAt", metadata, kind)
-VALUES (gen_random_uuid()::text, ${esc(gameId)}, ${esc(`${r.sinner} ${r.title}`)}, ${esc(r.sinner)},
-        ${esc(r.tier)}, false, 0, NULL, true, ${maxOrder + 1 + i}, now(), now(),
-        ${esc(JSON.stringify({ source: 'baslimbus', srcId: r.srcId, title: r.title, sinner: r.sinner, detail: r.detail }))}::jsonb,
+VALUES (gen_random_uuid()::text, ${esc(gameId)}, ${esc(r.title)}, ${esc(r.sinner)},
+        ${esc(r.sinner)}, false, 0, NULL, true, ${maxOrder + 1 + i}, now(), now(),
+        ${esc(JSON.stringify({ source: 'baslimbus', srcId: r.srcId, sinner: r.sinner, grade: r.tier, detail: r.detail }))}::jsonb,
         'character');`).join('\n')
 
 execSync(`psql "${DB}" -v ON_ERROR_STOP=1 -q -f -`, { input: sql, stdio: ['pipe', 'inherit', 'inherit'] })

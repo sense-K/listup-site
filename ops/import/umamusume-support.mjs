@@ -14,7 +14,7 @@
 // MODE=probe  : 앞 12장만 수집해 결과만 출력 (DB 미변경)   [uma-sup-probe]
 // MODE=import : 전량 수집 후 신규만 INSERT                  [uma-sup-import]
 
-import { execSync } from 'node:child_process'
+import { execSync, execFileSync } from 'node:child_process'
 
 const MODE = process.env.MODE === 'import' ? 'import' : 'probe'
 const DB = process.env.SUPABASE_DB_URL
@@ -29,9 +29,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
 const esc = v => (v === null || v === undefined) ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`
 
 function q(sql) {
-  // psql -c 는 셸을 거치므로 줄바꿈이 리터럴 "\n" 으로 전달돼 문법 오류가 난다 → 한 줄로 정규화
-  const one = sql.replace(/\s+/g, ' ').trim()
-  const out = execSync(`psql "${DB}" -v ON_ERROR_STOP=1 -At -F $'\\t' -c ${JSON.stringify(one)}`,
+  // 셸을 거치지 않는다 (execSync 는 /bin/sh=dash 라 $'\\t' 를 리터럴로 넘겨 컬럼 분리가 깨졌었다)
+  const out = execFileSync('psql', [DB, '-v', 'ON_ERROR_STOP=1', '-At', '-F', '\t', '-c', sql],
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
   return out.trim() ? out.trim().split('\n').map(l => l.split('\t')) : []
 }
