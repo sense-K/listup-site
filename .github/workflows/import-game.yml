@@ -46,6 +46,7 @@ jobs:
       contains(github.event.head_commit.message, '[probe-nikke-img]') ||
       contains(github.event.head_commit.message, '[fix-nikke-img]') ||
       contains(github.event.head_commit.message, '[find-source]') ||
+      contains(github.event.head_commit.message, '[find-source2]') ||
       contains(github.event.head_commit.message, '[ef-img-probe]') ||
       contains(github.event.head_commit.message, '[ef-img-fetch]') ||
       contains(github.event.head_commit.message, '[probe:') ||
@@ -92,6 +93,8 @@ jobs:
               umamusume-images) SCRIPT=ops/import/umamusume-images.mjs ;;
               nikke-images)     SCRIPT=ops/import/nikke-images.mjs ;;
             esac
+          elif echo "$MSG" | grep -q '\[find-source2\]'; then
+            SCRIPT=ops/import/find-source2.mjs; MODE=probe
           elif echo "$MSG" | grep -q '\[find-source\]'; then
             SCRIPT=ops/import/find-source.mjs; MODE=probe
           elif echo "$MSG" | grep -q '\[ef-img-fetch\]'; then
