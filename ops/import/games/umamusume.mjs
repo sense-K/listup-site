@@ -26,22 +26,32 @@ async function findDataJs() {
   return new URL(m[1], 'https://umamusume.kakaogames.com/').href
 }
 
-// const characterData = { "1001": {...}, ... }  형태에서 객체만 떼어낸다
+// characterData 는 배열일 수도 객체일 수도 있다 (공식 사이트가 바꾼 적 있음).
+// 선언 뒤 첫 [ 또는 { 를 균형 괄호로 잘라 평가한다 — 순수 JSON 이 아닐 수 있어 Function 으로 평가.
 function extractCharacters(js) {
-  const i = js.search(/characterData\s*=\s*\{/)
-  if (i < 0) throw new Error('characterData 변수 없음')
-  const start = js.indexOf('{', i)
+  const at = js.search(/(?:const|var|let)\s+characterData\s*=/)
+  if (at < 0) throw new Error('characterData 선언 없음 — 공식 사이트 구조 변경')
+  let i = js.indexOf('=', at) + 1
+  while (i < js.length && /\s/.test(js[i])) i++
+  const open = js[i]
+  if (open !== '[' && open !== '{') throw new Error(`characterData 가 배열/객체가 아님 (${open})`)
+  const close = open === '[' ? ']' : '}'
   let depth = 0, end = -1, inStr = null
-  for (let k = start; k < js.length; k++) {
-    const c = js[k]
-    if (inStr) { if (c === '\\') k++; else if (c === inStr) inStr = null; continue }
-    if (c === '"' || c === "'" || c === '`') { inStr = c; continue }
-    if (c === '{') depth++
-    else if (c === '}') { depth--; if (!depth) { end = k + 1; break } }
+  for (let j = i; j < js.length; j++) {
+    const ch = js[j]
+    if (inStr) { if (ch === '\\') j++; else if (ch === inStr) inStr = null; continue }
+    if (ch === '"' || ch === "'" || ch === '`') { inStr = ch; continue }
+    if (ch === open) depth++
+    else if (ch === close) { depth--; if (!depth) { end = j; break } }
   }
-  if (end < 0) throw new Error('characterData 객체 끝을 못 찾음')
-  return JSON.parse(js.slice(start, end))
+  if (end < 0) throw new Error('characterData 끝을 못 찾음')
+  // eslint-disable-next-line no-new-func
+  const val = Function(`"use strict"; return (${js.slice(i, end + 1)});`)()
+  const arr = Array.isArray(val) ? val : Object.values(val).flat()
+  return arr.filter(o => o && typeof o === 'object' && (o.name || o.eng))
 }
+
+const stripTags = t => String(t ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
 
 const normEn = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const slugify = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '') || null
@@ -49,8 +59,7 @@ const slugify = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').r
 export async function fetchCharacters({ existing = [] } = {}) {
   const url = await findDataJs()
   const js = await (await fetch(url, { headers: H })).text()
-  const chars = extractCharacters(js)
-  const list = Object.values(chars).filter(c => c?.name && c?.eng)
+  const list = extractCharacters(js).filter(c => c?.name && c?.eng)
   console.log(`  카카오 ${list.length}명 (${url.split('/').pop()})`)
 
   // 이미지: 이미 이미지가 있는 캐릭터는 umapyoi 를 다시 부르지 않는다
@@ -89,7 +98,8 @@ export async function fetchCharacters({ existing = [] } = {}) {
       metadata: {
         fullImageUrl: im.header || null,
         cv: c.cv || null, birthday: c.birth || null, height: c.height || null,
-        catchphrase: c.words || null, description: c.description || null, color: c.color || null,
+        catchphrase: stripTags(c.words) || null, description: stripTags(c.description) || null,
+        color: c.color || null,
       },
     }
   })

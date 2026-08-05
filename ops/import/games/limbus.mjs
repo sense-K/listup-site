@@ -86,14 +86,17 @@ export async function fetchCharacters({ existing = [] } = {}) {
 
   // 수감자 표기가 DB tier 와 어긋나면 그룹이 쪼개진다 → 사전 차단
   const dbTiers = [...new Set(existing.map(e => e.tier).filter(Boolean))]
-  if (dbTiers.length) {
-    const unknown = [...new Set(rows.map(r => r.tier))].filter(t => !dbTiers.includes(t))
-    if (unknown.length) throw new Error(`DB 에 없는 수감자 표기: ${unknown.join(', ')} — SINNER_ALIAS 에 매핑 추가 필요`)
-  }
 
   // 신규분만 이미지를 내려받는다
   const have = new Set(existing.map(e => norm(e.nameKo)))
   const news = rows.filter(r => !have.has(norm(r.nameKo)))
+  console.log(`  기존 ${rows.length - news.length}건 / 신규 ${news.length}건`)
+  // 신규 인격의 수감자 표기가 DB 와 어긋나면 등록 화면 그룹이 쪼개진다 → 사전 차단
+  if (dbTiers.length) {
+    const unknown = [...new Set(news.map(r => r.tier))].filter(t => !dbTiers.includes(t))
+    if (unknown.length) throw new Error(`DB 에 없는 수감자 표기: ${unknown.join(', ')} — SINNER_ALIAS 에 매핑 추가 필요`)
+  }
+
   if (news.length) {
     mkdirSync(IMG_DIR, { recursive: true })
     console.log(`  신규 ${news.length}건 — 이미지 내려받는 중`)
@@ -114,5 +117,8 @@ export async function fetchCharacters({ existing = [] } = {}) {
     }
   }
 
-  return rows.map(({ srcId, portraitUrl, ...r }) => r)
+  // 기존 인격은 이름만 돌려준다 — 갱신 대상에서 빼기 위함.
+  // 단빵숲 카드가 수감자를 잘못 집는 경우가 있어(첫 프로브에서 tier 17건 불일치) 기존 값을 덮지 않는다.
+  const newSet = new Set(news.map(r => r.nameKo))
+  return rows.map(({ srcId, portraitUrl, ...r }) => newSet.has(r.nameKo) ? r : { nameKo: r.nameKo })
 }
