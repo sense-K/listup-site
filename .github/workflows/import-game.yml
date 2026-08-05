@@ -147,13 +147,14 @@ jobs:
 
       - name: Commit fetched images
         if: contains(github.event.head_commit.message, '[ef-img-fetch]')
+          || contains(github.event.head_commit.message, '[limbus-import]')
         run: |
           git config user.email zzabhm@gmail.com
           git config user.name sense-K
-          git add img/characters/endfield 2>/dev/null || true
+          git add img/characters 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "커밋할 이미지 없음"
           else
-            git commit -m "chore: 엔드필드 캐릭터 아이콘 수집 (러너가 위키에서 다운로드)"
+            git commit -m "chore: 캐릭터 이미지 수집 (러너가 외부 소스에서 다운로드)"
             git push
           fi

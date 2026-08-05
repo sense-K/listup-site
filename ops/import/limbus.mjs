@@ -9,6 +9,7 @@
 
 import { chromium } from 'playwright'
 import { execSync, execFileSync } from 'node:child_process'
+import { mkdirSync, writeFileSync } from 'node:fs'
 
 const MODE = process.env.MODE === 'import' ? 'import' : 'probe'
 const DB = process.env.SUPABASE_DB_URL
@@ -22,6 +23,9 @@ function q(sql) {
   return out.trim() ? out.trim().split('\n').map(l => l.split('\t')) : []
 }
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9가-힣]/g, '')
+
+// 단빵숲 표기 → 우리 DB 표기 (별명 차이). DB tier 값과 반드시 일치해야 그룹이 안 쪼개진다
+const SINNER_ALIAS = { '로쟈': '로디온' }
 
 console.log(`MODE=${MODE}`)
 
@@ -96,7 +100,7 @@ const rows = uniq.map(s => {
   return {
     srcId: s.id,
     title: (title || '').trim(),          // 인격명 예: "새벽 사무소 대표"
-    sinner: (sinner || '').trim(),        // 수감자 예: "그레고르"
+    sinner: SINNER_ALIAS[(sinner || '').trim()] || (sinner || '').trim(),   // 수감자 (DB 표기로 통일)
     tier: GRADE[grade] || '',
     portrait: portrait?.src || null,
     detail: `https://baslimbus.info${s.href}`,
@@ -128,6 +132,15 @@ const tiers = [...new Set(existing.map(r => r[2]))]
 console.log(`  DB tier 값 ${tiers.length}종: ${tiers.slice(0, 20).join(', ')}`)
 console.log(`  이미지 있는 인격 ${existing.filter(r => r[3]).length}명`)
 
+// 수감자 표기가 DB tier 값과 어긋나면 등록 화면 그룹이 쪼개진다 → 사전 차단
+const unknown = [...new Set(rows.map(r => r.sinner))].filter(x => !tiers.includes(x))
+if (unknown.length) {
+  console.log(`  ⚠ DB tier 에 없는 수감자: ${unknown.join(', ')}`)
+  if (MODE === 'import') throw new Error('수감자 표기 불일치 — SINNER_ALIAS 에 매핑을 추가할 것')
+} else {
+  console.log('  OK  수감자 표기 전부 DB 와 일치')
+}
+
 // 우리 DB 는 nameKo = 인격명 하나로 식별된다. 인격명으로 대조한다.
 const haveTitle = new Set(existing.map(r => norm(r[0])))
 const news = rows.filter(r => !haveTitle.has(norm(r.title)))
@@ -141,7 +154,28 @@ if (news.length > rows.length * 0.5) {
   throw new Error(`신규가 ${news.length}/${rows.length} — 이름 대조가 깨진 듯. 중단`)
 }
 
-// ── 4. INSERT (신규만)
+// ── 4. 이미지 내려받기 (핫링크 금지 — repo 에 저장해 resetlist.kr 로 서빙)
+const IMG_DIR = 'img/characters/limbus'
+mkdirSync(IMG_DIR, { recursive: true })
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
+let imgOk = 0
+for (const r of news) {
+  if (!r.portrait) { console.log(`  이미지 없음: ${r.title}`); continue }
+  const url = r.portrait.startsWith('http') ? r.portrait : `https://baslimbus.info${r.portrait}`
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': UA, Referer: LIST_URL } })
+    if (!res.ok) { console.log(`  이미지 ${res.status}: ${r.title}`); continue }
+    const buf = Buffer.from(await res.arrayBuffer())
+    if (buf.length < 1000) { console.log(`  이미지 너무 작음(${buf.length}B): ${r.title}`); continue }
+    const ext = (url.match(/\.(webp|png|jpg|jpeg)(\?|$)/i) || [, 'webp'])[1].toLowerCase()
+    writeFileSync(`${IMG_DIR}/${r.srcId}.${ext}`, buf)
+    r.imageUrl = `https://resetlist.kr/${IMG_DIR}/${r.srcId}.${ext}`
+    imgOk++
+  } catch (e) { console.log(`  이미지 실패 ${r.title}: ${e.message}`) }
+}
+console.log(`\n이미지 ${imgOk}/${news.length}장 확보`)
+
+// ── 5. INSERT (신규만)
 // 기존 DB 규칙을 그대로 따른다: nameKo = 인격명, nameEn = 수감자, tier = 수감자(등록 화면 그룹)
 // 이미지는 단빵숲 핫링크를 쓰지 않고 비워둔다 (기존 인격들은 우리 스토리지에 있음)
 const maxOrder = Number(q(`SELECT coalesce(max("sortOrder"),0) FROM "Character" WHERE "gameId" = ${esc(gameId)}`)[0][0] || 0)
@@ -149,9 +183,9 @@ const sql = news.map((r, i) => `
 INSERT INTO "Character" (id, "gameId", "nameKo", "nameEn", tier, "isLimited", "basePrice",
                          "imageUrl", "isActive", "sortOrder", "createdAt", "updatedAt", metadata, kind)
 VALUES (gen_random_uuid()::text, ${esc(gameId)}, ${esc(r.title)}, ${esc(r.sinner)},
-        ${esc(r.sinner)}, false, 0, NULL, true, ${maxOrder + 1 + i}, now(), now(),
+        ${esc(r.sinner)}, false, 0, ${esc(r.imageUrl || null)}, true, ${maxOrder + 1 + i}, now(), now(),
         ${esc(JSON.stringify({ source: 'baslimbus', srcId: r.srcId, sinner: r.sinner, grade: r.tier, detail: r.detail }))}::jsonb,
         'character');`).join('\n')
 
 execSync(`psql "${DB}" -v ON_ERROR_STOP=1 -q -f -`, { input: sql, stdio: ['pipe', 'inherit', 'inherit'] })
-console.log(`\n→ ${news.length}건 INSERT 완료 (이미지는 비어있음 — 별도로 채울 것)`)
+console.log(`\n→ ${news.length}건 INSERT 완료 (이미지 ${imgOk}장)`)
