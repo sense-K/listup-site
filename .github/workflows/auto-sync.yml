@@ -4,11 +4,16 @@ name: Auto Character Sync (매일 새벽 캐릭터 자동 동기화)
 # 관리자가 누를 버튼은 없다 — 그냥 돈다.
 #
 #  · 매일 05:00 KST (20:00 UTC) 자동 실행
-#  · 대상: ops/import/run.mjs 의 SYNC_GAMES (원신·스타레일·젠레스·명조·에픽세븐·블루아카)
+#  · 대상: ops/import/run.mjs 의 SYNC_GAMES
+#      원신·스타레일·젠레스·명조·에픽세븐·블루아카·명일방주·엔드필드
+#      우마무스메(캐릭터)·우마무스메 서포트 카드·림버스
 #  · 결과는 ImportLog 테이블에 기록 → admin 캐릭터 관리 탭 상단에 표시됨
 #  · 한 게임이 실패해도 나머지는 계속 돌고, 실패가 있으면 이 워크플로가 빨간불이 된다
 #    (GitHub 설정에 따라 실패 메일도 옴)
 #  · 지금 당장 돌리고 싶으면: GitHub → Actions → 이 워크플로 → Run workflow 버튼
+#
+# 림버스(단빵숲)는 클라이언트 렌더 사이트라 헤드리스 브라우저가 필요하고,
+# 신규 인격 이미지를 repo 에 저장하므로 이 워크플로가 커밋·푸시까지 한다.
 
 on:
   schedule:
@@ -18,6 +23,8 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # 림버스 신규 인격 이미지를 repo 에 커밋
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,9 +34,26 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
+      - name: Install Playwright (림버스 단빵숲용)
+        run: npm i -D playwright && npx playwright install --with-deps chromium
       - name: Sync all games
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           GAME: all
           MODE: import
         run: node ops/import/run.mjs
+
+      # 신규 인격 이미지가 생겼으면 repo 에 넣어 resetlist.kr 로 서빙되게 한다.
+      # 커밋 메시지에 [deploy] 를 넣어 Cloudflare Pages 에 바로 반영.
+      - name: Commit new character images
+        if: always()
+        run: |
+          git config user.email zzabhm@gmail.com
+          git config user.name sense-K
+          git add img/characters 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "새로 받은 이미지 없음"
+          else
+            git commit -m "chore: 자동 동기화로 받은 캐릭터 이미지 [deploy]"
+            git push origin HEAD:main
+          fi

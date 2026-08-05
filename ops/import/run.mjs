@@ -5,8 +5,12 @@
 // 게임별 파일은 ops/import/games/{slug}.mjs 어댑터 하나만 둔다.
 //
 // 어댑터 계약:
-//   export const meta = { slug, name, source }
-//   export async function fetchCharacters() → [{
+//   export const meta = { slug, name, source, kind }
+//     · slug = Game 테이블의 게임 slug (파일명과 달라도 된다)
+//     · kind = 'character'(기본) | 'support'  — 같은 게임 안에서 캐릭터와 카드를 갈라 다룬다
+//   export async function fetchCharacters(ctx) → [{
+//     ctx = { existing }  — 이미 DB 에 있는 같은 kind 의 행들.
+//     비싼 수집(카드 상세 페이지, 이미지 다운로드)을 신규분만 하도록 어댑터가 활용한다.
 //     nameKo,                              // 필수. 이 값으로 기존 행과 대조
 //     nameEn, tier, imageUrl, slug,        // 선택
 //     element, weaponType, region,         // 선택 (컬럼 직접 매핑)
@@ -29,7 +33,7 @@
 //   · 삭제는 하지 않는다
 
 import { execFileSync } from 'node:child_process'
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, existsSync } from 'node:fs'
 
 const GAME = process.env.GAME
 const MODE = process.env.MODE || 'probe'
@@ -37,7 +41,8 @@ const DB = process.env.SUPABASE_DB_URL
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
 
 // GAME=all 일 때 도는 목록. 새 어댑터를 만들면 여기 추가.
-const SYNC_GAMES = ['genshin', 'starrail', 'zzz', 'wuwa', 'epicseven', 'bluearchive', 'arknights', 'endfield']
+const SYNC_GAMES = ['genshin', 'starrail', 'zzz', 'wuwa', 'epicseven', 'bluearchive', 'arknights', 'endfield',
+                    'umamusume', 'umamusume-support', 'limbus']
 
 const log = (...a) => console.log(...a)
 
@@ -58,7 +63,16 @@ function toSlug(nameEn) {
   return s || null
 }
 
-async function sampleImages(rows, say, n = 5) {
+async function sampleImages(rows, say, n = 5, selfHosted = false) {
+  if (selfHosted) {
+    // 어댑터가 이 실행에서 직접 내려받아 repo 에 쓴 이미지다.
+    // 아직 배포 전이라 HTTP 로는 404 가 나므로 파일 존재로 확인한다.
+    const withImg = rows.filter(r => r.localPath)
+    const ok = withImg.filter(r => existsSync(r.localPath)).length
+    say(`  이미지 파일 ${ok}/${withImg.length}장 확보`)
+    if (withImg.length && ok === 0) throw new Error('내려받은 이미지가 하나도 없음')
+    return
+  }
   const picked = rows.filter(r => r.imageUrl).slice(0, n)
   if (!picked.length) return
   let ok = 0
@@ -81,22 +95,25 @@ async function runGame(slug) {
 
   const adapter = await import(`./games/${slug}.mjs`)
   const { meta } = adapter
-  log(`${meta.name} (${meta.slug}) ← ${meta.source}`)
-
-  const fetched = await adapter.fetchCharacters()
-  say(`소스 ${fetched.length}명`)
-  if (!fetched.length) throw new Error('수집 0명 — 소스 구조가 바뀌었을 수 있음')
+  const kind = meta.kind || 'character'
+  log(`${meta.name} (${meta.slug}${kind === 'character' ? '' : '/' + kind}) ← ${meta.source}`)
 
   const g = q(`SELECT id FROM "Game" WHERE slug = ${esc(meta.slug)};`)
   if (!g.length) throw new Error(`Game 테이블에 slug=${meta.slug} 없음`)
   const gameId = g[0][0]
 
+  // 같은 kind 안에서만 대조한다 — 우마무스메처럼 캐릭터와 서포트 카드가 한 게임에 섞여 있어도 안전
   const existing = q(`SELECT id, "nameKo", coalesce("nameEn",''), coalesce(slug,''), coalesce("imageUrl",''),
       coalesce(tier,''), coalesce(element,''), coalesce("weaponType",''),
       (metadata IS NOT NULL AND metadata::text <> '{}')::int
-    FROM "Character" WHERE "gameId" = ${esc(gameId)};`)
+    FROM "Character" WHERE "gameId" = ${esc(gameId)} AND kind = ${esc(kind)};`)
     .map(([id, nameKo, nameEn, slug2, imageUrl, tier, element, weaponType, hasMeta]) =>
       ({ id, nameKo, nameEn, slug: slug2, imageUrl, tier, element, weaponType, hasMeta: hasMeta === '1' }))
+
+  // 어댑터에 DB 현황을 넘긴다 — 비싼 수집(카드 상세, 이미지 다운로드)을 신규분만 하도록
+  const fetched = await adapter.fetchCharacters({ existing, mode: MODE })
+  say(`소스 ${fetched.length}명`)
+  if (!fetched.length) throw new Error('수집 0명 — 소스 구조가 바뀌었을 수 있음')
   const byName = new Map(existing.map(r => [r.nameKo.trim(), r]))
   // 2차 대조: 소스의 한국어 이름이 오염된 경우가 실제로 있다
   // (StarRailRes kr 에 'Mar. 7th' 처럼 영어가 섞여 있음 → DB '3월 7일' 과 불일치 → 중복 INSERT 위험)
@@ -144,7 +161,7 @@ async function runGame(slug) {
     updates.forEach(u => Object.keys(u.diff).forEach(k => { fields[k] = (fields[k] || 0) + 1 }))
     say(`  갱신 필드: ${Object.entries(fields).map(([k, v]) => `${k} ${v}`).join(', ')}`)
   }
-  await sampleImages(news, say)
+  await sampleImages(news, say, 5, !!meta.selfHostedImages)
 
   const addedNames = news.map(r => r.nameKo).slice(0, 100)
   if (MODE !== 'import' || (!news.length && !updates.length)) {
@@ -152,16 +169,16 @@ async function runGame(slug) {
   }
 
   const sql = ['\\set ON_ERROR_STOP on', 'BEGIN;']
-  const maxOrder = existing.length
+  const maxOrder = Number(q(`SELECT coalesce(max("sortOrder"),0)+1 FROM "Character" WHERE "gameId" = ${esc(gameId)};`)[0][0] || 0)
   for (const [i, r] of news.entries()) {
     sql.push(`
 INSERT INTO "Character" (id, "gameId", "nameKo", "nameEn", tier, "isLimited", "basePrice",
                          "imageUrl", "isActive", "sortOrder", "createdAt", "updatedAt",
-                         slug, element, "weaponType", region, metadata)
+                         slug, element, "weaponType", region, metadata, kind)
 VALUES (gen_random_uuid()::text, ${esc(gameId)}, ${esc(r.nameKo)}, ${esc(r.nameEn || r.nameKo)},
         ${esc(r.tier || '')}, false, 0, ${esc(r.imageUrl)}, true, ${maxOrder + i}, now(), now(),
         ${esc(r.slug)}, ${esc(r.element ?? null)}, ${esc(r.weaponType ?? null)}, ${esc(r.region ?? null)},
-        ${esc(JSON.stringify(r.metadata || {}))}::jsonb);`)
+        ${esc(JSON.stringify(r.metadata || {}))}::jsonb, ${esc(kind)});`)
   }
   for (const u of updates) {
     const sets = Object.entries(u.diff).map(([k, v]) =>

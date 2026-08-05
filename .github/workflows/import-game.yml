@@ -79,6 +79,8 @@ jobs:
         if: contains(github.event.head_commit.message, '[find-source2]')
           || contains(github.event.head_commit.message, '[limbus-probe]')
           || contains(github.event.head_commit.message, '[limbus-import]')
+          || contains(github.event.head_commit.message, ':limbus]')
+          || contains(github.event.head_commit.message, ':all]')
         run: npm i -D playwright && npx playwright install --with-deps chromium
 
       - name: Determine mode
