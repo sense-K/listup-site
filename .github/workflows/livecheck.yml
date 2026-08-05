@@ -50,6 +50,11 @@ jobs:
           check "https://resetlist.kr/" 200 "내 주소를 가진 상점"
           check "https://resetlist.kr/" 200 "shop-demo-body" gone   # 가짜 상점 화면 제거됨
           check "https://resetlist.kr/" 200 "sd-owner-btn" gone
+          echo "== 엔드필드 캐릭터 아이콘 (자체 호스팅) =="
+          for c in perlica laevatain ember yvonne; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://resetlist.kr/img/characters/endfield/$c.png")
+            [ "$code" = 200 ] && echo "  OK  $c.png" || echo "::error::endfield $c.png -> $code"
+          done
           echo "== 매물 스크린샷 업로드 =="
           check "https://resetlist.kr/trade/register/" 200 "img-upload-grid"
           check "https://resetlist.kr/trade/register/" 200 "uploadListingImages"
