@@ -11,6 +11,8 @@ name: Game Import (외부 데이터 → Supabase)
 #   [probe-nikke-img] 니케 저해상도 이미지 측정 + prydwen 후보 탐색 (DB 미변경)
 #   [fix-nikke-img]   그 이미지를 실제로 UPDATE
 #   [find-source]     자동 임포터가 없는 게임들의 캐릭터 데이터 소스 탐색 (DB 미변경)
+#   [ef-img-probe]    엔드필드 캐릭터 아이콘 위키 탐색 (파일 미저장)
+#   [ef-img-fetch]    엔드필드 아이콘 다운로드 → img/characters/endfield/ 에 커밋
 #
 #   공통 임포터 (ops/import/run.mjs + games/{slug}.mjs 어댑터):
 #     [probe:{slug}]   무엇이 바뀌는지만 출력 (DB 미변경)
@@ -44,9 +46,13 @@ jobs:
       contains(github.event.head_commit.message, '[probe-nikke-img]') ||
       contains(github.event.head_commit.message, '[fix-nikke-img]') ||
       contains(github.event.head_commit.message, '[find-source]') ||
+      contains(github.event.head_commit.message, '[ef-img-probe]') ||
+      contains(github.event.head_commit.message, '[ef-img-fetch]') ||
       contains(github.event.head_commit.message, '[probe:') ||
       contains(github.event.head_commit.message, '[import:')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # [ef-img-fetch] 가 받은 이미지를 repo 에 커밋
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -88,6 +94,10 @@ jobs:
             esac
           elif echo "$MSG" | grep -q '\[find-source\]'; then
             SCRIPT=ops/import/find-source.mjs; MODE=probe
+          elif echo "$MSG" | grep -q '\[ef-img-fetch\]'; then
+            SCRIPT=ops/import/endfield-images.mjs; MODE=import
+          elif echo "$MSG" | grep -q '\[ef-img-probe\]'; then
+            SCRIPT=ops/import/endfield-images.mjs; MODE=probe
           elif echo "$MSG" | grep -q '\[fix-nikke-img\]'; then
             SCRIPT=ops/import/nikke-images.mjs; MODE=import
           elif echo "$MSG" | grep -q '\[probe-nikke-img\]'; then
@@ -110,3 +120,16 @@ jobs:
           MODE: ${{ steps.mode.outputs.mode }}
           GAME: ${{ steps.mode.outputs.game }}
         run: node ${{ steps.mode.outputs.script }}
+
+      - name: Commit fetched images
+        if: contains(github.event.head_commit.message, '[ef-img-fetch]')
+        run: |
+          git config user.email zzabhm@gmail.com
+          git config user.name sense-K
+          git add img/characters/endfield 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "커밋할 이미지 없음"
+          else
+            git commit -m "chore: 엔드필드 캐릭터 아이콘 수집 (러너가 위키에서 다운로드)"
+            git push
+          fi
