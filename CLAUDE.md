@@ -1093,6 +1093,36 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 - 신규 캐릭터 나오면: auto-sync 가 resetlist.kr URL 로 INSERT 시도하다 이미지 표본 실패로 그 게임만 중단(ImportLog 에 사유) →
   `[ef-img-fetch]` 로 아이콘 먼저 확보하면 다음 새벽 자동 반영.
 
+## 우마무스메: 캐릭터 vs 서포트 카드 (2026-08-05)
+
+우마무스메는 **육성 우마무스메(캐릭터)** 와 **서포트 카드** 가 별개 수집 대상이라
+같은 `Character` 테이블에 넣되 **`kind` 컬럼**으로 구분한다.
+
+| kind | 뜻 | tier | 노출 |
+|---|---|---|---|
+| `character` (기본값) | 육성 우마무스메 144명 | `우마무스메` | 도감·상세 SSR·sitemap·등록 |
+| `support` | 서포트 카드 547장 | `SSR 서포트`/`SR 서포트`/`R 서포트` | **등록·거래소 필터에만** |
+
+- `kind` 는 전 게임 공통 컬럼(`DEFAULT 'character'`). 인덱스 `Character_gameId_kind_idx`.
+- **도감(`game/umamusume/characters/`), 상세 SSR(`functions/game/umamusume/characters/[slug].js`),
+  `functions/sitemap.xml.js` 는 전부 `kind = 'character'` 로 거른다.** 새 도감을 만들 때도 이 필터를 넣을 것.
+- 등록/일괄등록/거래소 필터의 `GRADE_ORDER_MAP['umamusume']` =
+  `['우마무스메','SSR 서포트','SR 서포트','R 서포트']` → 화면에서 캐릭터와 카드가 그룹으로 갈린다.
+
+### 서포트 카드 임포터 (`ops/import/umamusume-support.mjs`)
+- 목록: `umapyoi.net/api/v1/support` (547장). **id 앞자리 = 레어도** (3=SSR/2=SR/1=R, 표본 16/16 검증)
+- 한국어: `gametora.com/ko/umamusume/supports/{slug}` **한 페이지에서 전부** 나온다
+  - `og:title` → `스페셜 위크 (SSR) 서포트 카드` = 캐릭터명 + 등급
+  - `description` → `스페셜 위크 (SSR, 근성) …` = 타입(스피드/스태미너/파워/근성/지능)
+  - 본문 `<div>[일본 최고의 무대를]</div>` = 카드 고유명
+  - 최종 `nameKo` = `스페셜 위크 [트레센 학원]` (캐릭터명은 우리 DB 표기 우선)
+- 이미지: `gametora.com/images/umamusume/supports/tex_support_card_{id}.png`
+- 캐릭터 매칭: umapyoi `gametora` 슬러그(`30028-kitasan-black`)에서 앞 숫자를 떼면 우리 `Character.slug`
+- 커밋 태그: `[uma-sup-probe]`(앞 12장만, DB 미변경) / `[uma-sup-import]`(전량, 신규만 INSERT)
+- 안전장치: 목록 100장 미만이면 중단, 한국어 이름 실패가 30% 초과면 중단
+- **주의 — `psql -c` 로 여러 줄 SQL 을 넘기면 줄바꿈이 리터럴 `\n` 으로 전달돼 깨진다.**
+  `q()` 가 `replace(/\s+/g,' ')` 로 한 줄 정규화한다. 새 스크립트를 쓸 때도 같은 함정에 주의.
+
 ### 팬사이트 자동화 조사 결과 (2026-08-05, 비활성 게임 포함 전수)
 - **명일방주 + 엔드필드 자동화 확정** → 어댑터 구축 + SYNC_GAMES 편입 완료. 둘 다 Game/Server 등록돼 있음(활성 상태였음).
   - 명일방주 서버: 한국/글로벌/일본/중국 (기존) · 엔드필드 서버: 아시아/아메리카·유럽/중국 (2026-08-05 정리)
@@ -1100,8 +1130,14 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 - 나머지는 전부 부적합 판정:
   - 림버스: 가챠시뮬 repo / LimBooks(noita0130.github.io) / limbuswiki.github.io — 구조 불안정·소규모
   - 브라운더스트2: BD2DB(souseha.com) / gitbook — API 없음
-  - 트릭컬·몬길·세나리·로스트소드·이환: 나무위키/인벤뿐 (봇차단 + 비정형 → 수집 부적합)
-  - 쿠킹덤: fandom ko api.php 후보 있으나 403 (러너 검증 미완)
+  - 트릭컬·몬길·세나리·이환: 나무위키/인벤뿐 (봇차단 + 비정형 → 수집 부적합)
+  - **로스트 소드 / 브라운더스트2: 캐릭터 0명인데 게임은 활성.** 공식·팬사이트 모두 기계가 읽을 데이터 없음
+    (공식은 껍데기 HTML, BD2DB(souseha)는 사이트 자체가 죽음, 위키 API 401/404) → 수동 등록 아니면 비활성 권장
+  - 쿠킹덤: 한국어 fandom 은 404, **영문 fandom MediaWiki API 는 열려 있음**(200).
+    영문 이름·이미지는 뽑히지만 한국어 이름은 니케처럼 수동 입력 필요. DB 37개뿐이라 보강 가치는 있음
+  - **림버스 단빵숲(baslimbus.info)**: HTML·RSC 에는 필터 UI 만 있고 목록은 **클라이언트 렌더**.
+    Playwright 로 띄우면 `/identity/{id}` 링크 + 인격명 + 수감자 + 등급(`img[alt=grade-N]`)이 잡힌다.
+    → 기술적으로 수집 가능하나 헤드리스 브라우저 + 페이지네이션이 필요하고, DB 에 이미 172명이 있어 실익은 낮음
 - 결론: 위 게임들은 수동 등록 또는 CharacterRequest 승인 방식(계획).
 
 ### SEO 소개문 숨김 (2026-08-05)

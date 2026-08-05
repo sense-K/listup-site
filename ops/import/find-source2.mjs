@@ -1,55 +1,25 @@
-// 림버스 단빵숲(baslimbus.info) — 브라우저로 띄우면 인격 데이터를 가져올 수 있는지 확인.
-// HTML/RSC 에는 필터 버튼만 있고 목록은 클라이언트에서 그려진다(CSR).
-// 러너에서 Playwright 로 실제 렌더 + 네트워크 요청을 관찰해 "데이터를 어디서 받는지" 찾는다.
-// DB 미변경.
+// 자동 임포터가 없는 게임의 데이터 소스 탐색 — 러너 전용, DB 미변경.
+// 커밋 태그 [find-source2] 로 실행. 확인할 대상이 생기면 이 파일을 바꿔서 다시 돌린다.
+//
+// 지금까지의 결론 (2026-08-05)
+//   림버스 단빵숲(baslimbus.info) : HTML·RSC 에는 필터 UI 만, 목록은 클라이언트 렌더.
+//                                   Playwright 로 띄우면 /identity/{id} 링크 + 인격명 + 등급이 잡힌다.
+//                                   → 수집 가능하지만 헤드리스 브라우저가 필요하고 페이지네이션을 타야 함.
+//   브라운더스트2 / 로스트소드     : 공식·팬사이트 모두 기계가 읽을 데이터 없음.
+//   쿠키런킹덤                     : 영문 fandom MediaWiki API 는 열림(한국어 이름은 없음).
 
-import { chromium } from 'playwright'
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
+const H = { 'User-Agent': UA, 'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8' }
 
-const browser = await chromium.launch()
-const page = await browser.newPage({ locale: 'ko-KR' })
+const TARGETS = [
+  ['쿠킹덤 fandom en api', 'https://cookierunkingdom.fandom.com/api.php?action=query&meta=siteinfo&format=json'],
+]
 
-const calls = []
-page.on('response', r => {
-  const u = r.url()
-  if (/baslimbus\.info/.test(u) && !/\.(css|js|png|webp|jpg|svg|ico|woff2?)($|\?)/.test(u)) {
-    calls.push([r.status(), r.request().method(), u])
+for (const [name, url] of TARGETS) {
+  try {
+    const r = await fetch(url, { headers: H, redirect: 'follow' })
+    console.log(`[${r.status}] ${name}  ${(await r.text()).length}B\n      ${url}`)
+  } catch (e) {
+    console.log(`[ERR] ${name} — ${e.message}`)
   }
-  // 외부 API(수퍼베이스/파이어베이스 등)로 나가는 것도 잡는다
-  if (!/baslimbus\.info/.test(u) && /api|supabase|firestore|googleapis|json/.test(u)) {
-    calls.push([r.status(), r.request().method(), '(외부) ' + u])
-  }
-})
-
-console.log('페이지 로드 중...')
-await page.goto('https://baslimbus.info/identity', { waitUntil: 'networkidle', timeout: 60000 })
-await page.waitForTimeout(3000)
-
-console.log('\n== 네트워크 요청 ==')
-for (const [s, m, u] of calls) console.log(`  ${s} ${m} ${u.slice(0, 160)}`)
-
-console.log('\n== 렌더된 인격 카드 ==')
-// 링크/이미지 기준으로 목록 아이템 탐색
-const info = await page.evaluate(() => {
-  const out = { links: [], imgs: [], sample: '' }
-  document.querySelectorAll('a[href*="/identity/"]').forEach(a => {
-    out.links.push({ href: a.getAttribute('href'), text: a.textContent.trim().slice(0, 60) })
-  })
-  document.querySelectorAll('img').forEach(i => {
-    const s = i.getAttribute('src') || ''
-    if (/identity|character|person|인격/i.test(s)) out.imgs.push(s)
-  })
-  const first = document.querySelector('a[href*="/identity/"]')
-  if (first) out.sample = (first.closest('div')?.outerHTML || first.outerHTML).slice(0, 600)
-  return out
-})
-console.log(`  /identity/ 링크 ${info.links.length}개`)
-for (const l of info.links.slice(0, 15)) console.log(`   · ${l.href}  "${l.text}"`)
-console.log(`  이미지 ${info.imgs.length}개: ${info.imgs.slice(0, 5).join(' ')}`)
-if (info.sample) console.log(`\n  카드 HTML 샘플:\n  ${info.sample.replace(/\s+/g, ' ')}`)
-
-// 페이지 전체 텍스트에서 인격 이름처럼 보이는 것
-const txt = await page.evaluate(() => document.body.innerText)
-console.log(`\n  본문 길이 ${txt.length}자`)
-console.log('  앞부분: ' + txt.slice(0, 600).replace(/\n+/g, ' | '))
-
-await browser.close()
+}

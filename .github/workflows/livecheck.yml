@@ -50,6 +50,18 @@ jobs:
           check "https://resetlist.kr/" 200 "내 주소를 가진 상점"
           check "https://resetlist.kr/" 200 "shop-demo-body" gone   # 가짜 상점 화면 제거됨
           check "https://resetlist.kr/" 200 "sd-owner-btn" gone
+          echo "== 우마무스메: 캐릭터 / 서포트 카드 분리 =="
+          curl -s --max-time 25 "https://resetlist.kr/sitemap.xml?cb=${GITHUB_RUN_ID}" > /tmp/sm2.xml
+          SUP=$(grep -c 'characters/sup-' /tmp/sm2.xml || true)
+          UMA=$(grep -c '/game/umamusume/characters/' /tmp/sm2.xml || true)
+          echo "  사이트맵: 우마 캐릭터 URL ${UMA}개 / 서포트카드 URL ${SUP}개"
+          [ "$SUP" = "0" ] && echo "  OK  서포트 카드는 사이트맵에서 제외됨" || echo "::error::서포트 카드가 사이트맵에 들어감(${SUP}개)"
+          [ "$UMA" -gt 100 ] && echo "  OK  우마 캐릭터 사이트맵 유지" || echo "::error::우마 캐릭터 URL이 사라짐(${UMA}개)"
+          # 등록 화면에 서포트 카드 그룹 순서가 배포됐는지
+          check "https://resetlist.kr/trade/register/" 200 "SSR 서포트"
+          check "https://resetlist.kr/trade/umamusume/" 200 "SSR 서포트"
+          # 서포트 카드는 상세 페이지가 없어야 한다
+          check "https://resetlist.kr/game/umamusume/characters/sup-30001-special-week/" 404 "캐릭터를 찾을 수 없어요"
           echo "== 엔드필드 캐릭터 아이콘 (자체 호스팅) =="
           for c in perlica laevatain ember yvonne; do
             code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://resetlist.kr/img/characters/endfield/$c.png")
