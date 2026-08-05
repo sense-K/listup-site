@@ -1054,12 +1054,22 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 ## 캐릭터 자동 동기화 (2026-08-05 구축)
 
 **매일 05:00 KST 에 GitHub Actions(`auto-sync.yml`)가 무인으로 돈다. 관리자가 누를 버튼 없음.**
-- 대상: 원신·스타레일·젠레스·명조·에픽세븐·블루아카·명일방주·엔드필드 (`ops/import/run.mjs` 의 `SYNC_GAMES`)
+- 대상 11개 (`ops/import/run.mjs` 의 `SYNC_GAMES`):
+  원신·스타레일·젠레스·명조·에픽세븐·블루아카·명일방주·엔드필드·**우마무스메·우마무스메 서포트카드·림버스**
 - 구조: 공통 러너 `ops/import/run.mjs` + 게임별 어댑터 `ops/import/games/{slug}.mjs`
-  - 어댑터는 "소스에서 캐릭터 배열을 뽑는 함수" 하나만 구현 (fetchCharacters)
+  - 어댑터는 "소스에서 캐릭터 배열을 뽑는 함수" 하나만 구현: `fetchCharacters(ctx)`
+  - `meta.kind` — `'character'`(기본) / `'support'`. **대조·INSERT 모두 같은 kind 안에서만** 일어난다.
+    우마무스메처럼 한 게임에 캐릭터와 서포트 카드가 섞여 있어도 서로를 신규로 오판하지 않는다.
+  - `meta.slug` 는 Game 테이블의 slug — **파일명과 달라도 된다**
+    (`games/umamusume-support.mjs` 의 `meta.slug='umamusume'`, `kind='support'`)
+  - `ctx.existing` 으로 DB 현황이 들어온다 → **비싼 수집을 신규분만** 하도록 쓴다.
+    (서포트 카드 547장은 첫 등록 때만 GameTora 를 훑고, 이후 매일 실행은 umapyoi 1회 호출로 끝)
+  - `meta.selfHostedImages` — 어댑터가 이번 실행에서 받아 repo 에 쓴 이미지면 HTTP 표본검사 대신 파일 존재로 확인
   - 새 게임 자동화 추가 = 어댑터 파일 1개 + SYNC_GAMES 에 slug 추가
 - 결과는 `ImportLog` 테이블에 기록 → **admin 캐릭터 관리 탭 상단 '자동 동기화' 카드**에 표시
 - 즉시 실행: GitHub → Actions → "Auto Character Sync" → Run workflow
+- **auto-sync.yml 은 chromium 을 설치**(림버스용)하고, 림버스 신규 인격 이미지가 생기면
+  `img/characters/` 를 `[deploy]` 커밋으로 main 에 푸시한다 (`permissions: contents: write`)
 - 단일 게임 수동 실행: 커밋 메시지에 `[probe:slug]`(미리보기) / `[import:slug]`(반영)
 
 ### 안전 규칙 (run.mjs 공통 — 무인 실행 전제)
@@ -1082,6 +1092,9 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 | epicseven | 스토브 epic7_hero.json **ko 배열** | slug 는 hero code. 주인공 c0001/c1005 제외 |
 | bluearchive | SchaleDB kr students.json | tier=학교명(기존 규칙), IsReleased[0] 만 |
 | arknights | Kengxxiao/ArknightsGameData_YoStar ko_KR | 374명. 이미지 yuanyan3060/ArknightsGameResource avatar. 직업→weaponType(뱅가드/가드…), TIER_6→'6성' |
+| umamusume | 카카오 공식 data.vN.js + umapyoi 이미지 | 육성 우마무스메. `characterData` 가 **배열**이라 균형괄호+Function 평가로 파싱 (객체로 가정하면 0명) |
+| umamusume-support | umapyoi + GameTora ko | 서포트 카드 547장. `kind='support'`. 이미 있는 카드는 GameTora 를 안 부른다 |
+| limbus | 단빵숲(baslimbus.info) | **Playwright 필요**(클라이언트 렌더). 기존 인격은 `nameKo` 만 반환해 갱신 대상에서 제외 — 단빵숲 카드가 수감자를 잘못 집는 경우가 있어 기존 tier 를 덮으면 위험 |
 | endfield | 3aKHP/EndFieldGameData 릴리스 zip | 26명. CharacterTable + i18n/KR.json 해시 조인. **int64 해시가 JS Number 정밀도(2^53) 초과 → 15자리+ 정수를 문자열로 감싸 parse** (안 하면 이름 조인 전멸). 주인공(Endministrator) 제외. 속성: 물리/열기/냉기/전기/자연, 직업→weaponType: 가드/디펜더/서포터/캐스터/뱅가드/스트라이커 |
 
 ### 엔드필드 이미지 = repo 자체 호스팅 (2026-08-05)
