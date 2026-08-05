@@ -42,7 +42,7 @@ export async function onRequest({ params }) {
 
   // gameId를 하드코딩하지 않고 Game.slug 조인으로 찾는다
   const rows = await supaGet(
-    `Character?slug=eq.${encodeURIComponent(slug)}&isActive=eq.true` +
+    `Character?slug=eq.${encodeURIComponent(slug)}&isActive=eq.true&kind=eq.character` +
     `&select=id,gameId,nameKo,nameEn,slug,imageUrl,sortOrder,metadata,game:Game!inner(slug)` +
     `&game.slug=eq.umamusume&limit=1`
   )
@@ -56,9 +56,9 @@ export async function onRequest({ params }) {
 
   // 우마무스메는 속성·등급 구분이 없어서 도감 순서상 앞뒤 캐릭터를 추천으로 쓴다
   const [prevRows, nextRows] = await Promise.all([
-    supaGet(`Character?gameId=eq.${encodeURIComponent(c.gameId)}&isActive=eq.true&sortOrder=lt.${c.sortOrder}` +
+    supaGet(`Character?gameId=eq.${encodeURIComponent(c.gameId)}&isActive=eq.true&kind=eq.character&sortOrder=lt.${c.sortOrder}` +
             `&slug=not.is.null&select=nameKo,slug,imageUrl&order=sortOrder.desc&limit=2`),
-    supaGet(`Character?gameId=eq.${encodeURIComponent(c.gameId)}&isActive=eq.true&sortOrder=gt.${c.sortOrder}` +
+    supaGet(`Character?gameId=eq.${encodeURIComponent(c.gameId)}&isActive=eq.true&kind=eq.character&sortOrder=gt.${c.sortOrder}` +
             `&slug=not.is.null&select=nameKo,slug,imageUrl&order=sortOrder.asc&limit=2`),
   ])
   const related = [...(prevRows || []).reverse(), ...(nextRows || [])].slice(0, 4)

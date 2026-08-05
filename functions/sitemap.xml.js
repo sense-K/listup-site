@@ -114,7 +114,7 @@ export async function onRequest() {
   if (games && games.length > 0) {
     const gameIds = games.map(g => `"${g.id}"`).join(',')
     const chars = await supaGet(
-      `Character?gameId=in.(${gameIds})&isActive=eq.true&slug=not.is.null&select=slug,gameId&limit=2000`
+      `Character?gameId=in.(${gameIds})&isActive=eq.true&kind=eq.character&slug=not.is.null&select=slug,gameId&limit=2000`
     )
     charUrls = (chars || [])
       .filter(c => c.slug && gameMap[c.gameId])

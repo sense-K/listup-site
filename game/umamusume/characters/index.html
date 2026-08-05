@@ -158,7 +158,7 @@
       const [{ data: chars }, { data: lcs }] = await Promise.all([
         db.from('Character')
           .select('id, nameKo, nameEn, slug, imageUrl, sortOrder, metadata')
-          .eq('gameId', game.id).eq('isActive', true).order('sortOrder'),
+          .eq('gameId', game.id).eq('isActive', true).eq('kind', 'character').order('sortOrder'),
         // 판매중·거래중인 매물에 등록된 캐릭터 (판매완료는 제외)
         db.from('ListingCharacter')
           .select('characterId, listing:Listing!inner(status)')
