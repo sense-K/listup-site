@@ -29,7 +29,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
 const esc = v => (v === null || v === undefined) ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`
 
 function q(sql) {
-  const out = execSync(`psql "${DB}" -v ON_ERROR_STOP=1 -At -F $'\\t' -c ${JSON.stringify(sql)}`,
+  // psql -c 는 셸을 거치므로 줄바꿈이 리터럴 "\n" 으로 전달돼 문법 오류가 난다 → 한 줄로 정규화
+  const one = sql.replace(/\s+/g, ' ').trim()
+  const out = execSync(`psql "${DB}" -v ON_ERROR_STOP=1 -At -F $'\\t' -c ${JSON.stringify(one)}`,
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
   return out.trim() ? out.trim().split('\n').map(l => l.split('\t')) : []
 }
