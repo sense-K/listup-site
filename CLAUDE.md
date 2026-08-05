@@ -1054,7 +1054,7 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 ## 캐릭터 자동 동기화 (2026-08-05 구축)
 
 **매일 05:00 KST 에 GitHub Actions(`auto-sync.yml`)가 무인으로 돈다. 관리자가 누를 버튼 없음.**
-- 대상: 원신·스타레일·젠레스·명조·에픽세븐·블루아카·명일방주 (`ops/import/run.mjs` 의 `SYNC_GAMES`)
+- 대상: 원신·스타레일·젠레스·명조·에픽세븐·블루아카·명일방주·엔드필드 (`ops/import/run.mjs` 의 `SYNC_GAMES`)
 - 구조: 공통 러너 `ops/import/run.mjs` + 게임별 어댑터 `ops/import/games/{slug}.mjs`
   - 어댑터는 "소스에서 캐릭터 배열을 뽑는 함수" 하나만 구현 (fetchCharacters)
   - 새 게임 자동화 추가 = 어댑터 파일 1개 + SYNC_GAMES 에 slug 추가
@@ -1081,14 +1081,26 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 | wuwa | nanoka.cc ww | 방랑자 6종 제외, rank<4 제외 |
 | epicseven | 스토브 epic7_hero.json **ko 배열** | slug 는 hero code. 주인공 c0001/c1005 제외 |
 | bluearchive | SchaleDB kr students.json | tier=학교명(기존 규칙), IsReleased[0] 만 |
-| arknights | Kengxxiao/ArknightsGameData_YoStar ko_KR | 374명. 이미지 yuanyan3060/ArknightsGameResource avatar. 직업→weaponType(뱅가드/가드…), TIER_6→'6성'. 게임은 아직 비활성이지만 활성화 즉시 사용 가능 |
+| arknights | Kengxxiao/ArknightsGameData_YoStar ko_KR | 374명. 이미지 yuanyan3060/ArknightsGameResource avatar. 직업→weaponType(뱅가드/가드…), TIER_6→'6성' |
+| endfield | 3aKHP/EndFieldGameData 릴리스 zip | 26명. CharacterTable + i18n/KR.json 해시 조인. **int64 해시가 JS Number 정밀도(2^53) 초과 → 15자리+ 정수를 문자열로 감싸 parse** (안 하면 이름 조인 전멸). 주인공(Endministrator) 제외. 속성: 물리/열기/냉기/전기/자연, 직업→weaponType: 가드/디펜더/서포터/캐스터/뱅가드/스트라이커 |
+
+### 엔드필드 이미지 = repo 자체 호스팅 (2026-08-05)
+- 신뢰할 핫링크 소스가 없어(위키 핫링크 불안, 공식 CDN 미확인) **아이콘을 repo 에 커밋**해 resetlist.kr 로 서빙:
+  `img/characters/endfield/{slug}.png` (120px, 25장, 340KB)
+- 수집기: `ops/import/endfield-images.mjs` — endfield.wiki.gg(1순위)/fandom(2순위) MediaWiki API 로
+  `File:{engName} icon.png` 탐색. 커밋 태그 `[ef-img-probe]`(탐색만) / `[ef-img-fetch]`(다운로드 → 러너가 repo 에 push).
+- **미브(Mifu)만 위키에 아이콘이 아직 없어 미확보** — imageUrl 은 404 → 카드 onerror 폴백. 위키 갱신 후 `[ef-img-fetch]` 재실행.
+- 신규 캐릭터 나오면: auto-sync 가 resetlist.kr URL 로 INSERT 시도하다 이미지 표본 실패로 그 게임만 중단(ImportLog 에 사유) →
+  `[ef-img-fetch]` 로 아이콘 먼저 확보하면 다음 새벽 자동 반영.
 
 ### 팬사이트 자동화 조사 결과 (2026-08-05, 비활성 게임 포함 전수)
-- **명일방주만 자동화 확정** → 어댑터 구축 + SYNC_GAMES 편입 완료.
+- **명일방주 + 엔드필드 자동화 확정** → 어댑터 구축 + SYNC_GAMES 편입 완료. 둘 다 Game/Server 등록돼 있음(활성 상태였음).
+  - 명일방주 서버: 한국/글로벌/일본/중국 (기존) · 엔드필드 서버: 아시아/아메리카·유럽/중국 (2026-08-05 정리)
+  - 둘 다 Currency 없음 → 돌계 등록 미활성 (필요 시 Currency 행만 추가)
 - 나머지는 전부 부적합 판정:
   - 림버스: 가챠시뮬 repo / LimBooks(noita0130.github.io) / limbuswiki.github.io — 구조 불안정·소규모
   - 브라운더스트2: BD2DB(souseha.com) / gitbook — API 없음
-  - 트릭컬·엔드필드·몬길·세나리·로스트소드·이환: 나무위키/인벤뿐 (봇차단 + 비정형 → 수집 부적합)
+  - 트릭컬·몬길·세나리·로스트소드·이환: 나무위키/인벤뿐 (봇차단 + 비정형 → 수집 부적합)
   - 쿠킹덤: fandom ko api.php 후보 있으나 403 (러너 검증 미완)
 - 결론: 위 게임들은 수동 등록 또는 CharacterRequest 승인 방식(계획).
 
