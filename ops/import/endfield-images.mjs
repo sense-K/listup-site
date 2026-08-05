@@ -25,14 +25,16 @@ async function api(base, params) {
 }
 
 // File 네임스페이스에서 이름 검색 → icon 류 우선 랭킹
-function rank(title) {
+function rank(title, engName) {
   const t = title.toLowerCase()
+  if (title === `File:${engName} icon.png`) return 100   // 정확 일치 최우선
   let s = 0
   if (/\bicon\b|_icon|icon\./.test(t)) s += 30
   if (/avatar|head|profile/.test(t)) s += 20
   if (/portrait/.test(t)) s += 10
   if (/\.png$/.test(t)) s += 5
-  if (/skin|outfit|elite|e2|emoji|chibi|sprite|weapon|banner|full/.test(t)) s -= 25
+  // 스킬/특성/굿즈 아이콘 오인 방지 (미브가 Combo-Mifu.png 를 집었던 사례)
+  if (/talent|combo|\bult\b|ult-|skill|statuette|contract|snapshot|emoji|chibi|sprite|weapon|banner|skin|outfit|elite|\be2\b/.test(t)) s -= 60
   return s
 }
 
@@ -45,8 +47,9 @@ async function findIcon(base, engName) {
     .map(h => h.title)
     .filter(t => t.toLowerCase().includes(engName.toLowerCase().split(' ')[0]))
   if (!hits.length) return null
-  hits.sort((a, b) => rank(b) - rank(a))
+  hits.sort((a, b) => rank(b, engName) - rank(a, engName))
   const best = hits[0]
+  if (rank(best, engName) < 0) return null   // 그럴듯한 후보가 없으면 다음 위키로
   const info = await api(base, { action: 'query', titles: best, prop: 'imageinfo', iiprop: 'url|size' })
   const page = Object.values(info?.query?.pages || {})[0]
   const ii = page?.imageinfo?.[0]
