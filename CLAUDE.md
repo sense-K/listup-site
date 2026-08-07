@@ -1208,8 +1208,12 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 - `/trade/` — 유형 탭(전체/리세계/돌계). `listings.js`의 `loadListings({typeFilter})`.
 - **매물 카드 = 대표 캐릭터 히어로형** (2026-08-03 개편, `renderListingCard` in `js/listings.js`):
   - `.listings-grid`는 **4열 그리드** (1280px↓ 3열 / 900px↓ 2열). 기존 1열 가로 카드에서 전환.
-  - 히어로(4:3): **첫 번째 캐릭터 이미지**가 대표. 캐릭터 없으면 게임 `artImageUrl`→`imageUrl`.
-    캐릭터 이미지 404 시 `onerror`로 게임 이미지 폴백.
+  - 히어로(4:3): **판매자가 올린 첫 스크린샷**(`Listing.images[0]`)이 대표. 없으면 게임 `artImageUrl`→`imageUrl`.
+    스크린샷 404 시 `onerror`로 게임 이미지 폴백.
+    (2026-08-05 변경 — 이전엔 첫 캐릭터 이미지였으나, 실제 계정 화면이 매물을 더 정확히 보여준다)
+    CSS: 캐릭터 일러스트용 `object-position: center 18%` 가 기본이라
+    스크린샷·게임아트는 `.is-shot` / `.is-game-art` 로 `center center` 를 준다.
+    `SELECT_FIELDS` 에 `images` 가 있어야 한다 — 빠지면 전부 게임 이미지로 폴백된다.
   - 히어로 문구: 캐릭터 있으면 `캐릭터명 / 외 N명 보유`, 돌계면 `재화명 수량 / 약 N연 분량`, 둘 다 없으면 `게임명 / 상세 설명 참고`.
   - 히어로 하단 3px 라인 = 대표 캐릭터 티어색. `cardTierClass()`로 정규화(s/a/b/c) — `gradeClass()`는 쿠키런킹덤 전용이라 별도 함수.
   - 스트립: 2번째 캐릭터부터 최대 6칸(+N). 캐릭터 1명뿐이거나 돌계면 재화 칩이 그 자리에.

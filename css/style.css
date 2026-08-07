@@ -882,8 +882,10 @@ a { text-decoration: none; color: inherit; }
   transition: transform 0.35s ease;
 }
 .card:hover .card-hero-img { transform: scale(1.045); }
-/* 게임 아트로 폴백된 경우엔 전체가 보이게 */
-.card-hero-img.is-game-art { object-position: center center; }
+/* 게임 아트 / 판매자 스크린샷은 화면 전체가 보여야 하므로 가운데 기준
+   (기본값 center 18% 는 캐릭터 일러스트에서 얼굴이 잘리지 않게 잡은 값) */
+.card-hero-img.is-game-art,
+.card-hero-img.is-shot { object-position: center center; }
 
 .card-hero-shade {
   position: absolute;

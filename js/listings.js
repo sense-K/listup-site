@@ -42,17 +42,20 @@ function renderListingCard(listing) {
 
   const charThumbOf = (c) => c ? (c.metadata?.cardImageUrl || c.imageUrl || '') : ''
 
-  // --- 대표(히어로): 첫 번째 캐릭터. 없으면 게임 이미지 ---
+  // --- 대표(히어로): 판매자가 올린 첫 스크린샷. 없으면 게임 대표 이미지 ---
+  // 실제 계정 화면이 캐릭터 일러스트보다 매물을 정확히 보여준다.
+  const shots = Array.isArray(listing.images) ? listing.images.filter(Boolean) : []
+  const shotUrl = shots[0] ?? ''
+  const gameFallback = gameArtUrl || gameImageUrl
+  const heroImg = shotUrl || gameFallback
+  // 스크린샷이 깨지면 게임 이미지로, 그것도 없으면 숨김
+  const heroOnError = shotUrl && gameFallback
+    ? ` onerror="this.onerror=null;this.src='${gameFallback}';this.classList.remove('is-shot');this.classList.add('is-game-art')"`
+    : ` onerror="this.style.display='none'"`
+  const heroImgClass = shotUrl ? ' is-shot' : ' is-game-art'
+
   const heroChar = hasChars ? chars[0].character : null
   const heroCharCount = hasChars ? (chars[0].count ?? 1) : 1
-  const heroCharImg = charThumbOf(heroChar)
-  const gameFallback = gameArtUrl || gameImageUrl
-  const heroImg = heroCharImg || gameFallback
-  // 캐릭터 이미지 로드 실패 시 게임 이미지로, 그것도 없으면 숨김
-  const heroOnError = heroCharImg && gameFallback
-    ? ` onerror="this.onerror=null;this.src='${gameFallback}';this.classList.add('is-game-art')"`
-    : ` onerror="this.style.display='none'"`
-  const heroIsGameArt = !heroCharImg
 
   let heroName, heroSub
   if (heroChar) {
@@ -151,7 +154,7 @@ function renderListingCard(listing) {
 
   return wrapOpen + `
       <div class="card-hero ${artClass}${heroTier ? ' hero-' + heroTier : ''}">
-        ${heroImg ? `<img class="card-hero-img${heroIsGameArt ? ' is-game-art' : ''}" src="${heroImg}" alt="${heroName}"${heroOnError}>` : ''}
+        ${heroImg ? `<img class="card-hero-img${heroImgClass}" src="${heroImg}" alt="${heroName}"${heroOnError}>` : ''}
         <div class="card-hero-shade"></div>
         ${centerOverlay}
         <div class="card-hero-top">
@@ -232,7 +235,7 @@ async function loadListings({ container, gameSlug, serverId, page = 1, limit = 1
 
     // 상태 구분 없이 최신순으로 한 번에 노출 (거래중·판매완료가 섞여 활발해 보이도록)
     const SELECT_FIELDS = `
-      id, price, discountAmount, description, createdAt, bumpedAt, viewCount, isHot, status, type, stock,
+      id, price, discountAmount, description, createdAt, bumpedAt, viewCount, isHot, status, type, stock, images,
       game:Game(nameKo, slug, emoji, imageUrl, artImageUrl),
       server:Server(nameKo),
       user:User(nickname, username, sellerGrade),

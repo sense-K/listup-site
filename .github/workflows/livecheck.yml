@@ -124,6 +124,12 @@ jobs:
           grep -q "viewCount > 50" /tmp/l.js && echo "::error::HOT이 아직 누적 조회수 기준" || echo "  OK  HOT 누적기준 제거됨"
           curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/css/style.css?cb=${GITHUB_RUN_ID}" > /tmp/s.css
           grep -q "card-hero-center" /tmp/s.css && echo "  OK  css card-hero-center" || echo "::error::css에 card-hero-center 없음"
+          echo "== 카드 썸네일 = 판매자 스크린샷 우선 =="
+          for n in "listing.images" "is-shot" "stock, images"; do
+            grep -q "$n" /tmp/l.js && echo "  OK  $n" || echo "::error::listings.js에 '$n' 없음"
+          done
+          grep -q "heroCharImg" /tmp/l.js && echo "::error::썸네일이 아직 캐릭터 이미지 기준" || echo "  OK  캐릭터 이미지 기준 제거됨"
+          grep -q "card-hero-img.is-shot" /tmp/s.css && echo "  OK  css is-shot" || echo "::error::css에 is-shot 없음"
           grep -q "repeat(4, minmax(0, 1fr))" /tmp/s.css && echo "  OK  css 4열 그리드" || echo "::error::css 4열 그리드 없음"
           echo "== 회귀 =="
           check "https://resetlist.kr/" 200 "리세리스트"
