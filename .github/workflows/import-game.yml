@@ -151,6 +151,7 @@ jobs:
       - name: Commit fetched images
         if: contains(github.event.head_commit.message, '[ef-img-fetch]')
           || contains(github.event.head_commit.message, '[limbus-import]')
+          || contains(github.event.head_commit.message, '[import:')
         run: |
           git config user.email zzabhm@gmail.com
           git config user.name sense-K

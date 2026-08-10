@@ -12,7 +12,7 @@
 //
 // 이미지는 핫링크하지 않고 신규분만 내려받아 img/characters/czn/ 에 저장한다.
 
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync, existsSync } from 'node:fs'
 
 export const meta = {
   slug: 'czn',
@@ -103,13 +103,17 @@ export async function fetchCharacters({ existing = [] } = {}) {
   const missing = rows.filter(r => !r.tier || !r.element || !r.weaponType)
   if (missing.length) console.log(`  ⚠ 속성 일부 누락 ${missing.length}명: ${missing.map(r => r.nameKo).join(', ')}`)
 
-  // 신규분만 이미지를 내려받는다 (핫링크 금지 — 팬사이트 CDN 에 의존하지 않는다)
+  // 이미지는 핫링크하지 않고 repo 에 저장한다 (팬사이트 CDN 에 의존하지 않기 위함).
+  // '신규 캐릭터' 가 아니라 '아직 파일이 없는 캐릭터' 를 받는다 →
+  // 등록은 됐는데 이미지가 빠진 상태로 끝나도 다음 실행에서 스스로 채워진다.
   const have = new Set(existing.map(e => norm(e.nameKo)))
   const news = rows.filter(r => !have.has(norm(r.nameKo)))
-  console.log(`  기존 ${rows.length - news.length}명 / 신규 ${news.length}명`)
-  if (news.length) {
+  rows.forEach(r => { r.imageUrl = `https://resetlist.kr/${IMG_DIR}/${r.srcId}.webp` })
+  const needImg = rows.filter(r => !existsSync(`${IMG_DIR}/${r.srcId}.webp`))
+  console.log(`  기존 ${rows.length - news.length}명 / 신규 ${news.length}명 · 이미지 받을 것 ${needImg.length}장`)
+  if (needImg.length) {
     mkdirSync(IMG_DIR, { recursive: true })
-    for (const r of news) {
+    for (const r of needImg) {
       try {
         const res = await fetch(r.srcImg, { headers: { 'User-Agent': UA, Referer: meta.source } })
         if (!res.ok) { console.log(`    이미지 ${res.status}: ${r.nameKo}`); continue }
@@ -118,10 +122,11 @@ export async function fetchCharacters({ existing = [] } = {}) {
         const path = `${IMG_DIR}/${r.srcId}.webp`
         writeFileSync(path, buf)
         r.localPath = path
-        r.imageUrl = `https://resetlist.kr/${path}`
       } catch (e) { console.log(`    이미지 실패 ${r.nameKo}: ${e.message}`) }
     }
   }
 
+  const gotAll = needImg.filter(r => r.localPath).length
+  if (needImg.length && gotAll === 0) throw new Error('이미지를 하나도 못 받음 — CDN 규칙 변경 의심')
   return rows.map(({ srcId, srcImg, ...r }) => r)
 }
