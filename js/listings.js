@@ -5,7 +5,7 @@ function getArtClass(gameSlug) {
     genshin: 'genshin', bluearchive: 'bluearchive', nikke: 'nikke',
     'cookie-run': 'cookierunkingdom', cookierunkingdom: 'cookierunkingdom',
     stardive: 'stardive', zzz: 'zzz', sevenknightsre: 'sevenknightsre',
-    leehwan: 'leehwan', trickcal: 'trickcal', limbus: 'limbus'
+    leehwan: 'leehwan', trickcal: 'trickcal', limbus: 'limbus', czn: 'zzz'
   }
   return map[gameSlug] || 'genshin'
 }

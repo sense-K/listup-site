@@ -42,7 +42,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 
 // GAME=all 일 때 도는 목록. 새 어댑터를 만들면 여기 추가.
 const SYNC_GAMES = ['genshin', 'starrail', 'zzz', 'wuwa', 'epicseven', 'bluearchive', 'arknights', 'endfield',
-                    'umamusume', 'umamusume-support', 'limbus']
+                    'umamusume', 'umamusume-support', 'limbus', 'czn']
 
 const log = (...a) => console.log(...a)
 

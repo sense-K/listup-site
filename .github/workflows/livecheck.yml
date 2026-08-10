@@ -62,6 +62,28 @@ jobs:
           check "https://resetlist.kr/trade/umamusume/" 200 "SSR 서포트"
           # 서포트 카드는 상세 페이지가 없어야 한다
           check "https://resetlist.kr/game/umamusume/characters/sup-30001-special-week/" 404 "캐릭터를 찾을 수 없어요"
+          echo "== 카오스 제로 나이트메어 신규 등록 =="
+          check "https://resetlist.kr/trade/czn/" 200 "카오스 제로 나이트메어"
+          check "https://resetlist.kr/trade/price/czn/" 200 "카오스 제로 나이트메어"
+          check "https://resetlist.kr/game/czn/" 200 "카오스 제로 나이트메어"
+          check "https://resetlist.kr/game/czn/characters/" 200 "카오스 제로 나이트메어 캐릭터 도감"
+          check "https://resetlist.kr/trade/czn/" 200 "타오바오"
+          check "https://resetlist.kr/trade/czn/" 200 "명조" gone
+          check "https://resetlist.kr/game/czn/characters/" 200 "응결" gone
+          check "https://resetlist.kr/sitemap.xml" 200 "/trade/czn/"
+          check "https://resetlist.kr/sitemap.xml" 200 "/game/czn/characters/"
+          curl -s --max-time 20 "https://resetlist.kr/sitemap.xml?cb=${GITHUB_RUN_ID}" > /tmp/smc.xml
+          CZN=$(grep -o 'https://resetlist.kr/game/czn/characters/[a-z0-9-]\+/' /tmp/smc.xml | head -1)
+          if [ -z "$CZN" ]; then echo "::error::사이트맵에 CZN 캐릭터 상세 URL 없음"; else
+            echo "detail sample: $CZN"
+            check "$CZN" 200 "카오스 제로 나이트메어"
+            check "$CZN" 200 "캐릭터를 찾을 수 없어요" gone
+          fi
+          check "https://resetlist.kr/game/czn/characters/zzz-not-a-character/" 404 "캐릭터를 찾을 수 없어요"
+          for c in 30113 1069 1003; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://resetlist.kr/img/characters/czn/$c.webp")
+            [ "$code" = 200 ] && echo "  OK  czn/$c.webp" || echo "::error::czn $c.webp -> $code"
+          done
           echo "== 림버스 신규 인격 이미지 (자체 호스팅) =="
           for c in 188 194 199; do
             code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://resetlist.kr/img/characters/limbus/$c.webp")

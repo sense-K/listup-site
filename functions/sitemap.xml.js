@@ -63,6 +63,10 @@ const STATIC_URLS = [
   { loc: '/game/wuwa/characters/',        priority: '0.8', changefreq: 'weekly'  },
   { loc: '/trade/wuwa/',                  priority: '0.9', changefreq: 'daily'   },
   { loc: '/trade/price/wuwa/',            priority: '0.7', changefreq: 'weekly'  },
+  { loc: '/game/czn/',                    priority: '0.8', changefreq: 'weekly'  },
+  { loc: '/game/czn/characters/',         priority: '0.8', changefreq: 'weekly'  },
+  { loc: '/trade/czn/',                   priority: '0.9', changefreq: 'daily'   },
+  { loc: '/trade/price/czn/',             priority: '0.7', changefreq: 'weekly'  },
   { loc: '/game/umamusume/',              priority: '0.8', changefreq: 'weekly'  },
   { loc: '/game/umamusume/characters/',   priority: '0.8', changefreq: 'weekly'  },
   { loc: '/trade/umamusume/',             priority: '0.9', changefreq: 'daily'   },
@@ -76,6 +80,7 @@ const CHAR_DETAIL_GAMES = {
   starrail: '/game/starrail/characters/',
   zzz:      '/game/zzz/characters/',
   wuwa:     '/game/wuwa/characters/',
+  czn:      '/game/czn/characters/',
   nikke:    '/game/nikke/characters/',
   leehwan:  '/game/leehwan/characters/',
   umamusume:'/game/umamusume/characters/',
@@ -104,7 +109,7 @@ export async function onRequest() {
 
   // 1. 캐릭터 상세 페이지용 게임 ID 조회
   const games = await supaGet(
-    `Game?slug=in.(genshin,starrail,zzz,wuwa,nikke,leehwan,umamusume)&select=id,slug`
+    `Game?slug=in.(genshin,starrail,zzz,wuwa,nikke,leehwan,umamusume,czn)&select=id,slug`
   )
   const gameMap = {}
   ;(games || []).forEach(g => { gameMap[g.id] = g.slug })

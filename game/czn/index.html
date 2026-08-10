@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>카오스 제로 나이트메어 리세계·돌계 판매·공략 | 리세리스트</title>
+  <meta name="description" content="카오스 제로 나이트메어 공략 도구와 리세계·돌계 거래소를 리세리스트에서 확인하세요. 타오바오 계정을 들여오는 대행 상점과 개인 판매자가 등록비·중개 수수료 없이 계정을 판매하고, 구매자는 보유 캐릭터로 검색해 직거래해요." />
+  <meta name="keywords" content="카오스 제로 나이트메어 리세계, 카오스 제로 나이트메어 돌계, 카오스 제로 나이트메어 대행, 카오스 제로 나이트메어 타오바오, 카제나 리세계, 카제나 계정, 카오스 제로 나이트메어 캐릭터 도감, 카오스 제로 나이트메어 공략, CZN 리세계" />
+  <link rel="canonical" href="https://resetlist.kr/game/czn/" />
+  <meta property="og:title" content="카오스 제로 나이트메어 리세계·돌계 판매·공략 | 리세리스트" />
+  <meta property="og:description" content="카오스 제로 나이트메어 공략 도구와 리세계·돌계 거래소를 리세리스트에서 확인하세요. 타오바오 계정을 들여오는 대행 상점과 개인 판매자가 등록비·중개 수수료 없이 계정을 판매하고, 구매자는 보유 캐릭터로 검색해 직거래해요." />
+  <meta property="og:url" content="https://resetlist.kr/game/czn/" />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+  <style>
+    .section-label { font-size:12px; font-weight:700; color:var(--text-sub,#64748b); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border,#e5e7eb); }
+    .trade-section { display:flex; gap:12px; flex-wrap:wrap; }
+    .trade-btn { display:inline-flex; align-items:center; gap:8px; padding:14px 24px; border-radius:14px; text-decoration:none; font-size:15px; font-weight:700; transition:transform 0.15s,box-shadow 0.15s; }
+    .trade-btn:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+    .trade-btn-primary { background:#7c3aed; color:#fff; }
+    .trade-btn-secondary { background:#f1f5f9; color:#1e293b; border:1.5px solid var(--border,#e5e7eb); }
+  </style>
+</head>
+<body>
+  <div id="navbar-container"></div>
+  <main class="game-hub-wrap">
+    <div class="game-hub-hero">
+      <div class="game-hub-hero-bg" id="game-hub-hero-bg"></div>
+      <div class="game-hub-hero-overlay"></div>
+      <div class="game-hub-hero-content">
+        <img class="game-hub-app-icon" id="game-hub-app-icon" src="" alt="" style="display:none;">
+        <span class="game-hub-icon" id="game-hub-emoji" style="font-size:48px;line-height:1;">🌑</span>
+        <div>
+          <div class="game-hub-title">카오스 제로 나이트메어</div>
+          <div class="game-hub-sub">캐릭터 35명 · 공략 도구 1종</div>
+        </div>
+      </div>
+    </div>
+    <div class="section-label">공략 도구</div>
+    <div class="tools-grid">
+      <a href="/game/czn/characters/" class="hub-tool-card">
+        <div class="hub-tool-card-top">
+          <div class="hub-tool-card-icon" style="background:rgba(124,58,237,0.1)">📖</div>
+          <span class="hub-tool-card-badge">서비스 중</span>
+        </div>
+        <div class="hub-tool-card-title">캐릭터 도감</div>
+        <div class="hub-tool-card-desc">카오스 제로 나이트메어 전체 캐릭터 정보와 보유 계정 시세를 한눈에</div>
+      </a>
+    </div>
+    <div class="section-label">거래소</div>
+    <div class="trade-section">
+      <a href="/trade/czn/" class="trade-btn trade-btn-primary">🌑 거래소 바로가기 →</a>
+      <a href="/trade/price/czn/" class="trade-btn trade-btn-secondary">📊 계정 시세 확인</a>
+    </div>
+      <p class="seo-intro">카오스 제로 나이트메어 리세계·돌계를 판매하신다면 리세리스트에 등록해보세요. 등록비와 중개 수수료가 없고, 가입하면 내 상점이 자동으로 만들어지며, 보유 캐릭터를 등록해두면 그 캐릭터를 찾는 구매자에게 검색으로 바로 노출돼요. 타오바오에서 카오스 제로 나이트메어 계정을 들여오는 대행 상점도, 직접 리세계를 돌린 개인 판매자도 똑같이 판매할 수 있어요. 구매자는 판매자가 올린 카오스 제로 나이트메어 계정을 수수료 없이 직거래로 구매할 수 있어요.</p>
+  </main>
+  <div id="footer-container"></div>
+  <script>
+    const GAME_SLUG = 'czn'
+    async function loadGameHero() {
+      const { data: game } = await db.from('Game').select('imageUrl, artImageUrl').eq('slug', GAME_SLUG).single()
+      if (!game) return
+      if (game.artImageUrl) document.getElementById('game-hub-hero-bg').style.backgroundImage = `url('${game.artImageUrl}')`
+      if (game.imageUrl) {
+        const icon = document.getElementById('game-hub-app-icon'), emoji = document.getElementById('game-hub-emoji')
+        icon.src = game.imageUrl; icon.alt = '카오스 제로 나이트메어'; icon.style.display = 'block'
+        if (emoji) emoji.style.display = 'none'
+      }
+    }
+    loadGameHero()
+    document.getElementById('navbar-container').innerHTML = renderNavbar()
+    loadAndRenderGameUI('czn')
+    document.getElementById('footer-container').innerHTML = typeof renderFooter === 'function' ? renderFooter() : ''
+  </script>
+</body>
+</html>
