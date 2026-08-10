@@ -1,45 +1,52 @@
-// 카오스 제로 나이트메어 — czncompass 캐릭터 목록을 브라우저로 확인. 러너 전용, DB 미변경.
+// 카오스 제로 나이트메어 — czncompass 캐릭터 카드 구조 확인. 러너 전용, DB 미변경.
 import { chromium } from 'playwright'
 
 const browser = await chromium.launch()
-const page = await browser.newPage({ locale: 'ko-KR', viewport: { width: 1500, height: 1000 } })
-
-const calls = []
-page.on('response', r => {
-  const u = r.url()
-  if (/\.(css|png|webp|jpg|jpeg|svg|ico|woff2?|gif)($|\?)/.test(u)) return
-  if (/czncompass\.com/.test(u) || /api|\.json/.test(u)) calls.push([r.status(), u])
-})
-
+const page = await browser.newPage({ locale: 'ko-KR', viewport: { width: 1500, height: 1200 } })
 await page.goto('https://www.czncompass.com/ko/characters', { waitUntil: 'networkidle', timeout: 90000 })
 await page.waitForTimeout(4000)
-// 지연 로딩 대비
-for (let i = 0; i < 12; i++) {
+for (let i = 0; i < 10; i++) {
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-  await page.waitForTimeout(500)
+  await page.waitForTimeout(400)
 }
 
-console.log('== 네트워크 (데이터 후보) ==')
-for (const [s, u] of calls.slice(0, 40)) console.log(`  ${s} ${u.slice(0, 170)}`)
-
-console.log('\n== 렌더된 캐릭터 ==')
-const info = await page.evaluate(() => {
-  const links = [...document.querySelectorAll('a[href*="/character"]')].map(a => ({
-    href: a.getAttribute('href'), text: a.textContent.trim().slice(0, 50),
-    img: a.querySelector('img')?.getAttribute('src') || null,
-  }))
-  const imgs = [...document.querySelectorAll('img')].map(i => i.getAttribute('src') || '').filter(Boolean)
-  const first = document.querySelector('a[href*="/character"]')
-  return { links, imgCount: imgs.length, imgSample: imgs.slice(0, 6),
-           cardHtml: first ? (first.outerHTML || '').slice(0, 900) : '' }
+// 캐릭터 이름 하나를 기준으로 그 카드(조상 요소)의 HTML 을 통째로 본다
+const dump = await page.evaluate(() => {
+  const NAMES = ['힐데', '테네브리아', '니아', '트리사']
+  const out = { cards: [], allImgs: [] }
+  out.allImgs = [...new Set([...document.querySelectorAll('img')]
+    .map(i => i.getAttribute('src') || '').filter(Boolean))]
+  for (const n of NAMES) {
+    const el = [...document.querySelectorAll('*')].find(
+      e => e.childElementCount === 0 && e.textContent.trim() === n)
+    if (!el) { out.cards.push({ name: n, html: '(못 찾음)' }); continue }
+    let card = el
+    for (let up = 0; up < 5 && card.parentElement; up++) {
+      card = card.parentElement
+      if (card.querySelector('img')) break
+    }
+    out.cards.push({ name: n, html: card.outerHTML.slice(0, 1400) })
+  }
+  return out
 })
-console.log(`  /character 링크 ${info.links.length}개`)
-for (const l of info.links.slice(0, 25)) console.log(`   · ${l.href}  "${l.text}"  img=${(l.img || '').slice(0, 80)}`)
-console.log(`  img 태그 ${info.imgCount}개: ${info.imgSample.join(' ').slice(0, 400)}`)
-if (info.cardHtml) console.log(`\n  카드 HTML:\n  ${info.cardHtml.replace(/\s+/g, ' ')}`)
 
-const txt = await page.evaluate(() => document.body.innerText)
-console.log(`\n  본문 ${txt.length}자`)
-console.log('  ' + txt.slice(0, 900).replace(/\n+/g, ' | '))
+console.log(`== 이미지 ${dump.allImgs.length}종 ==`)
+for (const u of dump.allImgs.slice(0, 45)) console.log('  ' + u)
+
+console.log('\n== 캐릭터 카드 HTML ==')
+for (const c of dump.cards) {
+  console.log(`\n---- ${c.name}\n${c.html.replace(/\s+/g, ' ')}`)
+}
+
+// 상세 페이지가 따로 있는지 (카드 클릭 시 URL 변화)
+const first = await page.$('img[src*="char"], img[alt]')
+if (first) {
+  const before = page.url()
+  await first.click({ timeout: 3000 }).catch(() => {})
+  await page.waitForTimeout(2500)
+  console.log(`\n클릭 후 URL: ${page.url()}${page.url() === before ? ' (변화 없음 → 모달)' : ''}`)
+  const t = await page.evaluate(() => document.body.innerText.slice(0, 700))
+  console.log('클릭 후 본문: ' + t.replace(/\n+/g, ' | '))
+}
 
 await browser.close()
