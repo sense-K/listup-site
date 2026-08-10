@@ -1054,8 +1054,8 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 ## 캐릭터 자동 동기화 (2026-08-05 구축)
 
 **매일 05:00 KST 에 GitHub Actions(`auto-sync.yml`)가 무인으로 돈다. 관리자가 누를 버튼 없음.**
-- 대상 11개 (`ops/import/run.mjs` 의 `SYNC_GAMES`):
-  원신·스타레일·젠레스·명조·에픽세븐·블루아카·명일방주·엔드필드·**우마무스메·우마무스메 서포트카드·림버스**
+- 대상 12개 (`ops/import/run.mjs` 의 `SYNC_GAMES`):
+  원신·스타레일·젠레스·명조·에픽세븐·블루아카·명일방주·엔드필드·**우마무스메·우마무스메 서포트카드·림버스**·**카오스 제로 나이트메어**
 - 구조: 공통 러너 `ops/import/run.mjs` + 게임별 어댑터 `ops/import/games/{slug}.mjs`
   - 어댑터는 "소스에서 캐릭터 배열을 뽑는 함수" 하나만 구현: `fetchCharacters(ctx)`
   - `meta.kind` — `'character'`(기본) / `'support'`. **대조·INSERT 모두 같은 kind 안에서만** 일어난다.
@@ -1162,6 +1162,37 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 
 ### 첫 실행 결과 (2026-08-05)
 단빵숲 184건 수집 → 기존 173건 매칭, **신규 11건 INSERT + 이미지 11장** (거미집·새벽 사무소·LCD 현장추리팀 등 최신 시즌)
+
+## 카오스 제로 나이트메어 (czn) — 2026-08-10 등록
+
+| 항목 | 값 |
+|---|---|
+| slug | `czn` (id `game_czn`) · emoji 🌑 · color `#7c3aed` |
+| 서버 | 아시아(ASIA) / 글로벌(GLOBAL) |
+| 캐릭터 | **35명** (5성/4성) |
+| 재화(돌계) | **미등록** — 재화 이름 + 1연당 개수 확보하면 `Currency` 행만 추가하면 등록 UI 가 자동으로 켜진다 |
+
+### 데이터 소스 — czncompass (팬 공략 위키)
+`ops/import/games/czn.mjs` · **Playwright 필요**(Next.js 클라이언트 렌더).
+`/ko/characters` 와 `/en/characters` 를 각각 렌더해 캐릭터 번호로 맞춘다(영문 이름 = slug 용).
+
+카드 DOM 에서 뽑는 값:
+| 대상 | 셀렉터 | 결과 |
+|---|---|---|
+| 이름·번호 | `img[src*=portrait_character_crop_half_{id}]` | `alt`=한국어 이름 |
+| 클래스 | `img[src*=icon_job_]` | `alt`=뱅가드/레인저/컨트롤러/사이오닉/스트라이커/헌터 → `weaponType` |
+| 속성(에고) | `img[src*=/ego/]` | `alt`=질서/정의/본능/공허/열정 → `element` |
+| 등급 | style 의 `slot_rarity_ssr\|sr` | ssr→5성, sr→4성 → `tier` |
+
+- 이미지는 **핫링크 금지** — `img/characters/czn/{번호}.webp` 로 repo 에 저장해 resetlist.kr 이 서빙
+- 어댑터는 '신규 캐릭터' 가 아니라 **'파일이 없는 캐릭터'** 를 받는다 → 등록만 되고 이미지가 빠져도 다음 실행에서 스스로 채워짐
+- `import-game.yml` 의 이미지 커밋 스텝은 `[import:` 태그도 대상 (limbus·czn 공통)
+
+### 페이지
+`/trade/czn/` · `/trade/price/czn/` · `/game/czn/` · `/game/czn/characters/` ·
+`functions/game/czn/characters/[slug].js`(상세 SSR, `CZN_GAME_ID='game_czn'`)
+- `tier` 가 이미 `5성`/`4성` 문자열 → 배지 클래스도 `.badge-5성`/`.badge-4성` (다른 게임의 `badge-S/A` 와 다름)
+- `_routes.json` 에 `/game/czn` 4경로 + `/trade/czn` 2경로 exclude, sitemap 정적 4개 + `CHAR_DETAIL_GAMES.czn`
 
 ### 팬사이트 자동화 조사 결과 (2026-08-05, 비활성 게임 포함 전수)
 - **명일방주 + 엔드필드 자동화 확정** → 어댑터 구축 + SYNC_GAMES 편입 완료. 둘 다 Game/Server 등록돼 있음(활성 상태였음).
