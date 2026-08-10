@@ -1170,7 +1170,7 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 | slug | `czn` (id `game_czn`) · emoji 🌑 · color `#7c3aed` |
 | 서버 | 아시아(ASIA) / 글로벌(GLOBAL) |
 | 캐릭터 | **35명** (5성/4성) |
-| 재화(돌계) | **미등록** — 재화 이름 + 1연당 개수 확보하면 `Currency` 행만 추가하면 등록 UI 가 자동으로 켜진다 |
+| 재화(돌계) | **크리스탈** · 1연 = 130개 (`cur_czn_crystal`) |
 
 ### 데이터 소스 — czncompass (팬 공략 위키)
 `ops/import/games/czn.mjs` · **Playwright 필요**(Next.js 클라이언트 렌더).
@@ -1231,7 +1231,7 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 ### 스키마 (반영 완료)
 - `User`(=상점 1:1): `username`(영문 아이디, URL용, 유니크, 기존 유저 shop0001~ 백필, 신규는 트리거 `trg_user_default_username`이 shop0300~ 자동발급), `shopBio`, `isVerified`, `sellerGrade`, `deliveryTime`, `refundPolicy`, `supportRecovery`, `businessHours`. 상점 이름 = 기존 `nickname`.
 - `Listing`: `type`('reroll'=리세계/'currency'=돌계, CHECK 제약) — **등록 화면에서 사용자가 고르지 않고 내용으로 자동 판별**(캐릭터 없이 재화만 있으면 'currency', 그 외 'reroll'). 거래소 유형 탭 필터용으로만 쓰임. `stock`(재고), `isAlwaysOn`(상시판매).
-- 돌계 재화: `Currency`(gameId별) + `ListingCurrency(amount)`. `ratePerUnit`=1연당 재화량 → "약 N연"=floor(amount/ratePerUnit). 시드: 원신 원석160/스타레일 성옥160/젠레스 폴리크롬160/명조 별의 소리160/니케 쥬얼300/블아 청휘석120.
+- 돌계 재화: `Currency`(gameId별) + `ListingCurrency(amount)`. `ratePerUnit`=1연당 재화량 → "약 N연"=floor(amount/ratePerUnit). 시드: 원신 원석160/스타레일 성옥160/젠레스 폴리크롬160/명조 별의 소리160/니케 쥬얼300/블아 청휘석120/카오스 제로 나이트메어 크리스탈130.
 - **보안 트리거** `trg_protect_user_admin_cols`: PostgREST 경유 비관리자(zzabhm@gmail.com 외)의 `isVerified`/`sellerGrade`/`role`/`trustScore` 변경 무시(셀프 인증배지 차단). psql 경로는 통과 → 인증 부여는 SQL Runner로.
 
 ### 페이지
