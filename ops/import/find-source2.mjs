@@ -39,9 +39,9 @@ console.log(`\n캐릭터 외 키 ${other.length}개: ${other.slice(0, 20).join('
 if (DB) {
   const q = sql => execFileSync('psql', [DB, '-t', '-A', '-F', '\t', '-c', sql], { encoding: 'utf8' })
     .trim().split('\n').filter(Boolean).map(l => l.split('\t'))
-  const rows = q(`SELECT "nameKo", coalesce(metadata->>'srcId',''), coalesce(tier,'')
+  const rows = q(`SELECT c."nameKo", coalesce(c.metadata->>'srcId',''), coalesce(c.tier,'')
                   FROM "Character" c JOIN "Game" g ON g.id=c."gameId"
-                  WHERE g.slug='czn' ORDER BY "nameKo";`)
+                  WHERE g.slug='czn' ORDER BY c."nameKo";`)
   console.log(`\n우리 DB 카제나 캐릭터 ${rows.length}명`)
   const officialByNum = {}
   for (const id of ids) {
