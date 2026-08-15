@@ -1190,6 +1190,16 @@ https://static-pubcomm.onstove.com/live/czn/multilingual/czn_homepage_brand_char
 - 같은 규칙의 다른 페이지: `czn_homepage_brand_main.json`, `czn_common_common.json`
 - 공식 이미지 디렉터리는 403 — 파일명을 아는 것만 접근 가능
 
+#### 카드 데이터 (2026-08-15)
+**공식에는 없다.** `czn_homepage_brand_card*` 계열 JSON 은 전부 404.
+카드·몬스터·인카운터 DB 는 **czncompass 가 직접 구축**해 자기 JS 번들에 넣어둔 것이다 (API 아님).
+- `617bed1dd2e06513.js` (4.7MB) — 카오스 인카운터/보상 DB. **6개 언어**(default·ko·en·ja·zhs·zht)
+  - `uk_*` 이벤트 노드 3,429종 / `card_id`(`card_enc_*`) 26종 / `dbid_*` 카드풀 필터 27종 / `type:"CARD_*"` 13종
+- `97309bb70ea0624e.js` (3.6MB) — 덱빌더 i18n. 카드 분류 어휘: 중립·몬스터·금기·고유·기본, 번뜩임(일반/신성), 페르소나, 각인
+- 살아있는 페이지: `/ko/characters` `/ko/monsters` `/ko/partners`(47명) `/ko/chaos`(8존)
+  카드정보·덱빌더 경로는 미확인 — 사이트가 JS 라우팅이라 `<a href>` 가 `/ko`, `/ko/privacy` 뿐이다
+- ⚠ 팬사이트의 자체 구축물이므로 사용 시 출처 표기·사전 양해가 맞고, 번들 파싱은 빌드마다 깨질 수 있다
+
 ### 데이터 소스 — czncompass (팬 공략 위키)
 `ops/import/games/czn.mjs` · **Playwright 필요**(Next.js 클라이언트 렌더).
 `/ko/characters` 와 `/en/characters` 를 각각 렌더해 캐릭터 번호로 맞춘다(영문 이름 = slug 용).
