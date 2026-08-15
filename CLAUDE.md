@@ -1172,6 +1172,24 @@ GitHub Actions `import-game.yml` + `ops/import/umamusume.mjs` 경유. 커밋 메
 | 캐릭터 | **35명** (5성/4성) |
 | 재화(돌계) | **크리스탈** · 1연 = 130개 (`cur_czn_crystal`) |
 
+### 스토브 공식 공개 데이터 (2026-08-15 조사)
+**전적/대전기록 API 는 없다.** `static-pubcomm.onstove.com/gameRecord/{game}/` 는 **epic7 만 200**,
+czn·lostark·outerplane·sevenknights 는 전부 403 → 에픽세븐이 예외적 특별 케이스다.
+
+대신 **공식 홈페이지 캐릭터 데이터는 열려 있다** (인증 불필요):
+```
+https://static-pubcomm.onstove.com/live/czn/multilingual/czn_homepage_brand_character.json
+```
+- 스토브 게임코드 `czn` / 내부 게임ID `STOVE_CHAOSZERO` / 공식 홈은 Nuxt SPA (`live/czn/brand/`)
+- **4개 언어(ko·en·ja·zh-TW) 전부 26명** 동일 구조
+- 필드: `Name`, `Description`(대표 대사), `Voice_Actor_Ko`, `Voice_Actor_Ja`, `Card_Text_1~5`(카드=스킬명)
+  + `Family_(fam_*)_Name`(세력), `Character_Role_(role_*)`(역할)
+- **`char_` 번호가 czncompass 의 `portrait_character_crop_half_{번호}` 와 같은 ID 공간** →
+  우리 `Character.metadata.srcId` 로 그대로 조인된다 (35명 중 18명 매칭)
+- 공식 JSON 26명 ↔ 우리 DB 35명: 공식에만 8명(NPC 추정), 우리에만 17명(공식 홈이 출시 시점 기준이라 신캐 누락)
+- 같은 규칙의 다른 페이지: `czn_homepage_brand_main.json`, `czn_common_common.json`
+- 공식 이미지 디렉터리는 403 — 파일명을 아는 것만 접근 가능
+
 ### 데이터 소스 — czncompass (팬 공략 위키)
 `ops/import/games/czn.mjs` · **Playwright 필요**(Next.js 클라이언트 렌더).
 `/ko/characters` 와 `/en/characters` 를 각각 렌더해 캐릭터 번호로 맞춘다(영문 이름 = slug 용).
