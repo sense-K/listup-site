@@ -1,72 +1,67 @@
-// 카제나 카드 DB 추출 가능성 검증 — 러너 전용, DB 미변경. [fs2]
-//
-// 3차까지 확인된 것: czncompass 의 JS 청크 617bed1dd2e06513.js (4.7MB) 안에
-// 카드/이벤트/보상 데이터가 5개 언어(default·ko·en·ja·zhs·zht)로 박혀 있다.
-// 이번엔 "실제로 구조화된 카드 목록을 뽑을 수 있는가" 를 본다.
+// 카제나 카드 DB — 실제 메뉴 링크를 읽어 카드 페이지를 찾는다. 러너 전용, DB 미변경. [find-source2]
+import { chromium } from 'playwright'
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
+const browser = await chromium.launch()
+const page = await browser.newPage({ locale: 'ko-KR', viewport: { width: 1500, height: 1100 } })
+await page.goto('https://www.czncompass.com/ko', { waitUntil: 'networkidle', timeout: 60000 })
+await page.waitForTimeout(2500)
 
-// 청크 파일명은 빌드마다 바뀌므로 /ko 에서 목록을 얻어 가장 큰 것을 고른다
-const home = await (await fetch('https://www.czncompass.com/ko', { headers: { 'User-Agent': UA } })).text()
-const chunkPaths = [...new Set([...home.matchAll(/["'](\/_next\/static\/chunks\/[\w.-]+\.js)["']/g)].map(m => m[1]))]
-console.log(`청크 후보 ${chunkPaths.length}개`)
+console.log('========== ① 사이트의 실제 링크 전부 ==========')
+const links = await page.evaluate(() =>
+  [...new Set([...document.querySelectorAll('a[href]')].map(a => a.getAttribute('href')))]
+    .filter(h => h && h.startsWith('/')))
+console.log(links.join('\n'))
 
-let best = { len: 0 }
-for (const p of chunkPaths) {
+// 메뉴를 눌러야 나오는 드롭다운(정보 등)도 열어본다
+const more = await page.evaluate(async () => {
+  const out = []
+  for (const el of [...document.querySelectorAll('button,[role=button],summary')]) {
+    const t = (el.textContent || '').trim()
+    if (/정보|가이드|메뉴|더보기/.test(t)) { el.click(); out.push(t) }
+  }
+  await new Promise(r => setTimeout(r, 800))
+  return { clicked: out, links: [...new Set([...document.querySelectorAll('a[href]')].map(a => a.getAttribute('href')))].filter(h => h && h.startsWith('/')) }
+})
+console.log(`\n메뉴 클릭 후 추가 링크: ${more.links.filter(l => !links.includes(l)).join(', ') || '없음'}`)
+const all = [...new Set([...links, ...more.links])]
+await page.close()
+
+// 카드/덱 관련 경로만 골라 방문
+const targets = all.filter(h => /card|deck|build|info|db|neutral|persona|epiphany|번뜩/i.test(h))
+console.log(`\n========== ② 카드/덱 관련 경로 방문 (${targets.length}개) ==========`)
+console.log(targets.join('  '))
+
+for (const t of targets.slice(0, 6)) {
+  const p = await browser.newPage({ locale: 'ko-KR', viewport: { width: 1500, height: 1100 } })
+  const chunks = []
+  p.on('response', r => { if (/_next\/static\/chunks\/.*\.js/.test(r.url())) chunks.push(r.url()) })
+  let status = 0
   try {
-    const t = await (await fetch(`https://www.czncompass.com${p}`, { headers: { 'User-Agent': UA } })).text()
-    if (t.length > best.len && /"ko":/.test(t)) best = { len: t.length, path: p, text: t }
-  } catch {}
+    const resp = await p.goto(`https://www.czncompass.com${t}`, { waitUntil: 'networkidle', timeout: 60000 })
+    status = resp?.status() ?? 0
+    await p.waitForTimeout(3500)
+    for (let i = 0; i < 6; i++) { await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await p.waitForTimeout(400) }
+  } catch (e) { console.log(`  (${t} 실패: ${e.message.slice(0, 50)})`) }
+
+  const txt = await p.evaluate(() => document.body.innerText).catch(() => '')
+  console.log(`\n--- [${status}] ${t}  본문 ${txt.length}자`)
+  console.log(`  ${txt.slice(0, 800).replace(/\n+/g, ' | ')}`)
+
+  // 이 페이지에서만 새로 로드된 청크에서 카드 레코드를 찾는다
+  for (const u of chunks) {
+    let s = ''
+    try { s = await (await fetch(u)).text() } catch { continue }
+    if (s.length < 200000) continue
+    const cardIds = [...new Set([...s.matchAll(/"id":"((?:nt|ps|uq|bs|fb|card)_[\w-]+)"/g)].map(x => x[1]))]
+    const koNames = [...s.matchAll(/"ko":"([^"]{1,24})"/g)].length
+    if (cardIds.length > 20) {
+      console.log(`  ★ ${u.split('/').pop()} (${s.length}B) — 카드형 id ${cardIds.length}종, ko 문자열 ${koNames}건`)
+      console.log(`     예: ${cardIds.slice(0, 12).join(', ')}`)
+      const i = s.indexOf(`"${cardIds[0]}"`)
+      console.log(`     레코드: ${s.slice(Math.max(0, i - 300), i + 700).replace(/\s+/g, ' ')}`)
+      break
+    }
+  }
+  await p.close()
 }
-console.log(`가장 큰 다국어 청크: ${best.path} (${best.len}B)\n`)
-const T = best.text || ''
-
-// ── 다국어 이름 객체를 전부 수집: {"default":"...","ko":"...","en":"...","ja":"..."}
-const nameObjs = []
-const re = /\{"default":"((?:[^"\\]|\\.)*)","ko":"((?:[^"\\]|\\.)*)","en":"((?:[^"\\]|\\.)*)"/g
-let m
-while ((m = re.exec(T)) !== null) {
-  const dec = s => { try { return JSON.parse(`"${s}"`) } catch { return s } }
-  nameObjs.push({ def: dec(m[1]), ko: dec(m[2]), en: dec(m[3]), at: m.index })
-}
-console.log(`다국어 문자열 객체 ${nameObjs.length}개`)
-console.log('  예시 10개:')
-for (const o of nameObjs.slice(0, 10)) console.log(`    ko="${o.ko.slice(0, 40)}"  en="${o.en.slice(0, 40)}"`)
-
-// ── 카드로 보이는 레코드: id 와 다국어 name 이 붙어 있는 패턴
-console.log('\n── 카드 레코드 패턴 탐색')
-const PATTERNS = [
-  ['dbid_ 필터',   /"filter_id":"(dbid_[\w]+)"/g],
-  ['card id',      /"card_id":"([\w-]+)"/g],
-  ['id=card_',     /"id":"(card_[\w-]+)"/g],
-  ['id=neutral_',  /"id":"(neutral_[\w-]+)"/g],
-  ['id=uk_ (고유)', /"id":"(uk_[\w-]+)"/g],
-  ['type CARD_',   /"type":"(CARD_[\w]+)"/g],
-]
-for (const [label, rx] of PATTERNS) {
-  const all = [...T.matchAll(rx)].map(x => x[1])
-  const uniq = [...new Set(all)]
-  console.log(`  ${label.padEnd(14)} ${String(uniq.length).padStart(5)}종 (총 ${all.length}회)  예: ${uniq.slice(0, 6).join(', ').slice(0, 130)}`)
-}
-
-// ── 카드 종류 키워드가 실제로 데이터에 붙어 나오는지
-console.log('\n── 카드 종류별 등장')
-for (const [ko, en] of [['중립','Neutral'], ['몬스터','Monster'], ['금기','Forbidden'],
-                        ['고유','Unique'], ['기본','Basic'], ['번뜩임','Epiphany'], ['페르소나','Persona'], ['각인','Engrav']]) {
-  const c = (T.match(new RegExp(`"ko":"[^"]*${ko}[^"]*"`, 'g')) || []).length
-  console.log(`  ${ko.padEnd(5)} / ${en.padEnd(10)} ko 문자열 ${c}건`)
-}
-
-// ── 가장 그럴듯한 카드 배열 덩어리 한 곳을 통째로 보여준다
-console.log('\n── 카드 레코드 실물 샘플')
-const anchor = T.indexOf('"card_id"') >= 0 ? T.indexOf('"card_id"')
-              : T.indexOf('dbid_neutral') >= 0 ? T.indexOf('dbid_neutral') : -1
-if (anchor > 0) console.log(T.slice(Math.max(0, anchor - 700), anchor + 900).replace(/\s+/g, ' '))
-else console.log('  카드 앵커를 못 찾음')
-
-// ── 이미지 CDN 에 카드 이미지가 있는지
-console.log('\n── 카드 이미지 경로')
-const imgs = [...new Set([...T.matchAll(/assets\.czncompass\.com\/[\w/.-]+/g)].map(x => x[0]))]
-console.log(`  assets 경로 ${imgs.length}종`)
-for (const u of imgs.filter(u => /card/i.test(u)).slice(0, 10)) console.log(`    ${u}`)
-if (!imgs.some(u => /card/i.test(u))) console.log(`    (card 포함 경로 없음) 전체 예: ${imgs.slice(0, 6).join('  ')}`)
+await browser.close()
