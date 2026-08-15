@@ -1,100 +1,96 @@
-// 카오스 제로 나이트메어 — 스토브(스마일게이트) 쪽에 공개 API 가 있는지 탐색. 러너 전용, DB 미변경.
+// 카제나 스토브 공개 데이터 2차 탐색 — 러너 전용, DB 미변경.
 //
-// 근거: 에픽세븐은 static-pubcomm.onstove.com/gameRecord/epic7/epic7_hero.json 을 공개로 서빙한다.
-//       같은 퍼블리셔·같은 플랫폼이므로 카제나도 동일 규칙의 경로가 있을 수 있다.
+// 1차에서 확인된 것:
+//   · 스토브 공식 게임코드 = czn, 내부 게임ID = STOVE_CHAOSZERO
+//   · 공식 홈은 Nuxt 앱: static-pubcomm.onstove.com/live/czn/brand/
+//   · 데이터 JSON 규칙: static-pubcomm.onstove.com/live/czn/{섹션}/czn_{페이지}.json
+//   · gameRecord/czn/* 는 전부 404 (에픽세븐의 gameRecord/epic7/* 는 여전히 200)
 //
-// ① 스토브 정적 호스트를 게임코드 × 파일명 조합으로 훑기
-// ② 공식 홈페이지 / 스토브 커뮤니티를 브라우저로 열어 실제로 호출하는 API 를 전부 캡처
-// ③ __NUXT__ 페이로드에서 API 베이스 URL 추출
-
-import { chromium } from 'playwright'
+// 이번에 확인할 것:
+//   ① Nuxt 빌드 매니페스트 → 공식 홈에 어떤 페이지(라우트)가 있는지 전부
+//   ② multilingual/analytics JSON 을 페이지명 조합으로 훑기 (캐릭터 페이지가 있으면 여기 걸림)
+//   ③ 이미 확인된 JSON 안에 실제로 뭐가 들었는지 (캐릭터 이름/이미지가 있나)
+//   ④ 스토브 전적(gameRecord) API 를 STOVE_CHAOSZERO 로 대입
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
 const H = { 'User-Agent': UA, 'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.8' }
+const BASE = 'https://static-pubcomm.onstove.com/live/czn'
 
-const hit = []
-async function tryUrl(url) {
+const found = []
+async function get(url, { quiet = false, show = 0 } = {}) {
   try {
     const r = await fetch(url, { headers: H, redirect: 'follow' })
+    if (!r.ok) { if (!quiet) console.log(`  ${r.status}  ${url}`); return null }
     const ct = (r.headers.get('content-type') || '').split(';')[0]
-    const len = Number(r.headers.get('content-length') || 0)
-    if (r.ok && /json|javascript|octet/.test(ct)) {
-      const body = await r.text()
-      console.log(`  ✅ ${r.status} ${ct} ${body.length}B  ${url}`)
-      console.log(`       앞부분: ${body.slice(0, 200).replace(/\s+/g, ' ')}`)
-      hit.push(url)
-      return body
-    }
-    if (r.ok) console.log(`  ·  ${r.status} ${ct} ${len || '?'}B  ${url}`)
-    return null
-  } catch { return null }
+    const body = await r.text()
+    console.log(`  ✅ ${r.status} ${ct} ${body.length}B  ${url}`)
+    found.push(url)
+    if (show) console.log(`      ${body.slice(0, show).replace(/\s+/g, ' ')}`)
+    return body
+  } catch (e) { if (!quiet) console.log(`  ERR ${url} — ${e.message.slice(0, 50)}`); return null }
 }
 
-console.log('==================== ① 스토브 정적 호스트 규칙 대입 ====================')
-console.log('(에픽세븐 실제 경로: static-pubcomm.onstove.com/gameRecord/epic7/epic7_hero.json)\n')
-// 먼저 에픽세븐이 지금도 되는지 확인 — 규칙이 살아있는지 기준점
-await tryUrl('https://static-pubcomm.onstove.com/gameRecord/epic7/epic7_hero.json')
-
-const CODES = ['czn', 'chaoszeronightmare', 'chaoszero', 'chaos_zero_nightmare', 'cznm', 'nightmare']
-const FILES = [
-  c => `gameRecord/${c}/${c}_hero.json`,
-  c => `gameRecord/${c}/${c}_character.json`,
-  c => `gameRecord/${c}/character.json`,
-  c => `gameRecord/${c}/hero.json`,
-  c => `gameRecord/${c}/index.json`,
-  c => `event/live/${c}/guide/data/character.json`,
-]
-for (const c of CODES) for (const f of FILES) await tryUrl(`https://static-pubcomm.onstove.com/${f(c)}`)
-
-console.log('\n==================== ② 브라우저로 실제 호출 캡처 ====================')
-const PAGES = [
-  ['공식 홈(ko)', 'https://chaoszeronightmare.onstove.com/ko'],
-  ['공식 캐릭터', 'https://chaoszeronightmare.onstove.com/ko/character'],
-  ['스토브 커뮤니티', 'https://page.onstove.com/chaoszeronightmare/kr'],
-]
-const browser = await chromium.launch()
-const seenApi = new Set()
-for (const [name, url] of PAGES) {
-  const page = await browser.newPage({ locale: 'ko-KR', viewport: { width: 1400, height: 1000 } })
-  const calls = []
-  page.on('response', r => {
-    const u = r.url()
-    if (/\.(png|jpg|jpeg|webp|gif|svg|woff2?|css|mp4|ico)($|\?)/i.test(u)) return
-    const ct = (r.headers()['content-type'] || '').split(';')[0]
-    // 데이터로 보이는 것만
-    if (/json/.test(ct) || /\/api\/|\/v\d\/|gameRecord|\.json/i.test(u)) calls.push([r.status(), ct, u])
-  })
-  try {
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 })
-    await page.waitForTimeout(3500)
-  } catch (e) { console.log(`  (${name} 로드 실패: ${e.message.slice(0, 60)})`) }
-  console.log(`\n--- ${name}  ${url}`)
-  const uniq = [...new Map(calls.map(c => [c[2], c])).values()]
-  for (const [s, ct, u] of uniq.slice(0, 30)) {
-    console.log(`  ${s} ${(ct || '-').padEnd(18)} ${u.slice(0, 150)}`)
-    if (/json/.test(ct)) seenApi.add(u.split('?')[0])
-  }
-  if (!uniq.length) console.log('  (데이터 호출 없음 — 정적 페이지)')
-  // 페이지에 박힌 API 베이스 URL
-  const bases = await page.evaluate(() => {
-    const txt = document.documentElement.innerHTML
-    return [...new Set([...txt.matchAll(/https?:\/\/[a-z0-9.-]*onstove\.com[^"'\\ )]*/gi)].map(m => m[0]))]
-      .filter(u => /api|record|static|data|cdn/i.test(u)).slice(0, 25)
-  }).catch(() => [])
-  if (bases.length) { console.log('  페이지에 박힌 onstove 주소:'); for (const b of bases) console.log(`    ${b.slice(0, 150)}`) }
-  await page.close()
-}
-await browser.close()
-
-console.log('\n==================== ③ 스토브 공개 API 후보 ====================')
+console.log('========== ① Nuxt 빌드 매니페스트 (공식 홈 라우트 전체) ==========')
 for (const u of [
-  'https://api.onstove.com/gamerecord/v1/games',
-  'https://api.onstove.com/gamerecord/v1.0/games',
-  'https://static-pubcomm.onstove.com/gameRecord/games.json',
-  'https://static-pubcomm.onstove.com/gameRecord/index.json',
-]) await tryUrl(u)
+  `${BASE}/brand/_nuxt/builds/latest.json`,
+  `${BASE}/brand/_nuxt/builds/meta/860e8073-82b2-4f77-b215-c849f72c99e1.json`,
+]) {
+  const b = await get(u, { show: 600 })
+  if (b) {
+    try {
+      const j = JSON.parse(b)
+      const keys = Object.keys(j)
+      console.log(`      키: ${keys.join(', ')}`)
+      // prerendered / routes 배열이 있으면 페이지 목록이다
+      for (const k of ['prerendered', 'routes', 'pages']) {
+        if (Array.isArray(j[k])) console.log(`      ${k} (${j[k].length}개): ${j[k].slice(0, 60).join(' ')}`)
+      }
+    } catch {}
+  }
+}
 
-console.log('\n==================== 요약 ====================')
-console.log(hit.length ? `데이터로 쓸 수 있는 응답 ${hit.length}건:\n  ${hit.join('\n  ')}`
-                       : '규칙 대입으로는 카제나용 공개 JSON 을 못 찾음')
-if (seenApi.size) console.log(`브라우저가 실제로 부른 JSON API:\n  ${[...seenApi].join('\n  ')}`)
+console.log('\n========== ② 페이지별 JSON 훑기 ==========')
+const PAGES = [
+  'common_common', 'common_error', 'homepage_brand_main',
+  'homepage_brand_character', 'homepage_brand_characters', 'homepage_brand_hero',
+  'homepage_brand_world', 'homepage_brand_media', 'homepage_brand_story',
+  'homepage_brand_guide', 'homepage_brand_system', 'homepage_brand_about',
+  'homepage_character', 'homepage_characters', 'character', 'characters',
+]
+for (const sec of ['multilingual', 'analytics']) {
+  console.log(`  -- ${sec}`)
+  for (const p of PAGES) await get(`${BASE}/${sec}/czn_${p}.json`, { quiet: true })
+}
+
+console.log('\n========== ③ 이미 확인된 JSON 내용 ==========')
+for (const u of [`${BASE}/multilingual/czn_common_common.json`,
+                 `${BASE}/multilingual/czn_homepage_brand_main.json`]) {
+  const b = await get(u)
+  if (!b) continue
+  try {
+    const j = JSON.parse(b)
+    const flat = JSON.stringify(j)
+    console.log(`      최상위 키: ${Object.keys(j).slice(0, 15).join(', ')}`)
+    // 캐릭터 이름이 들어있는지 (우리가 아는 35명 중 몇 명이 보이나)
+    const NAMES = ['힐데', '테네브리아', '아델하이트', '하이데마리', '나르쟈', '디아나', '루크', '유키']
+    const seen = NAMES.filter(n => flat.includes(n))
+    console.log(`      캐릭터 이름 포함: ${seen.length ? seen.join(', ') : '없음'}`)
+    console.log(`      샘플: ${flat.slice(0, 500)}`)
+  } catch {}
+}
+
+console.log('\n========== ④ 스토브 전적(gameRecord) API 대입 ==========')
+// 에픽세븐이 쓰는 규칙 + 내부 게임ID(STOVE_CHAOSZERO) 조합
+const RECORD = [
+  'https://static-pubcomm.onstove.com/gameRecord/czn/czn_character.json',
+  'https://static-pubcomm.onstove.com/gameRecord/STOVE_CHAOSZERO/character.json',
+  'https://api.onstove.com/gamerecord/v1.0/STOVE_CHAOSZERO/characters',
+  'https://api.onstove.com/gamerecord/v1.0/czn/characters',
+  'https://gamerecord.onstove.com/v1.0/czn/characters',
+  'https://api.onstove.com/game/v1.0/STOVE_CHAOSZERO',
+  'https://maintenance.onstove.com/v2.0/maintenance/GAME/STOVE_CHAOSZERO/PC_MARKET/ko',
+]
+for (const u of RECORD) await get(u, { show: 250 })
+
+console.log('\n========== 요약 ==========')
+console.log(found.length ? `열린 응답 ${found.length}건:\n  ${found.join('\n  ')}` : '아무것도 못 찾음')

@@ -49,6 +49,7 @@ jobs:
       contains(github.event.head_commit.message, '[fix-nikke-img]') ||
       contains(github.event.head_commit.message, '[find-source]') ||
       contains(github.event.head_commit.message, '[find-source2]') ||
+      contains(github.event.head_commit.message, '[fs2]') ||
       contains(github.event.head_commit.message, '[limbus-probe]') ||
       contains(github.event.head_commit.message, '[limbus-import]') ||
       contains(github.event.head_commit.message, '[uma-sup-probe]') ||
@@ -117,6 +118,8 @@ jobs:
             SCRIPT=ops/import/umamusume-support.mjs; MODE=import
           elif echo "$MSG" | grep -q '\[uma-sup-probe\]'; then
             SCRIPT=ops/import/umamusume-support.mjs; MODE=probe
+          elif echo "$MSG" | grep -q '\[fs2\]'; then
+            SCRIPT=ops/import/find-source2.mjs; MODE=probe
           elif echo "$MSG" | grep -q '\[find-source2\]'; then
             SCRIPT=ops/import/find-source2.mjs; MODE=probe
           elif echo "$MSG" | grep -q '\[find-source\]'; then
