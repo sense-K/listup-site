@@ -29,6 +29,7 @@ function errorPage(status, heading, msg) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-adsense-account" content="ca-pub-2411291444354261">
   <title>${esc(heading)} | 리세리스트</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -146,6 +147,7 @@ export async function onRequest({ params }) {
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="shortcut icon" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-adsense-account" content="ca-pub-2411291444354261">
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(description)}">
   <meta name="keywords" content="${esc(nickname)} 상점, 판매자 상점, 대행 상점, 게임 계정 대행, 리세계 대행, 리세계 계정 판매, 돌계 판매, 돌계 거래, 리세리스트">

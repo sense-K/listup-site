@@ -21,6 +21,7 @@ async function supaGet(path) {
 function respond404(msg) {
   return new Response(`<!DOCTYPE html>
 <html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="google-adsense-account" content="ca-pub-2411291444354261">
 <title>캐릭터를 찾을 수 없어요 | 리세리스트</title><link rel="stylesheet" href="/css/style.css"></head>
 <body><div id="navbar-container"></div>
 <div style="max-width:560px;margin:80px auto;padding:20px;text-align:center;">
@@ -119,6 +120,7 @@ export async function onRequest({ params }) {
 <head>
   <meta charset="UTF-8"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="shortcut icon" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-adsense-account" content="ca-pub-2411291444354261">
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(desc)}">
   <meta name="keywords" content="${esc(keywords)}">
