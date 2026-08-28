@@ -167,6 +167,13 @@ jobs:
             grep -q "$n" /tmp/cfg.js && echo "  OK  config.js $n" || echo "::error::config.js에 $n 없음"
           done
           grep -q "'/trade/register'" /tmp/cfg.js && echo "  OK  거래 등록 광고 제외" || echo "::error::광고 제외 경로 없음"
+          echo "== 약관·방침 (애드센스 정책 필수) =="
+          check "https://resetlist.kr/privacy/" 200 "개인정보처리방침"
+          check "https://resetlist.kr/privacy/" 200 "AdSense"
+          check "https://resetlist.kr/terms/" 200 "통신판매중개자"
+          grep -q '"/privacy/"' /tmp/cfg.js && echo "  OK  푸터 방침 링크" || echo "::error::푸터에 개인정보처리방침 링크 없음"
+          grep -q '"/terms/"' /tmp/cfg.js && echo "  OK  푸터 약관 링크" || echo "::error::푸터에 이용약관 링크 없음"
+          check "https://resetlist.kr/sitemap.xml" 200 "/privacy/"
           echo "== 회귀 =="
           check "https://resetlist.kr/" 200 "리세리스트"
           check "https://resetlist.kr/trade/" 200 "돌계"

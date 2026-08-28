@@ -72,6 +72,8 @@ const STATIC_URLS = [
   { loc: '/trade/umamusume/',             priority: '0.9', changefreq: 'daily'   },
   { loc: '/trade/price/umamusume/',       priority: '0.7', changefreq: 'weekly'  },
   { loc: '/contact/',                     priority: '0.4', changefreq: 'monthly' },
+  { loc: '/terms/',                       priority: '0.3', changefreq: 'yearly'  },
+  { loc: '/privacy/',                     priority: '0.3', changefreq: 'yearly'  },
 ]
 
 // 캐릭터 상세 페이지가 있는 게임 (slug → URL 경로 매핑)

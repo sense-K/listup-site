@@ -2188,6 +2188,82 @@ a { text-decoration: none; color: inherit; }
   .footer-disclaimer { text-align: left; line-height: 1.6; }
 }
 
+/* ===== 약관·방침 등 문서 페이지 (/privacy/, /terms/) ===== */
+.legal-wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 40px 24px 90px;
+  color: var(--text, #1f2333);
+  line-height: 1.75;
+  font-size: 15px;
+}
+.legal-header { margin-bottom: 28px; }
+.legal-header h1 { font-size: 28px; font-weight: 900; margin: 0 0 6px; }
+.legal-meta { font-size: 13px; color: var(--text-muted, #6b7280); margin: 0; }
+.legal-lead {
+  background: #f8f7ff;
+  border: 1px solid #e6e1ff;
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-size: 14px;
+  margin: 0 0 32px;
+}
+.legal-callout {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-left: 4px solid #f59e0b;
+  border-radius: 10px;
+  padding: 16px 18px;
+  font-size: 14px;
+  margin: 0 0 32px;
+}
+.legal-wrap h2 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 34px 0 10px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+.legal-wrap h2:first-of-type { border-top: 0; padding-top: 0; }
+.legal-wrap p { margin: 0 0 12px; }
+.legal-list { margin: 0 0 12px; padding-left: 20px; }
+.legal-list li { margin-bottom: 7px; }
+.legal-ol { list-style: decimal; }
+.legal-note {
+  font-size: 13px;
+  color: var(--text-muted, #6b7280);
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 14px;
+  font-size: 14px;
+}
+.legal-table th, .legal-table td {
+  border: 1px solid var(--border, #e5e7eb);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.legal-table th { background: #f9fafb; font-weight: 700; white-space: nowrap; }
+.legal-wrap a { color: var(--primary, #7c3aed); }
+.legal-footer-links {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border, #e5e7eb);
+  font-size: 14px;
+}
+@media (max-width: 768px) {
+  .legal-wrap { padding: 28px 16px 70px; font-size: 14.5px; }
+  .legal-header h1 { font-size: 23px; }
+  /* 표는 가로로만 스크롤 — 본문이 밀리지 않게 */
+  .legal-table { display: block; overflow-x: auto; white-space: nowrap; }
+  .legal-table td { white-space: normal; min-width: 150px; }
+}
+
 /* ===== 광고 (AdSense) =====
    config.js 의 mountAds() 가 넣는다. 슬롯 ID가 비어 있으면 아예 렌더되지 않음. */
 .ad-unit {

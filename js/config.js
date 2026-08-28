@@ -598,6 +598,8 @@ function renderFooter() {
             <div class="footer-link-title">고객지원</div>
             <div class="footer-links">
               <a href="/contact/">문의하기</a>
+              <a href="/terms/">이용약관</a>
+              <a href="/privacy/">개인정보처리방침</a>
             </div>
             <p class="footer-note">거래 전 판매자의 등급과 거래 후기를 꼭 확인하세요.</p>
           </div>
