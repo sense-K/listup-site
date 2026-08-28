@@ -20,7 +20,7 @@ jobs:
       - run: npm i -D playwright@1.49.1 && npx playwright install --with-deps chromium
       - name: 광고 송출 확인
         run: |
-          cat > /tmp/adcheck.mjs <<'EOF'
+          cat > ./adcheck.mjs <<'EOF'
           import { chromium } from 'playwright'
 
           const URLS = [
@@ -85,4 +85,4 @@ jobs:
           else if (anyUnfilled) console.log('결론: 구글이 응답은 하지만 광고를 안 채운다 → 아직 심사 중이거나 광고 재고 없음')
           else console.log('결론: 광고 응답 자체가 없다 → 심사 대기 중일 가능성이 높다')
           EOF
-          node /tmp/adcheck.mjs
+          node ./adcheck.mjs
