@@ -153,6 +153,20 @@ jobs:
           grep -q "heroCharImg" /tmp/l.js && echo "::error::썸네일이 아직 캐릭터 이미지 기준" || echo "  OK  캐릭터 이미지 기준 제거됨"
           grep -q "card-hero-img.is-shot" /tmp/s.css && echo "  OK  css is-shot" || echo "::error::css에 is-shot 없음"
           grep -q "repeat(4, minmax(0, 1fr))" /tmp/s.css && echo "  OK  css 4열 그리드" || echo "::error::css 4열 그리드 없음"
+          echo "== 애드센스 =="
+          check "https://resetlist.kr/ads.txt" 200 "pub-2411291444354261"
+          for u in "https://resetlist.kr/" \
+                   "https://resetlist.kr/game/genshin/characters/" \
+                   "https://resetlist.kr/game/genshin/characters/hu-tao/" \
+                   "https://resetlist.kr/trade/price/genshin/"; do
+            check "$u" 200 'content="ca-pub-2411291444354261"'
+          done
+          # 광고 로더는 읽는 페이지에만 / 거래 흐름에는 없어야 한다
+          curl -s --max-time 20 -H "Cache-Control: no-cache" "https://resetlist.kr/js/config.js?cb=${GITHUB_RUN_ID}" > /tmp/cfg.js
+          for n in ADSENSE mountAds adsAllowed "ad-unit"; do
+            grep -q "$n" /tmp/cfg.js && echo "  OK  config.js $n" || echo "::error::config.js에 $n 없음"
+          done
+          grep -q "'/trade/register'" /tmp/cfg.js && echo "  OK  거래 등록 광고 제외" || echo "::error::광고 제외 경로 없음"
           echo "== 회귀 =="
           check "https://resetlist.kr/" 200 "리세리스트"
           check "https://resetlist.kr/trade/" 200 "돌계"
