@@ -491,23 +491,29 @@ function renderFooter() {
           </div>
           <div class="footer-col">
             <div class="footer-link-title">거래</div>
-            <a href="/trade/">거래소</a>
-            <a href="/trade/register/">판매 등록</a>
-            <a href="/trade/price/">시세</a>
+            <div class="footer-links">
+              <a href="/trade/">거래소</a>
+              <a href="/trade/register/">판매 등록</a>
+              <a href="/trade/price/">시세</a>
+            </div>
           </div>
           <div class="footer-col">
             <div class="footer-link-title">게임 정보</div>
-            <a href="/game/genshin/characters/">원신 캐릭터 도감</a>
-            <a href="/game/genshin/uid/">원신 UID 조회</a>
-            <a href="/game/starrail/characters/">스타레일 캐릭터 도감</a>
-            <a href="/game/zzz/characters/">젠레스 존 제로 도감</a>
-            <a href="/game/nikke/characters/">니케 캐릭터 도감</a>
-            <a href="/game/wuwa/characters/">명조 캐릭터 도감</a>
-            <a href="/game/bluearchive/students/">블루아카이브 학생 도감</a>
+            <div class="footer-links">
+              <a href="/game/genshin/characters/">원신 캐릭터 도감</a>
+              <a href="/game/genshin/uid/">원신 UID 조회</a>
+              <a href="/game/starrail/characters/">스타레일 캐릭터 도감</a>
+              <a href="/game/zzz/characters/">젠레스 존 제로 도감</a>
+              <a href="/game/nikke/characters/">니케 캐릭터 도감</a>
+              <a href="/game/wuwa/characters/">명조 캐릭터 도감</a>
+              <a href="/game/bluearchive/students/">블루아카이브 학생 도감</a>
+            </div>
           </div>
           <div class="footer-col">
             <div class="footer-link-title">고객지원</div>
-            <a href="/contact/">문의하기</a>
+            <div class="footer-links">
+              <a href="/contact/">문의하기</a>
+            </div>
             <p class="footer-note">거래 전 판매자의 등급과 거래 후기를 꼭 확인하세요.</p>
           </div>
         </div>

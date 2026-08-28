@@ -1988,10 +1988,8 @@ a { text-decoration: none; color: inherit; }
   .page-wrapper { padding: 32px 32px 80px; }
   .game-hub-wrap { padding: 32px 32px 80px; }
   .uid-wrap { padding: 32px 32px 80px; }
-  .site-footer-inner { padding: 0 32px; }
   .game-select-section { padding: 32px 32px; }
-  /* 태블릿: 4열 → 2열 */
-  .footer-top { grid-template-columns: 1fr 1fr; row-gap: 28px; }
+  /* 푸터 반응형은 기본 스타일 뒤(=푸터 섹션 아래)에 모아뒀다 — 여기 두면 나중에 덮인다 */
 }
 
 /* ===== 모바일 ===== */
@@ -2011,7 +2009,6 @@ a { text-decoration: none; color: inherit; }
   .game-hub-wrap { padding: 20px 16px 60px; }
   .uid-wrap { padding: 20px 16px 60px; }
   .tab-bar-inner { padding: 0 16px; }
-  .site-footer-inner { padding: 0 16px; }
   .layout-with-sidebar { flex-direction: column; align-items: stretch; }
   .content-area { width: 100%; }
   .sidebar { width: 100%; position: static; }
@@ -2044,13 +2041,6 @@ a { text-decoration: none; color: inherit; }
   .fab { bottom: 16px; right: 16px; padding: 12px 18px; font-size: 13px; }
   /* 캐릭터 필터 모달: 7열 → 4열 */
   .cf-modal-body .char-grid { grid-template-columns: repeat(4, 1fr); }
-  /* 모바일: 브랜드 전체폭 + 링크 2열 */
-  .footer-top {
-    grid-template-columns: 1fr 1fr;
-    gap: 24px 20px;
-    padding: 28px 0 20px;
-  }
-  .footer-brand { grid-column: 1 / -1; }
 }
 
 @media (min-width: 769px) {
@@ -2114,6 +2104,13 @@ a { text-decoration: none; color: inherit; }
   text-transform: uppercase;
   margin-bottom: 2px;
 }
+/* 링크 묶음 — 데스크톱은 세로, 모바일은 가로로 흐르게 (아래 미디어쿼리) */
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
 .footer-col a {
   font-size: 13px;
   color: rgba(255,255,255,0.45);
@@ -2149,6 +2146,47 @@ a { text-decoration: none; color: inherit; }
   transition: color 0.15s;
 }
 .footer-bottom-links a:hover { color: rgba(255,255,255,0.8); }
+
+/* 푸터 반응형 — 반드시 위 기본 스타일 '뒤'에 둘 것.
+   (예전엔 공용 @media 블록 안에 있었는데, 그 블록이 이 파일 위쪽이라
+    아래의 기본 .footer-top / .site-footer-inner 에 그대로 덮여서
+    모바일에서도 데스크톱 4열이 그려지고 있었다 — '원신 캐릭 / 터 도감' 줄바꿈의 원인) */
+@media (max-width: 1024px) {
+  .site-footer-inner { padding: 0 32px; }
+  .footer-top { grid-template-columns: 1fr 1fr; row-gap: 28px; }
+}
+
+@media (max-width: 768px) {
+  .site-footer { margin-top: 32px; }
+  .site-footer-inner { padding: 0 16px; }
+  /* 한 열로 세우고, 링크는 가로로 흐르는 칩으로 — 좁은 열에서 단어가 쪼개지지 않게 */
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 26px 0 18px;
+  }
+  .footer-col { gap: 9px; }
+  .footer-desc { font-size: 12.5px; }
+  .footer-link-title { font-size: 11px; margin-bottom: 0; }
+  .footer-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .footer-links a {
+    padding: 7px 11px;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 999px;
+    color: rgba(255,255,255,0.6);
+  }
+  .footer-note { margin-top: 4px; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 0 20px; }
+  .footer-disclaimer { text-align: left; line-height: 1.6; }
+}
 
 /* ===== 시세 페이지 ===== */
 .price-page-wrapper {
@@ -2404,11 +2442,6 @@ a { text-decoration: none; color: inherit; }
   .price-recent-grid { grid-template-columns: 1fr; }
   .price-index-header h1 { font-size: 24px; }
   .price-index-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 768px) {
-  .footer-bottom { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .footer-disclaimer { text-align: left; }
 }
 
 /* 매물 카드 — 좁은 화면 조정 */
