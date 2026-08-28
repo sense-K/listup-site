@@ -88,6 +88,18 @@ function mountAds() {
   placed.forEach(() => {
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}) } catch (e) { /* 차단기 등 */ }
   })
+
+  // 광고를 못 받았을 때(미승인·재고 없음·차단기) 빈 칸이 280px 남는다.
+  // 구글이 data-ad-status="unfilled" 를 달아주므로 그 자리를 접는다.
+  // CSS :has() 로도 접지만, 미지원 브라우저를 위해 여기서 한 번 더 확인한다.
+  const collapse = () => placed.forEach(box => {
+    const ins = box.querySelector('ins.adsbygoogle')
+    if (!ins) return
+    const st = ins.getAttribute('data-ad-status')
+    if (st === 'unfilled' || (!st && !ins.querySelector('iframe'))) box.style.display = 'none'
+  })
+  setTimeout(collapse, 4000)
+  setTimeout(collapse, 10000)
 }
 
 document.addEventListener('DOMContentLoaded', mountAds)

@@ -2278,6 +2278,9 @@ a { text-decoration: none; color: inherit; }
   margin-bottom: 4px;
 }
 .ad-unit ins { display: block; }
+/* 광고를 못 받으면 빈 칸(280px)이 남는다 — 그 자리를 통째로 접는다.
+   :has() 미지원 브라우저는 config.js 의 collapse() 가 처리 */
+.ad-unit:has(ins[data-ad-status="unfilled"]) { display: none; }
 /* 하단 광고는 푸터 바로 위 = body 직계라 본문 폭·여백을 직접 잡아준다 */
 .ad-bottom {
   max-width: 1300px;
