@@ -2188,6 +2188,34 @@ a { text-decoration: none; color: inherit; }
   .footer-disclaimer { text-align: left; line-height: 1.6; }
 }
 
+/* ===== 광고 (AdSense) =====
+   config.js 의 mountAds() 가 넣는다. 슬롯 ID가 비어 있으면 아예 렌더되지 않음. */
+.ad-unit {
+  margin: 26px 0;
+  min-width: 0;
+}
+.ad-label {
+  display: block;
+  font-size: 11px;
+  color: #9ca3af;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.ad-unit ins { display: block; }
+/* 하단 광고는 푸터 바로 위 = body 직계라 본문 폭·여백을 직접 잡아준다 */
+.ad-bottom {
+  max-width: 1300px;
+  margin: 32px auto;
+  padding: 0 60px;
+}
+@media (max-width: 1024px) {
+  .ad-bottom { padding: 0 32px; }
+}
+@media (max-width: 768px) {
+  .ad-unit { margin: 20px 0; }
+  .ad-bottom { margin: 24px auto; padding: 0 16px; }
+}
+
 /* ===== 시세 페이지 ===== */
 .price-page-wrapper {
   max-width: 860px;

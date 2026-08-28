@@ -7,6 +7,91 @@ document.addEventListener('DOMContentLoaded',function(){var n=document.createEle
 window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
 gtag('js',new Date());gtag('config','G-SQDKTZQYCW');
 
+// ===== Google AdSense =====
+// 광고는 '읽는 페이지'(도감·시세·거래소 목록)에만 붙인다.
+// 거래 등록·로그인·관리 화면에는 스크립트 자체를 불러오지 않는다 —
+// 그래야 애드센스 자동 광고(앵커)까지 같이 막힌다. 거래 흐름에서 오클릭 한 번이면
+// 광고 몇 원 벌자고 거래 하나가 통째로 날아간다.
+const ADSENSE = {
+  enabled: true,
+  client: 'ca-pub-2411291444354261',
+  // 애드센스 → 광고 → '광고 단위 기준' 에서 만든 디스플레이 광고의 슬롯 ID(숫자)를 넣으면 켜진다.
+  // 비어 있으면 그 자리는 아예 렌더되지 않는다 (자동 광고 앵커는 그대로 동작).
+  slots: {
+    content: '',   // 본문 중간 — 캐릭터 상세 첫 소제목 앞 / 도감 목록 아래 / 시세표 아래
+    bottom: '',    // 페이지 하단 — 푸터 바로 위
+  },
+  // 광고를 일절 넣지 않는 경로 (앞부분 일치)
+  deny: ['/trade/register', '/trade/bulk', '/auth', '/admin', '/review', '/mypage'],
+}
+
+function adsAllowed() {
+  if (!ADSENSE.enabled || !ADSENSE.client) return false
+  const p = location.pathname
+  return !ADSENSE.deny.some(d => p === d || p.startsWith(d + '/') || p.startsWith(d + '?'))
+}
+
+// 본문 광고를 넣을 자리 — 위에서부터 처음 맞는 것 하나만 사용한다
+const AD_CONTENT_ANCHORS = [
+  ['.gc-h2', 'before'],       // 캐릭터 상세: 첫 소제목(스킬 등) 앞
+  ['#grid', 'after'],         // 도감 목록 아래
+  ['.price-table', 'after'],  // 시세표 아래
+]
+
+function makeAdUnit(slotKey) {
+  const slot = ADSENSE.slots[slotKey]
+  if (!slot) return null
+  const box = document.createElement('div')
+  box.className = 'ad-unit ad-' + slotKey
+  const label = document.createElement('span')
+  label.className = 'ad-label'
+  label.textContent = '광고'
+  const ins = document.createElement('ins')
+  ins.className = 'adsbygoogle'
+  ins.style.display = 'block'
+  ins.setAttribute('data-ad-client', ADSENSE.client)
+  ins.setAttribute('data-ad-slot', slot)
+  ins.setAttribute('data-ad-format', 'auto')
+  ins.setAttribute('data-full-width-responsive', 'true')
+  box.append(label, ins)
+  return box
+}
+
+function mountAds() {
+  if (!adsAllowed()) return
+
+  // 로더는 자동 광고(앵커)에도 필요하므로 슬롯 설정 여부와 무관하게 불러온다
+  const s = document.createElement('script')
+  s.async = true
+  s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + ADSENSE.client
+  s.crossOrigin = 'anonymous'
+  document.head.appendChild(s)
+
+  const placed = []
+
+  // 본문 중간
+  for (const [sel, where] of AD_CONTENT_ANCHORS) {
+    const anchor = document.querySelector(sel)
+    if (!anchor || !anchor.parentNode) continue
+    const unit = makeAdUnit('content')
+    if (unit) { anchor.parentNode.insertBefore(unit, where === 'before' ? anchor : anchor.nextSibling); placed.push(unit) }
+    break
+  }
+
+  // 하단 — 푸터 바로 위
+  const footer = document.getElementById('footer') || document.getElementById('footer-container')
+  if (footer && footer.parentNode) {
+    const unit = makeAdUnit('bottom')
+    if (unit) { footer.parentNode.insertBefore(unit, footer); placed.push(unit) }
+  }
+
+  placed.forEach(() => {
+    try { (window.adsbygoogle = window.adsbygoogle || []).push({}) } catch (e) { /* 차단기 등 */ }
+  })
+}
+
+document.addEventListener('DOMContentLoaded', mountAds)
+
 // ===== Supabase 설정 =====
 const SUPABASE_URL = 'https://ltcibadxwkupwjikqzik.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0Y2liYWR4d2t1cHdqaWtxemlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTQ5OTEsImV4cCI6MjA5MDY5MDk5MX0.KYrP2xopjSxBOee2KcS8tM89misAkyzfBvx0828t4No'
