@@ -167,6 +167,8 @@ jobs:
             grep -q "$n" /tmp/cfg.js && echo "  OK  config.js $n" || echo "::error::config.js에 $n 없음"
           done
           grep -q "'/trade/register'" /tmp/cfg.js && echo "  OK  거래 등록 광고 제외" || echo "::error::광고 제외 경로 없음"
+          grep -q "6068318504" /tmp/cfg.js && echo "  OK  본문 슬롯" || echo "::error::본문 광고 슬롯 비어있음"
+          grep -q "2212833973" /tmp/cfg.js && echo "  OK  하단 슬롯" || echo "::error::하단 광고 슬롯 비어있음"
           echo "== 약관·방침 (애드센스 정책 필수) =="
           check "https://resetlist.kr/privacy/" 200 "개인정보처리방침"
           check "https://resetlist.kr/privacy/" 200 "AdSense"
